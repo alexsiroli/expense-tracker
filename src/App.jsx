@@ -353,9 +353,9 @@ function App() {
   // };
 
   return (
-          <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+          <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-20">
       {/* Header con gradiente */}
-      <header className="gradient-bg text-white shadow-lg transition-all duration-300 py-3">
+      <header className="fixed top-0 left-0 w-full z-30 bg-blue-600/40 backdrop-blur-md text-white shadow-lg border-b border-blue-700/60 transition-all duration-300 py-3">
         <div className="max-w-md mx-auto px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
