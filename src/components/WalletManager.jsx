@@ -41,9 +41,9 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete }) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Gestione Conti</h3>
-        <button 
-          onClick={() => setShowForm(true)} 
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105"
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
         >
           <Plus className="w-4 h-4" />
           <span className="font-medium">Nuovo Conto</span>
@@ -58,7 +58,9 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete }) {
             <div className="flex items-center gap-3 min-w-0">
               <span className="w-4 h-4 rounded-full" style={{ background: wallet.color, display: 'inline-block' }}></span>
               <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{wallet.name}</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">€{wallet.balance.toFixed(2)}</span>
+              <span className={`text-xs font-medium ${wallet.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                €{wallet.balance.toFixed(2)}
+              </span>
             </div>
             <div className="flex gap-1 flex-shrink-0">
               <button onClick={() => handleEdit(wallet)} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 transition-colors" aria-label="Modifica conto">
@@ -74,7 +76,7 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete }) {
       {showForm && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="gradient-bg text-white p-6 rounded-t-3xl">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={handleCancel} className="text-white/80 hover:text-white transition-colors">
                   <X className="w-6 h-6" />
@@ -98,7 +100,7 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete }) {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Saldo iniziale</label>
-                <input type="number" value={formData.balance} onChange={e => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })} className="input" min="0" step="0.01" required placeholder="0,00" />
+                <input type="number" value={formData.balance} onChange={e => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })} className="input" step="0.01" required placeholder="0,00" />
               </div>
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={handleCancel} className="btn btn-secondary flex-1">Annulla</button>

@@ -59,10 +59,10 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
         </h3>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl shadow-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 transform hover:scale-105"
+          className="flex items-center gap-2 px-4 py-2 bg-purple-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-purple-700/90 transition-all duration-200 transform hover:scale-105"
         >
           <Plus className="w-4 h-4" />
-          <span className="font-medium">Aggiungi</span>
+          <span className="font-medium">Aggiungi Categoria</span>
         </button>
       </div>
 
@@ -86,7 +86,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
       {showForm && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="gradient-bg text-white p-6 rounded-t-3xl">
+            <div className="bg-purple-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button
                   onClick={handleCancel}
@@ -148,7 +148,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl font-medium hover:from-purple-700 hover:to-purple-800 transition-all duration-200 transform hover:scale-105"
+                  className="flex-1 px-4 py-2 bg-purple-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-purple-700/90 transition-all duration-200 transform hover:scale-105"
                 >
                   {editingCategory ? 'Modifica' : 'Aggiungi'}
                 </button>
@@ -159,7 +159,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
                 <div className="pt-6">
                   <button
                     type="button"
-                    className="w-full px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-medium hover:from-red-700 hover:to-red-800 transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2"
+                    className="w-full px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2"
                     onClick={() => setShowDeleteConfirm(true)}
                   >
                     <Trash2 className="w-4 h-4" />

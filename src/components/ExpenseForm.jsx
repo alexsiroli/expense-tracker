@@ -132,7 +132,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
     <div className="modal-overlay">
       <div className="modal-content">
         {/* Header */}
-        <div className="gradient-bg text-white p-6 rounded-t-3xl">
+        <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <button
               onClick={onClose}
@@ -196,7 +196,6 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                 onFocus={handleAmountFocus}
                 placeholder="0,00"
                 step="0.01"
-                min="0"
                 className="input form-input-with-icon"
                 required
               />

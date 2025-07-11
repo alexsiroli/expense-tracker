@@ -96,7 +96,7 @@ function DataManager({ onImportData }) {
           </p>
           <button
             onClick={exportData}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
           >
             <Download className="w-4 h-4" />
             <span className="font-medium">Scarica Backup</span>
@@ -114,10 +114,10 @@ function DataManager({ onImportData }) {
           </p>
           <button
             onClick={() => setShowImportModal(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 transform hover:scale-105"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105"
           >
             <Upload className="w-4 h-4" />
-            <span className="font-medium">Carica Backup</span>
+            <span className="font-medium">Importa Dati</span>
           </button>
         </div>
       </div>
@@ -126,7 +126,7 @@ function DataManager({ onImportData }) {
       {showImportModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="gradient-bg text-white p-6 rounded-t-3xl">
+            <div className="bg-green-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => {
@@ -192,7 +192,7 @@ function DataManager({ onImportData }) {
                       type="button"
                       onClick={importData}
                       disabled={!importFile}
-                      className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-medium hover:from-green-700 hover:to-green-800 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="flex-1 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       <Upload className="w-4 h-4 mr-2" />
                       Importa

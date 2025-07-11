@@ -172,6 +172,7 @@ function App() {
   const updateItem = (updatedItem) => {
     const updatedWithDate = {
       ...updatedItem,
+      id: editingItem.id, // Preserva l'ID originale
       date: updatedItem.date ? new Date(updatedItem.date + 'T00:00:00').toISOString() : new Date().toISOString()
     };
     if (activeTab === 'expenses') {
@@ -354,22 +355,22 @@ function App() {
 
   return (
           <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-28 pb-24">
-      {/* Header con gradiente */}
-      <header className="fixed top-0 left-0 w-full z-30 py-6">
+      {/* Header con grafica trasparente */}
+      <header className="fixed top-0 left-0 w-full z-30 py-6 animate-fade-in">
         <div className="max-w-md mx-auto px-6">
-          <div className="bg-blue-600/40 backdrop-blur-md border border-blue-700/60 rounded-2xl p-3">
+          <div className="bg-blue-600/40 backdrop-blur-md border border-blue-700/60 rounded-2xl p-3 transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/25 active:scale-95">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
                   <Wallet className="w-4 h-4" />
                 </div>
-                <h1 className="text-lg font-bold text-white">
+                <h1 className="text-lg font-bold text-white animate-fade-in-up">
                   MoneyTracker
                 </h1>
               </div>
               <button
                 onClick={toggleTheme}
-                className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-colors"
+                className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95"
               >
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
@@ -379,8 +380,8 @@ function App() {
       </header>
 
       {/* Balance Card con design moderno - PRIMA COSA */}
-      <div className="max-w-md mx-auto px-6 pt-4 pb-6">
-        <div className={`floating-card ${balanceCollapsed ? 'p-3' : 'p-6'}`}>
+      <div className="max-w-md mx-auto px-6 pt-4 pb-6 animate-fade-in-up">
+        <div className={`floating-card ${balanceCollapsed ? 'p-3' : 'p-6'} transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 animate-bounce-in active:scale-95`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <PiggyBank className="w-6 h-6 text-blue-600" />
@@ -393,7 +394,7 @@ function App() {
             </div>
             <button
               onClick={() => setBalanceCollapsed(!balanceCollapsed)}
-              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200 transform hover:scale-110 active:scale-95"
             >
               {balanceCollapsed ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -409,19 +410,19 @@ function App() {
           
           {!balanceCollapsed && (
             <>
-              <div className="text-center mt-4">
+              <div className="text-center mt-4 animate-fade-in-up">
                 <div className={`text-4xl font-bold mb-4 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   €{balance.toFixed(2)}
                 </div>
                 <div className="flex justify-center gap-6 text-sm">
-                  <div className="text-green-600">
+                  <div className="text-green-600 transform hover:scale-105 transition-all duration-200 active:scale-95">
                     <div className="flex items-center gap-1 font-semibold">
                       <TrendingUp className="w-4 h-4" />
                       Entrate
                     </div>
                     <div className="text-lg font-bold">€{totalIncomes.toFixed(2)}</div>
                   </div>
-                  <div className="text-red-600">
+                  <div className="text-red-600 transform hover:scale-105 transition-all duration-200 active:scale-95">
                     <div className="flex items-center gap-1 font-semibold">
                       <TrendingDown className="w-4 h-4" />
                       Spese
@@ -432,7 +433,7 @@ function App() {
               </div>
 
               {/* Sezione gestione conti */}
-              <div className="mt-8">
+              <div className="mt-8 animate-fade-in-up">
                 <WalletManager
                   wallets={getWalletsWithCalculatedBalance()}
                   onAdd={addWallet}
@@ -449,12 +450,12 @@ function App() {
 
         {/* Content */}
         {activeTab === 'expenses' && (
-          <div>
+          <div className="animate-fade-in-up">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue spese</h2>
               <button
                 onClick={() => setShowForm(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl shadow-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 transform hover:scale-105"
+                className="flex items-center gap-2 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95"
               >
                 <Plus className="w-4 h-4" />
                 <span className="font-medium">Aggiungi Spesa</span>
@@ -471,12 +472,12 @@ function App() {
         )}
 
         {activeTab === 'incomes' && (
-          <div>
+          <div className="animate-fade-in-up">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue entrate</h2>
               <button
                 onClick={() => setShowForm(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 transform hover:scale-105"
+                className="flex items-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95"
               >
                 <Plus className="w-4 h-4" />
                 <span className="font-medium">Aggiungi Entrata</span>
@@ -493,7 +494,7 @@ function App() {
         )}
 
         {activeTab === 'stats' && (
-          <div>
+          <div className="animate-fade-in-up">
             <DateRangePicker onDateRangeChange={setDateRange} />
             <div className="mt-8">
               <Statistics
@@ -508,7 +509,7 @@ function App() {
         )}
 
         {activeTab === 'categories' && (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-fade-in-up">
             <CategoryManager
               categories={categories.expense}
               onAddCategory={addCategory}
@@ -527,7 +528,7 @@ function App() {
         )}
 
         {activeTab === 'data' && (
-          <div>
+          <div className="animate-fade-in-up">
             <DataManager onImportData={importData} />
           </div>
         )}
