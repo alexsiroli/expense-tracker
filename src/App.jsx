@@ -170,10 +170,14 @@ function App() {
   };
   // Modifica transazione
   const updateItem = (updatedItem) => {
+    const updatedWithDate = {
+      ...updatedItem,
+      date: updatedItem.date ? new Date(updatedItem.date + 'T00:00:00').toISOString() : new Date().toISOString()
+    };
     if (activeTab === 'expenses') {
-      setExpenses(expenses.map(expense => expense.id === updatedItem.id ? updatedItem : expense));
+      setExpenses(expenses.map(expense => expense.id === updatedWithDate.id ? updatedWithDate : expense));
     } else {
-      setIncomes(incomes.map(income => income.id === updatedItem.id ? updatedItem : income));
+      setIncomes(incomes.map(income => income.id === updatedWithDate.id ? updatedWithDate : income));
     }
     setShowForm(false);
     setEditingItem(null);

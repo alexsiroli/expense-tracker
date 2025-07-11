@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, DollarSign, Tag, Calendar, Save, ArrowLeft, Store, Search, Wallet } from 'lucide-react';
+import { X, Euro, Tag, Calendar, Save, ArrowLeft, Store, Search, Wallet } from 'lucide-react';
 
 function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [], categories = [], wallets = [], selectedWalletId }) {
   const [formData, setFormData] = useState({
@@ -184,17 +184,17 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
 
           <div>
             <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              Importo (€)
+              Importo (Euro)
             </label>
             <div className="form-input-group">
-              <DollarSign className="form-input-icon" />
+              <Euro className="form-input-icon" />
               <input
                 type="number"
                 name="amount"
                 value={formData.amount}
                 onChange={handleChange}
                 onFocus={handleAmountFocus}
-                placeholder="0.00"
+                placeholder="0,00"
                 step="0.01"
                 min="0"
                 className="input form-input-with-icon"

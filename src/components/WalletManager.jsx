@@ -98,7 +98,7 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete }) {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Saldo iniziale</label>
-                <input type="number" value={formData.balance} onChange={e => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })} className="input" min="0" step="0.01" required />
+                <input type="number" value={formData.balance} onChange={e => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })} className="input" min="0" step="0.01" required placeholder="0,00" />
               </div>
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={handleCancel} className="btn btn-secondary flex-1">Annulla</button>
