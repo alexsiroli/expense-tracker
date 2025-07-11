@@ -353,7 +353,7 @@ function App() {
   // };
 
   return (
-          <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-20">
+          <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-20 pb-24">
       {/* Header con gradiente */}
       <header className="fixed top-0 left-0 w-full z-30 bg-blue-600/40 backdrop-blur-md text-white shadow-lg border-b border-blue-700/60 transition-all duration-300 py-3">
         <div className="max-w-md mx-auto px-6">
@@ -443,77 +443,6 @@ function App() {
 
       <div className="max-w-md mx-auto px-6 py-8 -mt-6 relative z-10">
 
-        {/* Navigation Tabs con design moderno */}
-        <div className="glass-card p-2 mb-8">
-          <div className="grid grid-cols-5 gap-2">
-            <button
-              onClick={() => setActiveTab('expenses')}
-              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                activeTab === 'expenses'
-                  ? 'tab-active'
-                  : 'tab-inactive'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-1">
-                <TrendingDown className="w-4 h-4" />
-                <span className="hidden sm:inline">Spese</span>
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('incomes')}
-              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                activeTab === 'incomes'
-                  ? 'tab-active'
-                  : 'tab-inactive'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-1">
-                <TrendingUp className="w-4 h-4" />
-                <span className="hidden sm:inline">Entrate</span>
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('stats')}
-              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                activeTab === 'stats'
-                  ? 'tab-active'
-                  : 'tab-inactive'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-1">
-                <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Stats</span>
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('categories')}
-              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                activeTab === 'categories'
-                  ? 'tab-active'
-                  : 'tab-inactive'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-1">
-                <Tag className="w-4 h-4" />
-                <span className="hidden sm:inline">Cat.</span>
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('data')}
-              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                activeTab === 'data'
-                  ? 'tab-active'
-                  : 'tab-inactive'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-1">
-                <Database className="w-4 h-4" />
-                <span className="hidden sm:inline">Dati</span>
-              </div>
-            </button>
-          </div>
-        </div>
-
         {/* Content */}
         {activeTab === 'expenses' && (
           <div>
@@ -598,6 +527,81 @@ function App() {
             <DataManager onImportData={importData} />
           </div>
         )}
+      </div>
+
+      {/* Navigation Tabs fluttuante in basso */}
+      <div className="fixed bottom-0 left-0 w-full z-30 py-3">
+        <div className="max-w-md mx-auto px-6">
+          <div className="glass-card p-2">
+            <div className="grid grid-cols-5 gap-2">
+              <button
+                onClick={() => setActiveTab('expenses')}
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                  activeTab === 'expenses'
+                    ? 'tab-active'
+                    : 'tab-inactive'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <TrendingDown className="w-4 h-4" />
+                  <span className="hidden sm:inline">Spese</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('incomes')}
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                  activeTab === 'incomes'
+                    ? 'tab-active'
+                    : 'tab-inactive'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="hidden sm:inline">Entrate</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('stats')}
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                  activeTab === 'stats'
+                    ? 'tab-active'
+                    : 'tab-inactive'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Stats</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('categories')}
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                  activeTab === 'categories'
+                    ? 'tab-active'
+                    : 'tab-inactive'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <Tag className="w-4 h-4" />
+                  <span className="hidden sm:inline">Cat.</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('data')}
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                  activeTab === 'data'
+                    ? 'tab-active'
+                    : 'tab-inactive'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <Database className="w-4 h-4" />
+                  <span className="hidden sm:inline">Dati</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Modal Form */}
