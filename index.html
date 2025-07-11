@@ -6,9 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MoneyTracker</title>
     
-    <!-- Routing fixes for GitHub Pages -->
-    <meta name="robots" content="noindex,nofollow" />
-    <base href="/" />
+
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -28,16 +26,6 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     
-    <!-- Routing fix for GitHub Pages -->
-    <script>
-      // Gestisce il routing per GitHub Pages
-      (function() {
-        const redirect = sessionStorage.redirect;
-        delete sessionStorage.redirect;
-        if (redirect && redirect !== location.href) {
-          history.replaceState(null, null, redirect);
-        }
-      })();
-    </script>
+
   </body>
 </html>
