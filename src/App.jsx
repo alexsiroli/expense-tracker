@@ -22,15 +22,17 @@ const defaultCategories = {
     { id: 5, name: 'Bollette', icon: '💡' },
     { id: 6, name: 'Salute', icon: '🏥' },
     { id: 7, name: 'Educazione', icon: '📚' },
-    { id: 8, name: 'Altro', icon: '📦' }
+    { id: 8, name: 'Trasferimento', icon: '💸' },
+    { id: 9, name: 'Altro', icon: '📦' }
   ],
   income: [
-    { id: 9, name: 'Stipendio', icon: '💼' },
-    { id: 10, name: 'Freelance', icon: '💻' },
-    { id: 11, name: 'Investimenti', icon: '📈' },
-    { id: 12, name: 'Regali', icon: '🎁' },
-    { id: 13, name: 'Vendite', icon: '🛒' },
-    { id: 14, name: 'Altro', icon: '📦' }
+    { id: 10, name: 'Stipendio', icon: '💼' },
+    { id: 11, name: 'Freelance', icon: '💻' },
+    { id: 12, name: 'Investimenti', icon: '📈' },
+    { id: 13, name: 'Regali', icon: '🎁' },
+    { id: 14, name: 'Vendite', icon: '🛒' },
+    { id: 15, name: 'Trasferimento', icon: '💸' },
+    { id: 16, name: 'Altro', icon: '📦' }
   ]
 };
 
@@ -75,7 +77,7 @@ function App() {
     return [defaultWallet];
   });
   const [activeWalletId, setActiveWalletId] = useState(() => wallets[0]?.id || defaultWallet.id);
-  const [balanceCollapsed, setBalanceCollapsed] = useState(false);
+  const [balanceCollapsed, setBalanceCollapsed] = useState(true);
 
   // Carica i dati dal localStorage all'avvio
   useEffect(() => {
@@ -314,6 +316,38 @@ function App() {
     }));
   };
 
+  // Funzione per gestire i trasferimenti tra conti
+  const handleTransfer = (transferData) => {
+    const { fromWalletId, toWalletId, amount } = transferData;
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Crea la transazione di uscita (spesa) dal conto di origine
+    const outgoingTransaction = {
+      id: Date.now(),
+      amount: parseFloat(amount),
+      category: 'Trasferimento',
+      date: today,
+      store: 'Trasferimento',
+      walletId: fromWalletId,
+      type: 'expense'
+    };
+    
+    // Crea la transazione di entrata (entrata) nel conto di destinazione
+    const incomingTransaction = {
+      id: Date.now() + 1, // ID diverso per evitare conflitti
+      amount: parseFloat(amount),
+      category: 'Trasferimento',
+      date: today,
+      store: 'Trasferimento',
+      walletId: toWalletId,
+      type: 'income'
+    };
+    
+    // Aggiungi entrambe le transazioni
+    setExpenses([...expenses, outgoingTransaction]);
+    setIncomes([...incomes, incomingTransaction]);
+  };
+
   // Funzione per importare i dati
   const importData = (data) => {
     // Importa tutti i dati
@@ -439,6 +473,7 @@ function App() {
                   onAdd={addWallet}
                   onEdit={editWallet}
                   onDelete={deleteWallet}
+                  onTransfer={handleTransfer}
                 />
               </div>
             </>

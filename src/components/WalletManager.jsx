@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Plus, X, Edit, Trash2 } from 'lucide-react';
+import { Plus, X, Edit, Trash2, ArrowRight } from 'lucide-react';
+import TransferModal from './TransferModal';
 
 const COLORS = [
   '#6366f1', '#f59e42', '#10b981', '#ef4444', '#3b82f6', '#f43f5e', '#eab308', '#a21caf', '#0ea5e9', '#f97316',
 ];
 
-function WalletManager({ wallets, onAdd, onEdit, onDelete }) {
+function WalletManager({ wallets, onAdd, onEdit, onDelete, onTransfer }) {
   const [showForm, setShowForm] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
   const [editingWallet, setEditingWallet] = useState(null);
   const [formData, setFormData] = useState({ name: '', color: COLORS[0], balance: 0 });
 
@@ -73,6 +75,21 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete }) {
           </div>
         ))}
       </div>
+      
+      {/* Bottone Trasferimento */}
+      {wallets.length > 1 && (
+        <div className="mt-6">
+          <button
+            onClick={() => setShowTransferModal(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-purple-700/90 transition-all duration-200 transform hover:scale-105"
+          >
+            <ArrowRight className="w-4 h-4" />
+            <span className="font-medium">Trasferisci tra Conti</span>
+          </button>
+        </div>
+      )}
+
+      {/* Modal Aggiungi/Modifica Conto */}
       {showForm && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -110,6 +127,14 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete }) {
           </div>
         </div>
       )}
+
+      {/* Modal Trasferimento */}
+      <TransferModal
+        isOpen={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        onTransfer={onTransfer}
+        wallets={wallets}
+      />
     </div>
   );
 }
