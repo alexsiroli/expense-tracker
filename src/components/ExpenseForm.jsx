@@ -160,16 +160,16 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-3">
+            <label className="block text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Tag className="w-5 h-5 text-muted-foreground" />
               Categoria
             </label>
-            <div className="form-input-group">
-              <Tag className="form-input-icon" />
+            <div>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="input form-input-with-icon"
+                className="input"
               >
                 {categories.map(category => (
                   <option key={category.id} value={category.name}>
@@ -181,17 +181,17 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-3">
+            <label className="block text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-muted-foreground" />
               Data
             </label>
-            <div className="form-input-group">
-              <Calendar className="form-input-icon" />
+            <div>
               <input
                 type="date"
                 name="date"
                 value={formData.date}
                 onChange={handleChange}
-                className="input form-input-with-icon"
+                className="input"
                 required
               />
             </div>
