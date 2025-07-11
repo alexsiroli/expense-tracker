@@ -1,1 +1,12 @@
- 
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="48" fill="rgba(59,130,246,0.12)"/>
+  <circle cx="96" cy="96" r="72" fill="white" fill-opacity="0.9"/>
+  <g filter="url(#shadow)">
+    <text x="50%" y="54%" text-anchor="middle" fill="#2563eb" font-size="80" font-family="Segoe UI, Arial, sans-serif" font-weight="bold" dy=".35em">€</text>
+  </g>
+  <defs>
+    <filter id="shadow" x="0" y="0" width="192" height="192" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#2563eb" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+</svg> 
