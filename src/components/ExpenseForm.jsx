@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, DollarSign, Tag, Calendar, Save, ArrowLeft, Store, Search, Wallet } from 'lucide-react';
 
 function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [], categories = [], wallets = [], selectedWalletId }) {
@@ -12,6 +12,8 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
 
   const [storeSuggestions, setStoreSuggestions] = useState([]);
   const [showStoreSuggestions, setShowStoreSuggestions] = useState(false);
+  const storeInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
 
   // Inizializza il form con i dati dell'item da modificare
   useEffect(() => {
@@ -25,6 +27,24 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
       });
     }
   }, [editingItem, categories, wallets, selectedWalletId]);
+
+  // Gestisce il click fuori dai suggerimenti per chiuderli
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target) && 
+          storeInputRef.current && !storeInputRef.current.contains(event.target)) {
+        setShowStoreSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   // Filtra i negozi mentre l'utente digita
   useEffect(() => {
@@ -40,9 +60,20 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
     }
   }, [formData.store, stores]);
 
+  // Aggiunge il negozio alla lista se non esiste
+  const addStoreToSuggestions = (storeName) => {
+    if (storeName.trim() && !stores.includes(storeName.trim())) {
+      const newStores = [...stores, storeName.trim()];
+      localStorage.setItem('stores', JSON.stringify(newStores));
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.amount) return;
+    
+    // Aggiunge il negozio alla lista se non esiste
+    addStoreToSuggestions(formData.store);
     
     onSubmit({
       ...formData,
@@ -62,6 +93,34 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
   const handleStoreSelect = (store) => {
     setFormData(prev => ({ ...prev, store }));
     setShowStoreSuggestions(false);
+    // Focus back to input after selection
+    setTimeout(() => {
+      if (storeInputRef.current) {
+        storeInputRef.current.focus();
+      }
+    }, 100);
+  };
+
+  const handleStoreInputFocus = () => {
+    if (formData.store.trim() && storeSuggestions.length > 0) {
+      setShowStoreSuggestions(true);
+    }
+  };
+
+  const handleStoreInputBlur = () => {
+    // Delay hiding suggestions to allow for touch events
+    setTimeout(() => {
+      setShowStoreSuggestions(false);
+    }, 300);
+  };
+
+  const handleStoreInputKeyDown = (e) => {
+    if (e.key === 'Enter' && storeSuggestions.length > 0) {
+      e.preventDefault();
+      handleStoreSelect(storeSuggestions[0]);
+    } else if (e.key === 'Escape') {
+      setShowStoreSuggestions(false);
+    }
   };
 
   const handleAmountFocus = (e) => {
@@ -111,7 +170,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                     </option>
                   ))}
                 </select>
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <div className="absolute right-10 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   <div 
                     className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                     style={{ 
@@ -148,29 +207,49 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
               Negozio
             </label>
-            <div className="form-input-group">
+            <div className="form-input-group relative">
               <Store className="form-input-icon" />
               <input
+                ref={storeInputRef}
                 type="text"
                 name="store"
                 value={formData.store}
                 onChange={handleChange}
+                onFocus={handleStoreInputFocus}
+                onBlur={handleStoreInputBlur}
+                onKeyDown={handleStoreInputKeyDown}
                 placeholder="Nome negozio"
                 className="input form-input-with-icon"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                inputMode="text"
               />
               
               {/* Suggerimenti negozi */}
               {showStoreSuggestions && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                <div 
+                  ref={suggestionsRef}
+                  className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto autocomplete-suggestions"
+                >
                   {storeSuggestions.map((store, index) => (
                     <button
                       key={index}
                       type="button"
-                      onClick={() => handleStoreSelect(store)}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleStoreSelect(store);
+                      }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      className="autocomplete-item w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors flex items-center gap-2"
                     >
-                                              <Search className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                      {store}
+                      <Search className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                      <span className="truncate">{store}</span>
                     </button>
                   ))}
                 </div>

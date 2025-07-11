@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -10,6 +10,7 @@ import { useTheme } from './hooks/useTheme';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import WalletManager from './components/WalletManager';
+import DataManager from './components/DataManager';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -47,12 +48,13 @@ const WALLET_COLORS = [
   '#f97316', // amber
 ];
 
-// Modello dati conto: { id, name, color, balance }
+// Modello dati conto: { id, name, color, balance, initialBalance }
 const defaultWallet = {
   id: 'wallet-1',
   name: 'Conto Principale',
   color: WALLET_COLORS[0],
   balance: 0,
+  initialBalance: 0,
 };
 
 function App() {
@@ -124,38 +126,45 @@ function App() {
   const filteredExpenses = expenses;
   const filteredIncomes = incomes;
 
-  // Aggiorna saldo conto
-  const updateWalletBalance = (walletId) => {
+  // Calcola il saldo di un conto dinamicamente
+  const calculateWalletBalance = (walletId) => {
     const wallet = wallets.find(w => w.id === walletId);
-    if (!wallet) return;
+    if (!wallet) return 0;
+    
     const totalIn = incomes.filter(i => i.walletId === walletId).reduce((sum, i) => sum + parseFloat(i.amount), 0);
     const totalOut = expenses.filter(e => e.walletId === walletId).reduce((sum, e) => sum + parseFloat(e.amount), 0);
-    const newBalance = wallet.initialBalance !== undefined ? wallet.initialBalance + totalIn - totalOut : wallet.balance + totalIn - totalOut;
-    setWallets(ws => ws.map(w => w.id === walletId ? { ...w, balance: newBalance } : w));
+    
+    // Usa il saldo iniziale se disponibile, altrimenti il saldo corrente
+    const baseBalance = wallet.initialBalance !== undefined ? wallet.initialBalance : wallet.balance;
+    return baseBalance + totalIn - totalOut;
   };
 
-  // Aggiorna saldo di tutti i conti (es. dopo eliminazione transazione)
-  const updateAllWalletsBalance = () => {
-    setWallets(ws => ws.map(w => {
-      const totalIn = incomes.filter(i => i.walletId === w.id).reduce((sum, i) => sum + parseFloat(i.amount), 0);
-      const totalOut = expenses.filter(e => e.walletId === w.id).reduce((sum, e) => sum + parseFloat(e.amount), 0);
-      const newBalance = w.initialBalance !== undefined ? w.initialBalance + totalIn - totalOut : w.balance + totalIn - totalOut;
-      return { ...w, balance: newBalance };
+  // Calcola i saldi di tutti i conti dinamicamente
+  const getWalletsWithCalculatedBalance = () => {
+    return wallets.map(wallet => ({
+      ...wallet,
+      balance: calculateWalletBalance(wallet.id) // Sostituisce il saldo con quello calcolato
     }));
   };
 
   // Aggiungi spesa/entrata associata a conto
   const addExpense = (expense) => {
-    const newExpense = { ...expense, id: Date.now(), date: new Date().toISOString() };
+    const newExpense = { 
+      ...expense, 
+      id: Date.now(), 
+      date: expense.date ? new Date(expense.date + 'T00:00:00').toISOString() : new Date().toISOString() 
+    };
     setExpenses([...expenses, newExpense]);
-    updateWalletBalance(newExpense.walletId);
     setShowForm(false);
     setEditingItem(null);
   };
   const addIncome = (income) => {
-    const newIncome = { ...income, id: Date.now(), date: new Date().toISOString() };
+    const newIncome = { 
+      ...income, 
+      id: Date.now(), 
+      date: income.date ? new Date(income.date + 'T00:00:00').toISOString() : new Date().toISOString() 
+    };
     setIncomes([...incomes, newIncome]);
-    updateWalletBalance(newIncome.walletId);
     setShowForm(false);
     setEditingItem(null);
   };
@@ -163,10 +172,8 @@ function App() {
   const updateItem = (updatedItem) => {
     if (activeTab === 'expenses') {
       setExpenses(expenses.map(expense => expense.id === updatedItem.id ? updatedItem : expense));
-      updateWalletBalance(updatedItem.walletId);
     } else {
       setIncomes(incomes.map(income => income.id === updatedItem.id ? updatedItem : income));
-      updateWalletBalance(updatedItem.walletId);
     }
     setShowForm(false);
     setEditingItem(null);
@@ -179,13 +186,9 @@ function App() {
     } else {
       // Elimina transazione
       if (activeTab === 'expenses') {
-        const exp = expenses.find(e => e.id === id);
         setExpenses(expenses.filter(expense => expense.id !== id));
-        if (exp) updateWalletBalance(exp.walletId);
       } else {
-        const inc = incomes.find(i => i.id === id);
         setIncomes(incomes.filter(income => income.id !== id));
-        if (inc) updateWalletBalance(inc.walletId);
       }
     }
     setShowConfirmDelete(false);
@@ -288,12 +291,54 @@ function App() {
     const newWallet = {
       ...wallet,
       id: `wallet-${Date.now()}`,
-      balance: parseFloat(wallet.balance) || 0,
+      initialBalance: parseFloat(wallet.balance) || 0, // Salva il saldo iniziale
+      balance: parseFloat(wallet.balance) || 0, // Per compatibilità
     };
     setWallets([...wallets, newWallet]);
   };
   const editWallet = (updatedWallet) => {
-    setWallets(wallets.map(w => w.id === updatedWallet.id ? { ...w, ...updatedWallet } : w));
+    setWallets(wallets.map(w => {
+      if (w.id === updatedWallet.id) {
+        return {
+          ...w,
+          ...updatedWallet,
+          initialBalance: parseFloat(updatedWallet.balance) || 0, // Aggiorna il saldo iniziale
+        };
+      }
+      return w;
+    }));
+  };
+
+  // Funzione per importare i dati
+  const importData = (data) => {
+    // Importa tutti i dati
+    if (data.expenses) {
+      setExpenses(data.expenses);
+      localStorage.setItem('expenses', JSON.stringify(data.expenses));
+    }
+    if (data.incomes) {
+      setIncomes(data.incomes);
+      localStorage.setItem('incomes', JSON.stringify(data.incomes));
+    }
+    if (data.categories) {
+      setCategories(data.categories);
+      localStorage.setItem('categories', JSON.stringify(data.categories));
+    }
+    if (data.stores) {
+      setStores(data.stores);
+      localStorage.setItem('stores', JSON.stringify(data.stores));
+    }
+    if (data.wallets) {
+      setWallets(data.wallets);
+      localStorage.setItem('wallets', JSON.stringify(data.wallets));
+      // Imposta il primo conto come attivo
+      if (data.wallets.length > 0) {
+        setActiveWalletId(data.wallets[0].id);
+      }
+    }
+    if (data.theme) {
+      localStorage.setItem('theme', data.theme);
+    }
   };
   // deleteWallet = (id) => { // This function is now handled by the new updateAllWalletsBalance
   //   setWallets(wallets.filter(w => w.id !== id));
@@ -385,7 +430,7 @@ function App() {
       {/* Sezione gestione conti */}
       <div className="max-w-md mx-auto px-6 py-8">
         <WalletManager
-          wallets={wallets}
+          wallets={getWalletsWithCalculatedBalance()}
           onAdd={addWallet}
           onEdit={editWallet}
           onDelete={deleteWallet}
@@ -396,7 +441,7 @@ function App() {
 
         {/* Navigation Tabs con design moderno */}
         <div className="glass-card p-2 mb-8">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-2">
             <button
               onClick={() => setActiveTab('expenses')}
               className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
@@ -447,6 +492,19 @@ function App() {
               <div className="flex items-center justify-center gap-1">
                 <Tag className="w-4 h-4" />
                 <span className="hidden sm:inline">Cat.</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('data')}
+              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                activeTab === 'data'
+                  ? 'tab-active'
+                  : 'tab-inactive'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-1">
+                <Database className="w-4 h-4" />
+                <span className="hidden sm:inline">Dati</span>
               </div>
             </button>
           </div>
@@ -528,6 +586,12 @@ function App() {
               onEditCategory={editCategory}
               type="income"
             />
+          </div>
+        )}
+
+        {activeTab === 'data' && (
+          <div>
+            <DataManager onImportData={importData} />
           </div>
         )}
       </div>

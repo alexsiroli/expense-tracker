@@ -25,7 +25,9 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete }) {
 
   const handleEdit = (wallet) => {
     setEditingWallet(wallet);
-    setFormData({ name: wallet.name, color: wallet.color, balance: wallet.balance });
+    // Usa il saldo iniziale se disponibile, altrimenti il saldo corrente
+    const balanceToShow = wallet.initialBalance !== undefined ? wallet.initialBalance : wallet.balance;
+    setFormData({ name: wallet.name, color: wallet.color, balance: balanceToShow });
     setShowForm(true);
   };
 
