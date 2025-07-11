@@ -1,12 +1,18 @@
 import { useState } from 'react';
 import { Plus, X, Tag, Edit, Trash2 } from 'lucide-react';
+import ConfirmDialog from './ConfirmDialog';
 
 function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCategory, type }) {
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({ name: '', icon: '📦' });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const icons = ['🍽️', '🚗', '🎮', '🛍️', '💡', '🏥', '📚', '💼', '💻', '📈', '🎁', '🛒', '📦'];
+  const icons = [
+    '🍽️', '🚗', '🎮', '🛍️', '💡', '🏥', '📚', '💼',
+    '💻', '📈', '🎁', '🛒', '🏠', '✈️', '🍔', '🍕',
+    '🍣', '🍦', '🐶', '🐱', '⚽', '🏀', '🎸', '🎤'
+  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -35,6 +41,16 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
     setFormData({ name: '', icon: '📦' });
   };
 
+  const handleDelete = () => {
+    if (editingCategory) {
+      onDeleteCategory(editingCategory.id);
+      setShowDeleteConfirm(false);
+      setShowForm(false);
+      setEditingCategory(null);
+      setFormData({ name: '', icon: '📦' });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -53,28 +69,16 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
       {/* Lista categorie */}
       <div className="grid grid-cols-2 gap-3">
         {categories.map((category) => (
-          <div key={category.id} className="card p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{category.icon}</span>
-                <span className="font-medium text-foreground">{category.name}</span>
-              </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => handleEdit(category)}
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => onDeleteCategory(category.id)}
-                  className="p-2 text-muted-foreground hover:text-destructive transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
+          <button
+            key={category.id}
+            type="button"
+            onClick={() => handleEdit(category)}
+            className="card p-4 flex items-center gap-3 min-w-0 w-full text-left hover:bg-secondary/40 transition-colors"
+            aria-label={`Modifica categoria ${category.name}`}
+          >
+            <span className="text-2xl flex-shrink-0">{category.icon}</span>
+            <span className="font-medium text-foreground truncate">{category.name}</span>
+          </button>
         ))}
       </div>
 
@@ -149,8 +153,30 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
                   {editingCategory ? 'Modifica' : 'Aggiungi'}
                 </button>
               </div>
+
+              {/* Pulsante elimina solo in modifica */}
+              {editingCategory && (
+                <div className="pt-6">
+                  <button
+                    type="button"
+                    className="btn btn-danger w-full"
+                    onClick={() => setShowDeleteConfirm(true)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Elimina categoria
+                  </button>
+                </div>
+              )}
             </form>
           </div>
+          {/* Dialog conferma eliminazione */}
+          <ConfirmDialog
+            isOpen={showDeleteConfirm}
+            onClose={() => setShowDeleteConfirm(false)}
+            onConfirm={handleDelete}
+            title="Conferma eliminazione"
+            message="Sei sicuro di voler eliminare questa categoria? Questa azione non può essere annullata."
+          />
         </div>
       )}
     </div>

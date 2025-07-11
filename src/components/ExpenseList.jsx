@@ -53,12 +53,11 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground truncate">
-                      {item.description || 'Nessuna descrizione'}
+                      {item.store || 'Senza negozio'}
                     </h3>
-                    {item.store && (
-                      <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
-                        <Store className="w-3 h-3" />
-                        <span>{item.store}</span>
+                    {item.description && (
+                      <div className="text-xs text-muted-foreground mt-1 truncate">
+                        {item.description}
                       </div>
                     )}
                   </div>
