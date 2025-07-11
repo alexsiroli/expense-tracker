@@ -12,6 +12,15 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
 
+  // Debug logging
+  console.log('Statistics component received:', { 
+    expensesCount: expenses.length, 
+    incomesCount: incomes.length,
+    currentMonthExpensesCount: currentMonthExpenses.length,
+    currentMonthIncomesCount: currentMonthIncomes.length,
+    dateRange
+  });
+
   // Filtra dati in base al periodo selezionato
   const filteredData = useMemo(() => {
     let data = dateRange ? { expenses, incomes } : { expenses: currentMonthExpenses, incomes: currentMonthIncomes };
@@ -168,7 +177,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" tickFormatter={v => { const [y, m] = v.split('-'); return `${m}/${y.slice(2)}`; }} />
               <YAxis />
-              <Tooltip formatter={v => formatCurrency(v)} />
+              <Tooltip content={<CustomTooltip />} />
               <Legend />
               <Line type="monotone" dataKey="Spese" stroke="#ef4444" name="Spese" strokeWidth={3} />
               <Line type="monotone" dataKey="Entrate" stroke="#22c55e" name="Entrate" strokeWidth={3} />
@@ -190,7 +199,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
                     <Cell key={`cell-exp-${idx}`} fill={COLORS[idx % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={v => formatCurrency(v)} />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           ) : <div className="text-center py-8 text-gray-500 dark:text-gray-400">Nessuna spesa registrata</div>}
@@ -206,7 +215,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
                     <Cell key={`cell-inc-${idx}`} fill={COLORS[idx % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={v => formatCurrency(v)} />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           ) : <div className="text-center py-8 text-gray-500 dark:text-gray-400">Nessuna entrata registrata</div>}
