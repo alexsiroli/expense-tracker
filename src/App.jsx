@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -65,94 +65,105 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-md mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900 text-center">
-            Tracker Spese
-          </h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header con gradiente */}
+      <header className="gradient-bg text-white shadow-2xl">
+        <div className="max-w-md mx-auto px-6 py-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+              <Wallet className="w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-bold">MoneyTracker</h1>
+          </div>
+          <p className="text-center text-blue-100 text-sm">Gestisci le tue finanze in modo intelligente</p>
         </div>
       </header>
 
-      <div className="max-w-md mx-auto px-4 py-6">
-        {/* Balance Card */}
-        <div className="card p-6 mb-6">
+      <div className="max-w-md mx-auto px-6 py-8 -mt-6 relative z-10">
+        {/* Balance Card con design moderno */}
+        <div className="floating-card p-8 mb-8">
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-700 mb-2">Bilancio Totale</h2>
-            <div className={`text-3xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <PiggyBank className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-bold text-slate-800">Bilancio Totale</h2>
+            </div>
+            <div className={`text-4xl font-bold mb-2 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               €{balance.toFixed(2)}
             </div>
-            <div className="flex justify-center gap-8 mt-4 text-sm">
+            <div className="flex justify-center gap-6 text-sm">
               <div className="text-green-600">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 font-semibold">
                   <TrendingUp className="w-4 h-4" />
-                  Entrate: €{totalIncomes.toFixed(2)}
+                  Entrate
                 </div>
+                <div className="text-lg font-bold">€{totalIncomes.toFixed(2)}</div>
               </div>
               <div className="text-red-600">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 font-semibold">
                   <TrendingDown className="w-4 h-4" />
-                  Spese: €{totalExpenses.toFixed(2)}
+                  Spese
                 </div>
+                <div className="text-lg font-bold">€{totalExpenses.toFixed(2)}</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex bg-white rounded-lg shadow-sm mb-6">
-          <button
-            onClick={() => setActiveTab('expenses')}
-            className={`flex-1 py-3 px-4 text-sm font-medium rounded-l-lg transition-colors ${
-              activeTab === 'expenses'
-                ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <TrendingDown className="w-4 h-4" />
-              Spese
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('incomes')}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-              activeTab === 'incomes'
-                ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Entrate
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('stats')}
-            className={`flex-1 py-3 px-4 text-sm font-medium rounded-r-lg transition-colors ${
-              activeTab === 'stats'
-                ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Statistiche
-            </div>
-          </button>
+        {/* Navigation Tabs con design moderno */}
+        <div className="glass-card p-2 mb-8">
+          <div className="flex">
+            <button
+              onClick={() => setActiveTab('expenses')}
+              className={`flex-1 py-4 px-6 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                activeTab === 'expenses'
+                  ? 'tab-active'
+                  : 'tab-inactive'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <TrendingDown className="w-5 h-5" />
+                Spese
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('incomes')}
+              className={`flex-1 py-4 px-6 text-sm font-semibold transition-all duration-300 ${
+                activeTab === 'incomes'
+                  ? 'tab-active'
+                  : 'tab-inactive'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Entrate
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`flex-1 py-4 px-6 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                activeTab === 'stats'
+                  ? 'tab-active'
+                  : 'tab-inactive'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Stats
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
         {activeTab === 'expenses' && (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Le tue spese</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-800">Le tue spese</h2>
               <button
                 onClick={() => setShowForm(true)}
-                className="btn btn-primary"
+                className="btn btn-danger"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-5 h-5 mr-2" />
                 Aggiungi
               </button>
             </div>
@@ -166,13 +177,13 @@ function App() {
 
         {activeTab === 'incomes' && (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Le tue entrate</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-800">Le tue entrate</h2>
               <button
                 onClick={() => setShowForm(true)}
-                className="btn btn-primary"
+                className="btn btn-success"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-5 h-5 mr-2" />
                 Aggiungi
               </button>
             </div>

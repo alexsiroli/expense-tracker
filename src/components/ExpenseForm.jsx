@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, DollarSign, Tag, Calendar } from 'lucide-react';
+import { X, DollarSign, Tag, Calendar, Save, ArrowLeft } from 'lucide-react';
 
 const categories = {
   expense: [
@@ -49,23 +49,28 @@ function ExpenseForm({ onSubmit, onClose, type }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Aggiungi {type === 'expense' ? 'Spesa' : 'Entrata'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-6 h-6" />
-          </button>
+    <div className="modal-overlay">
+      <div className="modal-content">
+        {/* Header */}
+        <div className="gradient-bg text-white p-6 rounded-t-3xl">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={onClose}
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <h2 className="text-xl font-bold">
+              Aggiungi {type === 'expense' ? 'Spesa' : 'Entrata'}
+            </h2>
+            <div className="w-6"></div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-3">
               Descrizione
             </label>
             <input
@@ -80,11 +85,11 @@ function ExpenseForm({ onSubmit, onClose, type }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-3">
               Importo (€)
             </label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input
                 type="number"
                 name="amount"
@@ -93,23 +98,23 @@ function ExpenseForm({ onSubmit, onClose, type }) {
                 placeholder="0.00"
                 step="0.01"
                 min="0"
-                className="input pl-10"
+                className="input pl-12"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-3">
               Categoria
             </label>
             <div className="relative">
-              <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Tag className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="input pl-10"
+                className="input pl-12"
               >
                 {categories[type].map(category => (
                   <option key={category} value={category}>
@@ -121,23 +126,24 @@ function ExpenseForm({ onSubmit, onClose, type }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-3">
               Data
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input
                 type="date"
                 name="date"
                 value={formData.date}
                 onChange={handleChange}
-                className="input pl-10"
+                className="input pl-12"
                 required
               />
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-4">
             <button
               type="button"
               onClick={onClose}
@@ -147,8 +153,9 @@ function ExpenseForm({ onSubmit, onClose, type }) {
             </button>
             <button
               type="submit"
-              className="btn btn-primary flex-1"
+              className={`btn flex-1 ${type === 'expense' ? 'btn-danger' : 'btn-success'}`}
             >
+              <Save className="w-5 h-5 mr-2" />
               Salva
             </button>
           </div>
