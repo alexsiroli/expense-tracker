@@ -1,6 +1,7 @@
 import { Trash2, TrendingUp, TrendingDown, AlertCircle, Edit, Store } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { formatCurrency } from '../utils/formatters';
 
 function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
   const formatDate = (dateString) => {
@@ -59,7 +60,7 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
                   <div className={`text-lg font-bold ${
                     type === 'expense' ? 'text-red-600' : 'text-green-600'
                   }`}>
-                    {type === 'expense' ? '-' : '+'}€{item.amount.toFixed(2)}
+                    {type === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
                   </div>
                 </div>
                 

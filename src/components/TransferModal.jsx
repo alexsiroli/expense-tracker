@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, ArrowRight, Euro, Wallet } from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
 
 function TransferModal({ isOpen, onClose, onTransfer, wallets }) {
   const [formData, setFormData] = useState({
@@ -62,7 +63,7 @@ function TransferModal({ isOpen, onClose, onTransfer, wallets }) {
               <option value="">Seleziona conto di origine</option>
               {wallets.map(wallet => (
                 <option key={wallet.id} value={wallet.id}>
-                  {wallet.name} (€{wallet.balance.toFixed(2)})
+                  {wallet.name} ({formatCurrency(wallet.balance)})
                 </option>
               ))}
             </select>
@@ -89,7 +90,7 @@ function TransferModal({ isOpen, onClose, onTransfer, wallets }) {
               <option value="">Seleziona conto di destinazione</option>
               {wallets.map(wallet => (
                 <option key={wallet.id} value={wallet.id}>
-                  {wallet.name} (€{wallet.balance.toFixed(2)})
+                  {wallet.name} ({formatCurrency(wallet.balance)})
                 </option>
               ))}
             </select>

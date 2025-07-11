@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import WalletManager from './components/WalletManager';
 import DataManager from './components/DataManager';
+import { formatCurrency } from './utils/formatters';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -422,7 +423,7 @@ function App() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Bilancio Totale</h2>
               {balanceCollapsed && (
                 <span className={`text-lg font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  €{balance.toFixed(2)}
+                  {formatCurrency(balance)}
                 </span>
               )}
             </div>
@@ -446,7 +447,7 @@ function App() {
             <>
               <div className="text-center mt-4 animate-fade-in-up">
                 <div className={`text-4xl font-bold mb-4 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  €{balance.toFixed(2)}
+                  {formatCurrency(balance)}
                 </div>
                 <div className="flex justify-center gap-6 text-sm">
                   <div className="text-green-600 transform hover:scale-105 transition-all duration-200 active:scale-95">
@@ -454,14 +455,14 @@ function App() {
                       <TrendingUp className="w-4 h-4" />
                       Entrate
                     </div>
-                    <div className="text-lg font-bold">€{totalIncomes.toFixed(2)}</div>
+                    <div className="text-lg font-bold">{formatCurrency(totalIncomes)}</div>
                   </div>
                   <div className="text-red-600 transform hover:scale-105 transition-all duration-200 active:scale-95">
                     <div className="flex items-center gap-1 font-semibold">
                       <TrendingDown className="w-4 h-4" />
                       Spese
                     </div>
-                    <div className="text-lg font-bold">€{totalExpenses.toFixed(2)}</div>
+                    <div className="text-lg font-bold">{formatCurrency(totalExpenses)}</div>
                   </div>
                 </div>
               </div>

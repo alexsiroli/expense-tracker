@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, X, Edit, Trash2, ArrowRight } from 'lucide-react';
 import TransferModal from './TransferModal';
+import { formatCurrency } from '../utils/formatters';
 
 const COLORS = [
   '#6366f1', '#f59e42', '#10b981', '#ef4444', '#3b82f6', '#f43f5e', '#eab308', '#a21caf', '#0ea5e9', '#f97316',
@@ -61,7 +62,7 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete, onTransfer }) {
               <span className="w-4 h-4 rounded-full" style={{ background: wallet.color, display: 'inline-block' }}></span>
               <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{wallet.name}</span>
               <span className={`text-xs font-medium ${wallet.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                €{wallet.balance.toFixed(2)}
+                {formatCurrency(wallet.balance)}
               </span>
             </div>
             <div className="flex gap-1 flex-shrink-0">

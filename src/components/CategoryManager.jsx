@@ -62,7 +62,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
           className="flex items-center gap-2 px-4 py-2 bg-purple-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-purple-700/90 transition-all duration-200 transform hover:scale-105"
         >
           <Plus className="w-4 h-4" />
-          <span className="font-medium">Aggiungi Categoria</span>
+          <span className="font-medium">Aggiungi</span>
         </button>
       </div>
 
@@ -120,13 +120,13 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
                 <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   Icona
                 </label>
-                <div className="grid grid-cols-6 gap-2">
+                <div className="grid grid-cols-8 gap-1">
                   {icons.map((icon) => (
                     <button
                       key={icon}
                       type="button"
                       onClick={() => setFormData({ ...formData, icon })}
-                      className={`p-3 rounded-lg text-2xl transition-all ${
+                      className={`p-2 rounded-lg text-xl transition-all ${
                         formData.icon === icon
                           ? 'bg-blue-600 text-white'
                           : 'bg-secondary hover:bg-gray-100 dark:hover:bg-gray-700/80'
