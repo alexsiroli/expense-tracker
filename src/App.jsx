@@ -353,31 +353,33 @@ function App() {
   // };
 
   return (
-          <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-20 pb-24">
+          <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-28 pb-24">
       {/* Header con gradiente */}
-      <header className="fixed top-0 left-0 w-full z-30 bg-blue-600/40 backdrop-blur-md text-white shadow-lg border-b border-blue-700/60 transition-all duration-300 py-3">
+      <header className="fixed top-0 left-0 w-full z-30 py-6">
         <div className="max-w-md mx-auto px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
-                <Wallet className="w-4 h-4" />
+          <div className="bg-blue-600/40 backdrop-blur-md border border-blue-700/60 rounded-2xl p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <h1 className="text-lg font-bold text-white">
+                  MoneyTracker
+                </h1>
               </div>
-              <h1 className="text-lg font-bold">
-                MoneyTracker
-              </h1>
+              <button
+                onClick={toggleTheme}
+                className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-colors"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
             </div>
-            <button
-              onClick={toggleTheme}
-              className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
           </div>
         </div>
       </header>
 
       {/* Balance Card con design moderno - PRIMA COSA */}
-      <div className="max-w-md mx-auto px-6 pt-4">
+      <div className="max-w-md mx-auto px-6 pt-4 pb-6">
         <div className={`floating-card ${balanceCollapsed ? 'p-3' : 'p-6'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -406,39 +408,41 @@ function App() {
           </div>
           
           {!balanceCollapsed && (
-            <div className="text-center mt-4">
-              <div className={`text-4xl font-bold mb-4 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                €{balance.toFixed(2)}
-              </div>
-              <div className="flex justify-center gap-6 text-sm">
-                <div className="text-green-600">
-                  <div className="flex items-center gap-1 font-semibold">
-                    <TrendingUp className="w-4 h-4" />
-                    Entrate
-                  </div>
-                  <div className="text-lg font-bold">€{totalIncomes.toFixed(2)}</div>
+            <>
+              <div className="text-center mt-4">
+                <div className={`text-4xl font-bold mb-4 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  €{balance.toFixed(2)}
                 </div>
-                <div className="text-red-600">
-                  <div className="flex items-center gap-1 font-semibold">
-                    <TrendingDown className="w-4 h-4" />
-                    Spese
+                <div className="flex justify-center gap-6 text-sm">
+                  <div className="text-green-600">
+                    <div className="flex items-center gap-1 font-semibold">
+                      <TrendingUp className="w-4 h-4" />
+                      Entrate
+                    </div>
+                    <div className="text-lg font-bold">€{totalIncomes.toFixed(2)}</div>
                   </div>
-                  <div className="text-lg font-bold">€{totalExpenses.toFixed(2)}</div>
+                  <div className="text-red-600">
+                    <div className="flex items-center gap-1 font-semibold">
+                      <TrendingDown className="w-4 h-4" />
+                      Spese
+                    </div>
+                    <div className="text-lg font-bold">€{totalExpenses.toFixed(2)}</div>
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {/* Sezione gestione conti */}
+              <div className="mt-8">
+                <WalletManager
+                  wallets={getWalletsWithCalculatedBalance()}
+                  onAdd={addWallet}
+                  onEdit={editWallet}
+                  onDelete={deleteWallet}
+                />
+              </div>
+            </>
           )}
         </div>
-      </div>
-
-      {/* Sezione gestione conti */}
-      <div className="max-w-md mx-auto px-6 py-8">
-        <WalletManager
-          wallets={getWalletsWithCalculatedBalance()}
-          onAdd={addWallet}
-          onEdit={editWallet}
-          onDelete={deleteWallet}
-        />
       </div>
 
       <div className="max-w-md mx-auto px-6 py-8 -mt-6 relative z-10">
