@@ -278,56 +278,56 @@ function App() {
 
         {/* Navigation Tabs con design moderno */}
         <div className="glass-card p-2 mb-8">
-          <div className="flex">
+          <div className="flex overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveTab('expenses')}
-              className={`flex-1 py-4 px-6 text-sm font-semibold rounded-xl transition-all duration-300 ${
+              className={`flex-shrink-0 py-4 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
                 activeTab === 'expenses'
                   ? 'tab-active'
                   : 'tab-inactive'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
-                <TrendingDown className="w-5 h-5" />
+                <TrendingDown className="w-4 h-4" />
                 Spese
               </div>
             </button>
             <button
               onClick={() => setActiveTab('incomes')}
-              className={`flex-1 py-4 px-6 text-sm font-semibold transition-all duration-300 ${
+              className={`flex-shrink-0 py-4 px-4 text-sm font-semibold transition-all duration-300 ${
                 activeTab === 'incomes'
                   ? 'tab-active'
                   : 'tab-inactive'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
-                <TrendingUp className="w-5 h-5" />
+                <TrendingUp className="w-4 h-4" />
                 Entrate
               </div>
             </button>
             <button
               onClick={() => setActiveTab('stats')}
-              className={`flex-1 py-4 px-6 text-sm font-semibold rounded-xl transition-all duration-300 ${
+              className={`flex-shrink-0 py-4 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
                 activeTab === 'stats'
                   ? 'tab-active'
                   : 'tab-inactive'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
-                <BarChart3 className="w-5 h-5" />
+                <BarChart3 className="w-4 h-4" />
                 Stats
               </div>
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className={`flex-1 py-4 px-6 text-sm font-semibold rounded-xl transition-all duration-300 ${
+              className={`flex-shrink-0 py-4 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
                 activeTab === 'categories'
                   ? 'tab-active'
                   : 'tab-inactive'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
-                <Tag className="w-5 h-5" />
+                <Tag className="w-4 h-4" />
                 Categorie
               </div>
             </button>

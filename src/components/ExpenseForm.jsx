@@ -108,8 +108,8 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             <label className="block text-sm font-semibold text-foreground mb-3">
               Importo (€)
             </label>
-            <div className="relative">
-              <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <div className="form-input-group">
+              <DollarSign className="form-input-icon" />
               <input
                 type="number"
                 name="amount"
@@ -119,7 +119,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                 placeholder="0.00"
                 step="0.01"
                 min="0"
-                className="input pl-12"
+                className="input form-input-with-icon"
                 required
               />
             </div>
@@ -129,15 +129,15 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             <label className="block text-sm font-semibold text-foreground mb-3">
               Negozio
             </label>
-            <div className="relative">
-              <Store className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <div className="form-input-group">
+              <Store className="form-input-icon" />
               <input
                 type="text"
                 name="store"
                 value={formData.store}
                 onChange={handleChange}
                 placeholder="Nome negozio"
-                className="input pl-12"
+                className="input form-input-with-icon"
               />
               
               {/* Suggerimenti negozi */}
@@ -163,13 +163,13 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             <label className="block text-sm font-semibold text-foreground mb-3">
               Categoria
             </label>
-            <div className="relative">
-              <Tag className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <div className="form-input-group">
+              <Tag className="form-input-icon" />
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="input pl-12"
+                className="input form-input-with-icon"
               >
                 {categories.map(category => (
                   <option key={category.id} value={category.name}>
@@ -184,14 +184,14 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             <label className="block text-sm font-semibold text-foreground mb-3">
               Data
             </label>
-            <div className="relative">
-              <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <div className="form-input-group">
+              <Calendar className="form-input-icon" />
               <input
                 type="date"
                 name="date"
                 value={formData.date}
                 onChange={handleChange}
-                className="input pl-12"
+                className="input form-input-with-icon"
                 required
               />
             </div>
