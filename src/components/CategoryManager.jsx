@@ -54,15 +54,15 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-foreground">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Categorie {type === 'expense' ? 'Spese' : 'Entrate'}
         </h3>
         <button
           onClick={() => setShowForm(true)}
-          className="btn btn-primary"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl shadow-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 transform hover:scale-105"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Aggiungi
+          <Plus className="w-4 h-4" />
+          <span className="font-medium">Aggiungi</span>
         </button>
       </div>
 
@@ -73,11 +73,11 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
             key={category.id}
             type="button"
             onClick={() => handleEdit(category)}
-            className="card p-4 flex items-center gap-3 min-w-0 w-full text-left hover:bg-secondary/40 transition-colors"
+            className="card p-4 flex items-center gap-3 min-w-0 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700/40 transition-colors"
             aria-label={`Modifica categoria ${category.name}`}
           >
             <span className="text-2xl flex-shrink-0">{category.icon}</span>
-            <span className="font-medium text-foreground truncate">{category.name}</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{category.name}</span>
           </button>
         ))}
       </div>
@@ -103,7 +103,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-3">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   Nome Categoria
                 </label>
                 <input
@@ -117,7 +117,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-3">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   Icona
                 </label>
                 <div className="grid grid-cols-6 gap-2">
@@ -128,8 +128,8 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
                       onClick={() => setFormData({ ...formData, icon })}
                       className={`p-3 rounded-lg text-2xl transition-all ${
                         formData.icon === icon
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary hover:bg-secondary/80'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-secondary hover:bg-gray-100 dark:hover:bg-gray-700/80'
                       }`}
                     >
                       {icon}
@@ -142,13 +142,13 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="btn btn-secondary flex-1"
+                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200"
                 >
                   Annulla
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary flex-1"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl font-medium hover:from-purple-700 hover:to-purple-800 transition-all duration-200 transform hover:scale-105"
                 >
                   {editingCategory ? 'Modifica' : 'Aggiungi'}
                 </button>
@@ -159,10 +159,10 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
                 <div className="pt-6">
                   <button
                     type="button"
-                    className="btn btn-danger w-full"
+                    className="w-full px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-medium hover:from-red-700 hover:to-red-800 transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2"
                     onClick={() => setShowDeleteConfirm(true)}
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
+                    <Trash2 className="w-4 h-4" />
                     Elimina categoria
                   </button>
                 </div>

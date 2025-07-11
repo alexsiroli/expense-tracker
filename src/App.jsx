@@ -9,6 +9,7 @@ import DateRangePicker from './components/DateRangePicker';
 import { useTheme } from './hooks/useTheme';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import WalletManager from './components/WalletManager';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -32,6 +33,28 @@ const defaultCategories = {
   ]
 };
 
+// Palette colori per portafogli
+const WALLET_COLORS = [
+  '#6366f1', // indigo
+  '#f59e42', // orange
+  '#10b981', // green
+  '#ef4444', // red
+  '#3b82f6', // blue
+  '#f43f5e', // pink
+  '#eab308', // yellow
+  '#a21caf', // purple
+  '#0ea5e9', // sky
+  '#f97316', // amber
+];
+
+// Modello dati conto: { id, name, color, balance }
+const defaultWallet = {
+  id: 'wallet-1',
+  name: 'Conto Principale',
+  color: WALLET_COLORS[0],
+  balance: 0,
+};
+
 function App() {
   const { theme, toggleTheme } = useTheme();
   const [expenses, setExpenses] = useState([]);
@@ -44,7 +67,13 @@ function App() {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [dateRange, setDateRange] = useState(null);
-  const [headerCompact, setHeaderCompact] = useState(false);
+  const [wallets, setWallets] = useState(() => {
+    const saved = localStorage.getItem('wallets');
+    if (saved) return JSON.parse(saved);
+    return [defaultWallet];
+  });
+  const [activeWalletId, setActiveWalletId] = useState(() => wallets[0]?.id || defaultWallet.id);
+  const [balanceCollapsed, setBalanceCollapsed] = useState(false);
 
   // Carica i dati dal localStorage all'avvio
   useEffect(() => {
@@ -84,70 +113,107 @@ function App() {
     localStorage.setItem('stores', JSON.stringify(stores));
   }, [stores]);
 
-  // Gestione scroll per header compatto
+  // Aggiorna localStorage quando cambiano i conti
   useEffect(() => {
-    const handleScroll = () => {
-      setHeaderCompact(window.scrollY > 50);
-    };
+    localStorage.setItem('wallets', JSON.stringify(wallets));
+  }, [wallets]);
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
+
+  // Mostra tutte le transazioni (non più filtrate per conto)
+  const filteredExpenses = expenses;
+  const filteredIncomes = incomes;
+
+  // Aggiorna saldo conto
+  const updateWalletBalance = (walletId) => {
+    const wallet = wallets.find(w => w.id === walletId);
+    if (!wallet) return;
+    const totalIn = incomes.filter(i => i.walletId === walletId).reduce((sum, i) => sum + parseFloat(i.amount), 0);
+    const totalOut = expenses.filter(e => e.walletId === walletId).reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const newBalance = wallet.initialBalance !== undefined ? wallet.initialBalance + totalIn - totalOut : wallet.balance + totalIn - totalOut;
+    setWallets(ws => ws.map(w => w.id === walletId ? { ...w, balance: newBalance } : w));
+  };
+
+  // Aggiorna saldo di tutti i conti (es. dopo eliminazione transazione)
+  const updateAllWalletsBalance = () => {
+    setWallets(ws => ws.map(w => {
+      const totalIn = incomes.filter(i => i.walletId === w.id).reduce((sum, i) => sum + parseFloat(i.amount), 0);
+      const totalOut = expenses.filter(e => e.walletId === w.id).reduce((sum, e) => sum + parseFloat(e.amount), 0);
+      const newBalance = w.initialBalance !== undefined ? w.initialBalance + totalIn - totalOut : w.balance + totalIn - totalOut;
+      return { ...w, balance: newBalance };
+    }));
+  };
+
+  // Aggiungi spesa/entrata associata a conto
   const addExpense = (expense) => {
     const newExpense = { ...expense, id: Date.now(), date: new Date().toISOString() };
     setExpenses([...expenses, newExpense]);
-    
-    // Aggiungi il negozio se nuovo
-    if (expense.store && !stores.includes(expense.store)) {
-      setStores([...stores, expense.store]);
-    }
-    
+    updateWalletBalance(newExpense.walletId);
     setShowForm(false);
     setEditingItem(null);
   };
-
   const addIncome = (income) => {
     const newIncome = { ...income, id: Date.now(), date: new Date().toISOString() };
     setIncomes([...incomes, newIncome]);
-    
-    // Aggiungi il negozio se nuovo
-    if (income.store && !stores.includes(income.store)) {
-      setStores([...stores, income.store]);
-    }
-    
+    updateWalletBalance(newIncome.walletId);
     setShowForm(false);
     setEditingItem(null);
   };
-
+  // Modifica transazione
   const updateItem = (updatedItem) => {
     if (activeTab === 'expenses') {
-      setExpenses(expenses.map(expense => 
-        expense.id === updatedItem.id ? updatedItem : expense
-      ));
+      setExpenses(expenses.map(expense => expense.id === updatedItem.id ? updatedItem : expense));
+      updateWalletBalance(updatedItem.walletId);
     } else {
-      setIncomes(incomes.map(income => 
-        income.id === updatedItem.id ? updatedItem : income
-      ));
+      setIncomes(incomes.map(income => income.id === updatedItem.id ? updatedItem : income));
+      updateWalletBalance(updatedItem.walletId);
     }
-    
-    // Aggiungi il negozio se nuovo
-    if (updatedItem.store && !stores.includes(updatedItem.store)) {
-      setStores([...stores, updatedItem.store]);
-    }
-    
     setShowForm(false);
     setEditingItem(null);
   };
-
+  // Elimina transazione
   const handleDelete = (id) => {
-    if (activeTab === 'expenses') {
-      setExpenses(expenses.filter(expense => expense.id !== id));
+    if (itemToDelete && itemToDelete.type === 'wallet') {
+      // Elimina conto
+      performWalletDeletion(id);
     } else {
-      setIncomes(incomes.filter(income => income.id !== id));
+      // Elimina transazione
+      if (activeTab === 'expenses') {
+        const exp = expenses.find(e => e.id === id);
+        setExpenses(expenses.filter(expense => expense.id !== id));
+        if (exp) updateWalletBalance(exp.walletId);
+      } else {
+        const inc = incomes.find(i => i.id === id);
+        setIncomes(incomes.filter(income => income.id !== id));
+        if (inc) updateWalletBalance(inc.walletId);
+      }
     }
     setShowConfirmDelete(false);
     setItemToDelete(null);
+  };
+  // Elimina conto e tutte le transazioni collegate
+  const deleteWallet = (id) => {
+    const wallet = wallets.find(w => w.id === id);
+    const walletExpenses = expenses.filter(e => e.walletId === id);
+    const walletIncomes = incomes.filter(i => i.walletId === id);
+    
+    if (walletExpenses.length > 0 || walletIncomes.length > 0) {
+      setItemToDelete({ type: 'wallet', id, wallet, expenses: walletExpenses, incomes: walletIncomes });
+      setShowConfirmDelete(true);
+    } else {
+      // Se non ci sono transazioni, elimina direttamente
+      performWalletDeletion(id);
+    }
+  };
+
+  const performWalletDeletion = (id) => {
+    setWallets(wallets.filter(w => w.id !== id));
+    setExpenses(expenses.filter(e => e.walletId !== id));
+    setIncomes(incomes.filter(i => i.walletId !== id));
+    if (activeWalletId === id) {
+      setActiveWalletId(wallets[0]?.id || 'wallet-1');
+    }
+    updateAllWalletsBalance();
   };
 
   const confirmDelete = (id) => {
@@ -200,135 +266,187 @@ function App() {
 
   // Filtra i dati per il range di date selezionato
   const getFilteredData = () => {
-    if (!dateRange) return { expenses, incomes };
+    if (!dateRange) return { expenses: expenses, incomes: incomes };
     
-    const filteredExpenses = expenses.filter(expense => {
+    const dateFilteredExpenses = expenses.filter(expense => {
       const expenseDate = expense.date.split('T')[0];
       return expenseDate >= dateRange.startDate && expenseDate <= dateRange.endDate;
     });
     
-    const filteredIncomes = incomes.filter(income => {
+    const dateFilteredIncomes = incomes.filter(income => {
       const incomeDate = income.date.split('T')[0];
       return incomeDate >= dateRange.startDate && incomeDate <= dateRange.endDate;
     });
     
-    return { expenses: filteredExpenses, incomes: filteredIncomes };
+    return { expenses: dateFilteredExpenses, incomes: dateFilteredIncomes };
   };
 
   const filteredData = getFilteredData();
 
+  // Funzioni gestione conti
+  const addWallet = (wallet) => {
+    const newWallet = {
+      ...wallet,
+      id: `wallet-${Date.now()}`,
+      balance: parseFloat(wallet.balance) || 0,
+    };
+    setWallets([...wallets, newWallet]);
+  };
+  const editWallet = (updatedWallet) => {
+    setWallets(wallets.map(w => w.id === updatedWallet.id ? { ...w, ...updatedWallet } : w));
+  };
+  // deleteWallet = (id) => { // This function is now handled by the new updateAllWalletsBalance
+  //   setWallets(wallets.filter(w => w.id !== id));
+  //   // TODO: elimina anche tutte le transazioni collegate a questo portafoglio
+  //   if (activeWalletId === id) {
+  //     setActiveWalletId(wallets[0]?.id || 'wallet-1');
+  //   }
+  // };
+
   return (
-    <div className="min-h-screen bg-background transition-colors duration-200">
+          <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       {/* Header con gradiente */}
-      <header className={`gradient-bg text-white shadow-2xl transition-all duration-300 ${headerCompact ? 'header-compact' : 'header-full'}`}>
+      <header className="gradient-bg text-white shadow-lg transition-all duration-300 py-3">
         <div className="max-w-md mx-auto px-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                <Wallet className="w-6 h-6" />
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
+                <Wallet className="w-4 h-4" />
               </div>
-              <h1 className={`font-bold transition-all duration-300 ${headerCompact ? 'text-xl' : 'text-3xl'}`}>
+              <h1 className="text-lg font-bold">
                 MoneyTracker
               </h1>
             </div>
             <button
               onClick={toggleTheme}
-              className="p-2 bg-white/20 rounded-xl backdrop-blur-sm hover:bg-white/30 transition-colors"
+              className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-colors"
             >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
           </div>
-          {!headerCompact && (
-            <p className="text-center text-blue-100 text-sm mt-2">
-              Gestisci le tue finanze in modo intelligente
-            </p>
-          )}
         </div>
       </header>
 
-      <div className="max-w-md mx-auto px-6 py-8 -mt-6 relative z-10">
-        {/* Balance Card con design moderno */}
-        <div className="floating-card p-8 mb-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <PiggyBank className="w-6 h-6 text-primary" />
-              <h2 className="text-xl font-bold text-foreground">Bilancio Totale</h2>
+      {/* Balance Card con design moderno - PRIMA COSA */}
+      <div className="max-w-md mx-auto px-6 pt-4">
+        <div className={`floating-card ${balanceCollapsed ? 'p-3' : 'p-6'}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <PiggyBank className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Bilancio Totale</h2>
+              {balanceCollapsed && (
+                <span className={`text-lg font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  €{balance.toFixed(2)}
+                </span>
+              )}
             </div>
-            <div className={`text-4xl font-bold mb-2 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              €{balance.toFixed(2)}
-            </div>
-            <div className="flex justify-center gap-6 text-sm">
-              <div className="text-green-600">
-                <div className="flex items-center gap-1 font-semibold">
-                  <TrendingUp className="w-4 h-4" />
-                  Entrate
-                </div>
-                <div className="text-lg font-bold">€{totalIncomes.toFixed(2)}</div>
-              </div>
-              <div className="text-red-600">
-                <div className="flex items-center gap-1 font-semibold">
-                  <TrendingDown className="w-4 h-4" />
-                  Spese
-                </div>
-                <div className="text-lg font-bold">€{totalExpenses.toFixed(2)}</div>
-              </div>
-            </div>
+            <button
+              onClick={() => setBalanceCollapsed(!balanceCollapsed)}
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+            >
+              {balanceCollapsed ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              )}
+            </button>
           </div>
+          
+          {!balanceCollapsed && (
+            <div className="text-center mt-4">
+              <div className={`text-4xl font-bold mb-4 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                €{balance.toFixed(2)}
+              </div>
+              <div className="flex justify-center gap-6 text-sm">
+                <div className="text-green-600">
+                  <div className="flex items-center gap-1 font-semibold">
+                    <TrendingUp className="w-4 h-4" />
+                    Entrate
+                  </div>
+                  <div className="text-lg font-bold">€{totalIncomes.toFixed(2)}</div>
+                </div>
+                <div className="text-red-600">
+                  <div className="flex items-center gap-1 font-semibold">
+                    <TrendingDown className="w-4 h-4" />
+                    Spese
+                  </div>
+                  <div className="text-lg font-bold">€{totalExpenses.toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Sezione gestione conti */}
+      <div className="max-w-md mx-auto px-6 py-8">
+        <WalletManager
+          wallets={wallets}
+          onAdd={addWallet}
+          onEdit={editWallet}
+          onDelete={deleteWallet}
+        />
+      </div>
+
+      <div className="max-w-md mx-auto px-6 py-8 -mt-6 relative z-10">
 
         {/* Navigation Tabs con design moderno */}
         <div className="glass-card p-2 mb-8">
-          <div className="flex overflow-x-auto scrollbar-hide">
+          <div className="grid grid-cols-4 gap-2">
             <button
               onClick={() => setActiveTab('expenses')}
-              className={`flex-shrink-0 py-4 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
+              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                 activeTab === 'expenses'
                   ? 'tab-active'
                   : 'tab-inactive'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-1">
                 <TrendingDown className="w-4 h-4" />
-                Spese
+                <span className="hidden sm:inline">Spese</span>
               </div>
             </button>
             <button
               onClick={() => setActiveTab('incomes')}
-              className={`flex-shrink-0 py-4 px-4 text-sm font-semibold transition-all duration-300 ${
+              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                 activeTab === 'incomes'
                   ? 'tab-active'
                   : 'tab-inactive'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-1">
                 <TrendingUp className="w-4 h-4" />
-                Entrate
+                <span className="hidden sm:inline">Entrate</span>
               </div>
             </button>
             <button
               onClick={() => setActiveTab('stats')}
-              className={`flex-shrink-0 py-4 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
+              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                 activeTab === 'stats'
                   ? 'tab-active'
                   : 'tab-inactive'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-1">
                 <BarChart3 className="w-4 h-4" />
-                Stats
+                <span className="hidden sm:inline">Stats</span>
               </div>
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className={`flex-shrink-0 py-4 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
+              className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                 activeTab === 'categories'
                   ? 'tab-active'
                   : 'tab-inactive'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-1">
                 <Tag className="w-4 h-4" />
-                Categorie
+                <span className="hidden sm:inline">Cat.</span>
               </div>
             </button>
           </div>
@@ -338,17 +456,17 @@ function App() {
         {activeTab === 'expenses' && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-foreground">Le tue spese</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue spese</h2>
               <button
                 onClick={() => setShowForm(true)}
-                className="btn btn-danger"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl shadow-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 transform hover:scale-105"
               >
-                <Plus className="w-5 h-5 mr-2" />
-                Aggiungi
+                <Plus className="w-4 h-4" />
+                <span className="font-medium">Aggiungi Spesa</span>
               </button>
             </div>
             <ExpenseList
-              items={expenses}
+              items={filteredExpenses}
               onDelete={confirmDelete}
               onEdit={handleEdit}
               type="expense"
@@ -360,17 +478,17 @@ function App() {
         {activeTab === 'incomes' && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-foreground">Le tue entrate</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue entrate</h2>
               <button
                 onClick={() => setShowForm(true)}
-                className="btn btn-success"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 transform hover:scale-105"
               >
-                <Plus className="w-5 h-5 mr-2" />
-                Aggiungi
+                <Plus className="w-4 h-4" />
+                <span className="font-medium">Aggiungi Entrata</span>
               </button>
             </div>
             <ExpenseList
-              items={incomes}
+              items={filteredIncomes}
               onDelete={confirmDelete}
               onEdit={handleEdit}
               type="income"
@@ -382,13 +500,15 @@ function App() {
         {activeTab === 'stats' && (
           <div>
             <DateRangePicker onDateRangeChange={setDateRange} />
-            <Statistics
-              expenses={filteredData.expenses}
-              incomes={filteredData.incomes}
-              currentMonthExpenses={currentMonthExpenses}
-              currentMonthIncomes={currentMonthIncomes}
-              dateRange={dateRange}
-            />
+            <div className="mt-8">
+              <Statistics
+                expenses={filteredData.expenses}
+                incomes={filteredData.incomes}
+                currentMonthExpenses={currentMonthExpenses}
+                currentMonthIncomes={currentMonthIncomes}
+                dateRange={dateRange}
+              />
+            </div>
           </div>
         )}
 
@@ -424,6 +544,8 @@ function App() {
           editingItem={editingItem}
           stores={stores}
           categories={activeTab === 'expenses' ? categories.expense : categories.income}
+          wallets={wallets}
+          selectedWalletId={activeWalletId}
         />
       )}
 
@@ -431,9 +553,13 @@ function App() {
       <ConfirmDialog
         isOpen={showConfirmDelete}
         onClose={() => setShowConfirmDelete(false)}
-        onConfirm={() => handleDelete(itemToDelete)}
-        title="Conferma eliminazione"
-        message="Sei sicuro di voler eliminare questa transazione? Questa azione non può essere annullata."
+        onConfirm={() => handleDelete(itemToDelete?.id || itemToDelete)}
+        title={itemToDelete?.type === 'wallet' ? "Conferma eliminazione conto" : "Conferma eliminazione"}
+        message={
+          itemToDelete?.type === 'wallet' 
+            ? `Sei sicuro di voler eliminare il conto "${itemToDelete?.wallet?.name}"? Questa azione eliminerà anche ${itemToDelete?.expenses?.length || 0} spese e ${itemToDelete?.incomes?.length || 0} entrate collegate. Questa azione non può essere annullata.`
+            : "Sei sicuro di voler eliminare questa transazione? Questa azione non può essere annullata."
+        }
       />
     </div>
   );

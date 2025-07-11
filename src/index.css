@@ -48,12 +48,8 @@
     --ring: 224.3 76.3% 94.1%;
   }
 
-  * {
-    @apply border-border;
-  }
-
   body {
-    @apply bg-background text-foreground transition-colors duration-200;
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -64,11 +60,11 @@
   }
   
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 h-12 py-3 px-6 shadow-lg hover:shadow-xl transform hover:scale-105;
+    @apply bg-blue-600 text-white hover:bg-blue-700 h-12 py-3 px-6 shadow-lg hover:shadow-xl transform hover:scale-105;
   }
   
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 h-12 py-3 px-6 border border-input shadow-sm hover:shadow-md;
+    @apply bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 h-12 py-3 px-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md;
   }
 
   .btn-success {
@@ -80,19 +76,19 @@
   }
   
   .input {
-    @apply flex h-12 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm transition-all duration-200;
+    @apply flex h-12 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 dark:placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm transition-all duration-200;
   }
   
   .card {
-    @apply rounded-2xl border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-all duration-300;
+    @apply rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-lg hover:shadow-xl transition-all duration-300;
   }
 
   .glass-card {
-    @apply rounded-2xl bg-card/60 backdrop-blur-md border border-border/20 shadow-xl;
+    @apply rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200/20 dark:border-gray-700/20 shadow-xl;
   }
 
   .floating-card {
-    @apply rounded-2xl bg-card shadow-2xl border border-border transform hover:scale-105 transition-all duration-300;
+    @apply rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 transform hover:scale-105 transition-all duration-300;
   }
 
   .gradient-bg {
@@ -112,19 +108,19 @@
   }
 
   .expense-item {
-    @apply rounded-xl bg-card/90 backdrop-blur-sm border border-border/50 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02];
+    @apply rounded-xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02];
   }
 
   .stat-card {
-    @apply rounded-2xl bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm border border-border/50 shadow-lg p-6;
+    @apply rounded-2xl bg-gradient-to-br from-white/90 to-white/70 dark:from-gray-800/90 dark:to-gray-800/70 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg p-6;
   }
 
   .modal-overlay {
-    @apply fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50;
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50;
   }
 
   .modal-content {
-    @apply bg-card rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-border;
+    @apply bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700;
   }
 
   .header-compact {

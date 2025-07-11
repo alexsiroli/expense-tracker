@@ -18,15 +18,15 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
         <div className="mb-6">
           <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center mb-4">
             {type === 'expense' ? (
-              <TrendingDown className="w-10 h-10 text-muted-foreground" />
+              <TrendingDown className="w-10 h-10 text-gray-500 dark:text-gray-400" />
             ) : (
-              <TrendingUp className="w-10 h-10 text-muted-foreground" />
+              <TrendingUp className="w-10 h-10 text-gray-500 dark:text-gray-400" />
             )}
           </div>
-          <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+          <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-2">
             Nessuna {type === 'expense' ? 'spesa' : 'entrata'} registrata
           </h3>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
             Aggiungi la tua prima {type === 'expense' ? 'spesa' : 'entrata'} per iniziare
           </p>
         </div>
@@ -52,14 +52,9 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-foreground truncate">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                       {item.store || 'Senza negozio'}
                     </h3>
-                    {item.description && (
-                      <div className="text-xs text-muted-foreground mt-1 truncate">
-                        {item.description}
-                      </div>
-                    )}
                   </div>
                   <div className={`text-lg font-bold ${
                     type === 'expense' ? 'text-red-600' : 'text-green-600'
@@ -70,10 +65,10 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-600/10 text-blue-600 border border-blue-600/20">
                       {item.category}
                     </span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       {formatDate(item.date)}
                     </span>
                   </div>
@@ -81,14 +76,14 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => onEdit(item)}
-                      className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg"
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 transition-colors rounded-lg"
                       title="Modifica"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => onDelete(item.id)}
-                      className="p-2 text-muted-foreground hover:text-destructive transition-colors rounded-lg"
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-destructive transition-colors rounded-lg"
                       title="Elimina"
                     >
                       <Trash2 className="w-4 h-4" />

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { X, DollarSign, Tag, Calendar, Save, ArrowLeft, Store, Search } from 'lucide-react';
+import { X, DollarSign, Tag, Calendar, Save, ArrowLeft, Store, Search, Wallet } from 'lucide-react';
 
-function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [], categories = [] }) {
+function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [], categories = [], wallets = [], selectedWalletId }) {
   const [formData, setFormData] = useState({
-    description: '',
     amount: '',
     category: categories.length > 0 ? categories[0].name : '',
     date: new Date().toISOString().split('T')[0],
-    store: ''
+    store: '',
+    walletId: selectedWalletId || (wallets[0]?.id ?? '')
   });
 
   const [storeSuggestions, setStoreSuggestions] = useState([]);
@@ -17,14 +17,14 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
   useEffect(() => {
     if (editingItem) {
       setFormData({
-        description: editingItem.description || '',
         amount: editingItem.amount?.toString() || '',
         category: editingItem.category || (categories.length > 0 ? categories[0].name : ''),
         date: editingItem.date ? editingItem.date.split('T')[0] : new Date().toISOString().split('T')[0],
-        store: editingItem.store || ''
+        store: editingItem.store || '',
+        walletId: editingItem.walletId || selectedWalletId || (wallets[0]?.id ?? '')
       });
     }
-  }, [editingItem, categories]);
+  }, [editingItem, categories, wallets, selectedWalletId]);
 
   // Filtra i negozi mentre l'utente digita
   useEffect(() => {
@@ -90,22 +90,41 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Selettore conto */}
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-3">
-              Descrizione (opzionale)
+            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              Conto
             </label>
-            <input
-              type="text"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder={`Descrizione ${type === 'expense' ? 'spesa' : 'entrata'}`}
-              className="input"
-            />
+            <div>
+              <div className="relative">
+                <select
+                  name="walletId"
+                  value={formData.walletId}
+                  onChange={handleChange}
+                  className="input pr-10"
+                  required
+                >
+                  {wallets.map(wallet => (
+                    <option key={wallet.id} value={wallet.id}>
+                      {wallet.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <div 
+                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                    style={{ 
+                      backgroundColor: wallets.find(w => w.id === formData.walletId)?.color || '#6366f1'
+                    }}
+                  ></div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-3">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
               Importo (€)
             </label>
             <div className="form-input-group">
@@ -126,7 +145,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-3">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
               Negozio
             </label>
             <div className="form-input-group">
@@ -142,15 +161,15 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
               
               {/* Suggerimenti negozi */}
               {showStoreSuggestions && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
                   {storeSuggestions.map((store, index) => (
                     <button
                       key={index}
                       type="button"
                       onClick={() => handleStoreSelect(store)}
-                      className="w-full px-4 py-3 text-left hover:bg-secondary transition-colors flex items-center gap-2"
+                      className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
                     >
-                      <Search className="w-4 h-4 text-muted-foreground" />
+                                              <Search className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                       {store}
                     </button>
                   ))}
@@ -159,41 +178,43 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Tag className="w-5 h-5 text-muted-foreground" />
-              Categoria
-            </label>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="input"
-              >
-                {categories.map(category => (
-                  <option key={category.id} value={category.name}>
-                    {category.icon} {category.name}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                <Tag className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                Categoria
+              </label>
+              <div>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  {categories.map(category => (
+                    <option key={category.id} value={category.name}>
+                      {category.icon} {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-muted-foreground" />
-              Data
-            </label>
             <div>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="input"
-                required
-              />
+              <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                Data
+              </label>
+              <div>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  className="input"
+                  required
+                />
+              </div>
             </div>
           </div>
 

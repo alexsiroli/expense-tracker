@@ -10,8 +10,8 @@ function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'dan
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
             <AlertTriangle className="w-8 h-8 text-destructive" />
           </div>
-          <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
-          <p className="text-muted-foreground mb-6">{message}</p>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{title}</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">{message}</p>
           
           <div className="flex gap-3">
             <button

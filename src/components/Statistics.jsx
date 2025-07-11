@@ -85,8 +85,8 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
               <TrendingDown className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Spese Totali</h3>
-              <p className="text-2xl font-bold text-foreground">€{stats.totalExpenses.toFixed(2)}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Spese Totali</h3>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">€{stats.totalExpenses.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -97,8 +97,8 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Entrate Totali</h3>
-              <p className="text-2xl font-bold text-foreground">€{stats.totalIncomes.toFixed(2)}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Entrate Totali</h3>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">€{stats.totalIncomes.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -109,7 +109,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
               <DollarSign className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Bilancio</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Bilancio</h3>
               <p className={`text-2xl font-bold ${stats.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 €{stats.balance.toFixed(2)}
               </p>
@@ -120,7 +120,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
 
       {/* Period Label */}
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600/10 text-blue-600 rounded-full">
           <Calendar className="w-4 h-4" />
           <span className="text-sm font-medium">{periodLabel}</span>
         </div>
@@ -130,7 +130,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Spese per Categoria */}
         <div className="card p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Spese per Categoria</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Spese per Categoria</h3>
           {stats.expenseChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -152,7 +152,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               Nessuna spesa registrata
             </div>
           )}
@@ -160,7 +160,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
 
         {/* Entrate per Categoria */}
         <div className="card p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Entrate per Categoria</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Entrate per Categoria</h3>
           {stats.incomeChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -182,7 +182,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               Nessuna entrata registrata
             </div>
           )}
@@ -191,7 +191,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
 
       {/* Grafico a Barre Mensile */}
       <div className="card p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Andamento Mensile</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Andamento Mensile</h3>
         {stats.monthlyData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stats.monthlyData}>
@@ -217,7 +217,7 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             Nessun dato disponibile
           </div>
         )}

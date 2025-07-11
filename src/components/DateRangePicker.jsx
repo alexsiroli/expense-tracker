@@ -41,8 +41,8 @@ function DateRangePicker({ onDateRangeChange }) {
   return (
     <div className="card p-4">
       <div className="flex items-center gap-2 mb-4">
-        <Calendar className="w-5 h-5 text-primary" />
-        <h3 className="font-semibold text-foreground">Filtro Temporale</h3>
+                    <Calendar className="w-5 h-5 text-blue-600" />
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Filtro Temporale</h3>
       </div>
       
       <div className="space-y-4">
@@ -50,19 +50,19 @@ function DateRangePicker({ onDateRangeChange }) {
         <div className="flex gap-2">
           <button
             onClick={setLastWeek}
-            className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
+            className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors"
           >
             Ultima settimana
           </button>
           <button
             onClick={setLastMonth}
-            className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
+            className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors"
           >
             Ultimo mese
           </button>
           <button
             onClick={setLastYear}
-            className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
+            className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors"
           >
             Ultimo anno
           </button>
@@ -71,7 +71,7 @@ function DateRangePicker({ onDateRangeChange }) {
         {/* Custom Date Range */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
               Data inizio
             </label>
             <input
@@ -85,7 +85,7 @@ function DateRangePicker({ onDateRangeChange }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
               Data fine
             </label>
             <input
