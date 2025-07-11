@@ -3,51 +3,100 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
   body {
-    @apply bg-gradient-to-br from-slate-50 to-blue-50 text-slate-900;
+    @apply bg-background text-foreground transition-colors duration-200;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none shadow-sm;
+    @apply inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none shadow-sm;
   }
   
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 h-12 py-3 px-6 shadow-lg hover:shadow-xl transform hover:scale-105;
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 h-12 py-3 px-6 shadow-lg hover:shadow-xl transform hover:scale-105;
   }
   
   .btn-secondary {
-    @apply bg-white text-slate-700 hover:bg-slate-50 h-12 py-3 px-6 border border-slate-200 shadow-sm hover:shadow-md;
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 h-12 py-3 px-6 border border-input shadow-sm hover:shadow-md;
   }
 
   .btn-success {
-    @apply bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 h-12 py-3 px-6 shadow-lg hover:shadow-xl transform hover:scale-105;
+    @apply bg-green-600 text-white hover:bg-green-700 h-12 py-3 px-6 shadow-lg hover:shadow-xl transform hover:scale-105;
   }
 
   .btn-danger {
-    @apply bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 h-12 py-3 px-6 shadow-lg hover:shadow-xl transform hover:scale-105;
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 h-12 py-3 px-6 shadow-lg hover:shadow-xl transform hover:scale-105;
   }
   
   .input {
-    @apply flex h-12 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm transition-all duration-200;
+    @apply flex h-12 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm transition-all duration-200;
   }
   
   .card {
-    @apply rounded-2xl border-0 bg-white/80 backdrop-blur-sm text-slate-950 shadow-lg hover:shadow-xl transition-all duration-300;
+    @apply rounded-2xl border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-all duration-300;
   }
 
   .glass-card {
-    @apply rounded-2xl bg-white/60 backdrop-blur-md border border-white/20 shadow-xl;
+    @apply rounded-2xl bg-card/60 backdrop-blur-md border border-border/20 shadow-xl;
   }
 
   .floating-card {
-    @apply rounded-2xl bg-white shadow-2xl border-0 transform hover:scale-105 transition-all duration-300;
+    @apply rounded-2xl bg-card shadow-2xl border border-border transform hover:scale-105 transition-all duration-300;
   }
 
   .gradient-bg {
-    @apply bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500;
+    @apply bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600;
   }
 
   .text-gradient {
@@ -55,26 +104,34 @@
   }
 
   .tab-active {
-    @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg;
+    @apply bg-primary text-primary-foreground shadow-lg;
   }
 
   .tab-inactive {
-    @apply bg-white/80 text-slate-600 hover:bg-white/90 shadow-sm;
+    @apply bg-card/80 text-muted-foreground hover:bg-card/90 shadow-sm;
   }
 
   .expense-item {
-    @apply rounded-xl bg-white/90 backdrop-blur-sm border border-white/50 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02];
+    @apply rounded-xl bg-card/90 backdrop-blur-sm border border-border/50 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02];
   }
 
   .stat-card {
-    @apply rounded-2xl bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm border border-white/50 shadow-lg p-6;
+    @apply rounded-2xl bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm border border-border/50 shadow-lg p-6;
   }
 
   .modal-overlay {
-    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50;
+    @apply fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50;
   }
 
   .modal-content {
-    @apply bg-white rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300;
+    @apply bg-card rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-border;
+  }
+
+  .header-compact {
+    @apply py-4 px-6;
+  }
+
+  .header-full {
+    @apply py-8 px-6;
   }
 }

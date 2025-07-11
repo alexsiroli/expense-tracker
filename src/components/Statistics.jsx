@@ -1,135 +1,141 @@
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, TrendingDown, Calendar, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
-import { it } from 'date-fns/locale';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { TrendingUp, TrendingDown, Calendar, DollarSign } from 'lucide-react';
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
+function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncomes, dateRange }) {
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B6B'];
 
-function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncomes }) {
-  const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
-  const totalIncomes = incomes.reduce((sum, income) => sum + parseFloat(income.amount), 0);
-  const balance = totalIncomes - totalExpenses;
-
-  const currentMonthTotalExpenses = currentMonthExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
-  const currentMonthTotalIncomes = currentMonthIncomes.reduce((sum, income) => sum + parseFloat(income.amount), 0);
-  const currentMonthBalance = currentMonthTotalIncomes - currentMonthTotalExpenses;
-
-  // Statistiche per categoria (spese)
-  const expenseByCategory = expenses.reduce((acc, expense) => {
-    acc[expense.category] = (acc[expense.category] || 0) + parseFloat(expense.amount);
-    return acc;
-  }, {});
-
-  const expenseChartData = Object.entries(expenseByCategory).map(([category, amount]) => ({
-    name: category,
-    value: amount
-  }));
-
-  // Statistiche per categoria (entrate)
-  const incomeByCategory = incomes.reduce((acc, income) => {
-    acc[income.category] = (acc[income.category] || 0) + parseFloat(income.amount);
-    return acc;
-  }, {});
-
-  const incomeChartData = Object.entries(incomeByCategory).map(([category, amount]) => ({
-    name: category,
-    value: amount
-  }));
-
-  // Statistiche mensili (ultimi 6 mesi)
-  const getMonthlyStats = () => {
-    const months = [];
-    const now = new Date();
+  // Calcola le statistiche per il periodo selezionato
+  const getStatsForPeriod = () => {
+    const data = dateRange ? { expenses, incomes } : { expenses: currentMonthExpenses, incomes: currentMonthIncomes };
     
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthKey = format(date, 'yyyy-MM');
-      const monthName = format(date, 'MMM yyyy', { locale: it });
-      
-      const monthExpenses = expenses.filter(expense => 
-        expense.date.startsWith(monthKey)
-      ).reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
-      
-      const monthIncomes = incomes.filter(income => 
-        income.date.startsWith(monthKey)
-      ).reduce((sum, income) => sum + parseFloat(income.amount), 0);
-      
-      months.push({
-        month: monthName,
-        expenses: monthExpenses,
-        incomes: monthIncomes,
-        balance: monthIncomes - monthExpenses
-      });
-    }
-    
-    return months;
+    const totalExpenses = data.expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+    const totalIncomes = data.incomes.reduce((sum, income) => sum + parseFloat(income.amount), 0);
+    const balance = totalIncomes - totalExpenses;
+
+    // Raggruppa per categoria
+    const expenseByCategory = data.expenses.reduce((acc, expense) => {
+      acc[expense.category] = (acc[expense.category] || 0) + parseFloat(expense.amount);
+      return acc;
+    }, {});
+
+    const incomeByCategory = data.incomes.reduce((acc, income) => {
+      acc[income.category] = (acc[income.category] || 0) + parseFloat(income.amount);
+      return acc;
+    }, {});
+
+    // Prepara i dati per i grafici
+    const expenseChartData = Object.entries(expenseByCategory).map(([category, amount]) => ({
+      name: category,
+      value: amount,
+      type: 'expense'
+    }));
+
+    const incomeChartData = Object.entries(incomeByCategory).map(([category, amount]) => ({
+      name: category,
+      value: amount,
+      type: 'income'
+    }));
+
+    // Dati per il grafico a barre mensile
+    const monthlyData = getMonthlyData(data.expenses, data.incomes);
+
+    return {
+      totalExpenses,
+      totalIncomes,
+      balance,
+      expenseChartData,
+      incomeChartData,
+      monthlyData
+    };
   };
 
-  const monthlyData = getMonthlyStats();
+  const getMonthlyData = (expenses, incomes) => {
+    const months = {};
+    
+    [...expenses, ...incomes].forEach(item => {
+      const date = new Date(item.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!months[monthKey]) {
+        months[monthKey] = { month: monthKey, expenses: 0, incomes: 0 };
+      }
+      
+      if (item.amount) {
+        if (expenses.includes(item)) {
+          months[monthKey].expenses += parseFloat(item.amount);
+        } else {
+          months[monthKey].incomes += parseFloat(item.amount);
+        }
+      }
+    });
+
+    return Object.values(months).sort((a, b) => a.month.localeCompare(b.month));
+  };
+
+  const stats = getStatsForPeriod();
+  const periodLabel = dateRange ? 'Periodo selezionato' : 'Mese corrente';
 
   return (
     <div className="space-y-8">
-      {/* Statistiche generali */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="stat-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-green-100 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-green-600" />
+            <div className="p-2 bg-red-100 rounded-lg">
+              <TrendingDown className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-800">Entrate Totali</h3>
-              <p className="text-sm text-slate-500">Questo mese: €{currentMonthTotalIncomes.toFixed(2)}</p>
+              <h3 className="text-sm font-medium text-muted-foreground">Spese Totali</h3>
+              <p className="text-2xl font-bold text-foreground">€{stats.totalExpenses.toFixed(2)}</p>
             </div>
           </div>
-          <p className="text-3xl font-bold text-green-600">€{totalIncomes.toFixed(2)}</p>
         </div>
-        
+
         <div className="stat-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-red-100 rounded-xl">
-              <TrendingDown className="w-6 h-6 text-red-600" />
+            <div className="p-2 bg-green-100 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-800">Spese Totali</h3>
-              <p className="text-sm text-slate-500">Questo mese: €{currentMonthTotalExpenses.toFixed(2)}</p>
+              <h3 className="text-sm font-medium text-muted-foreground">Entrate Totali</h3>
+              <p className="text-2xl font-bold text-foreground">€{stats.totalIncomes.toFixed(2)}</p>
             </div>
           </div>
-          <p className="text-3xl font-bold text-red-600">€{totalExpenses.toFixed(2)}</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <DollarSign className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Bilancio</h3>
+              <p className={`text-2xl font-bold ${stats.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                €{stats.balance.toFixed(2)}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Bilancio */}
-      <div className="stat-card">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800">Bilancio</h3>
-          </div>
-          <div className={`text-4xl font-bold mb-2 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            €{balance.toFixed(2)}
-          </div>
-          <p className="text-sm text-slate-500">
-            Questo mese: €{currentMonthBalance.toFixed(2)}
-          </p>
+      {/* Period Label */}
+      <div className="text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full">
+          <Calendar className="w-4 h-4" />
+          <span className="text-sm font-medium">{periodLabel}</span>
         </div>
       </div>
 
-      {/* Grafico spese per categoria */}
-      {expenseChartData.length > 0 && (
-        <div className="stat-card">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-red-100 rounded-xl">
-              <PieChartIcon className="w-6 h-6 text-red-600" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800">Spese per Categoria</h3>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Spese per Categoria */}
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Spese per Categoria</h3>
+          {stats.expenseChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={expenseChartData}
+                  data={stats.expenseChartData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -138,31 +144,28 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {expenseChartData.map((entry, index) => (
+                  {stats.expenseChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => `€${value.toFixed(2)}`} />
               </PieChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* Grafico entrate per categoria */}
-      {incomeChartData.length > 0 && (
-        <div className="stat-card">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-green-100 rounded-xl">
-              <PieChartIcon className="w-6 h-6 text-green-600" />
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              Nessuna spesa registrata
             </div>
-            <h3 className="text-xl font-bold text-slate-800">Entrate per Categoria</h3>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+          )}
+        </div>
+
+        {/* Entrate per Categoria */}
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Entrate per Categoria</h3>
+          {stats.incomeChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={incomeChartData}
+                  data={stats.incomeChartData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -171,61 +174,54 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {incomeChartData.map((entry, index) => (
+                  {stats.incomeChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => `€${value.toFixed(2)}`} />
               </PieChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* Grafico mensile */}
-      {monthlyData.length > 0 && (
-        <div className="stat-card">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              Nessuna entrata registrata
             </div>
-            <h3 className="text-xl font-bold text-slate-800">Andamento Mensile</h3>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                <XAxis dataKey="month" stroke="#64748B" />
-                <YAxis stroke="#64748B" />
-                <Tooltip 
-                  formatter={(value) => `€${value.toFixed(2)}`}
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
-                  }}
-                />
-                <Bar dataKey="incomes" fill="#10B981" name="Entrate" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" fill="#EF4444" name="Spese" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Nessun dato */}
-      {expenses.length === 0 && incomes.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-20 h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <Calendar className="w-10 h-10 text-slate-400" />
+      {/* Grafico a Barre Mensile */}
+      <div className="card p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Andamento Mensile</h3>
+        {stats.monthlyData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={stats.monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="month" 
+                tickFormatter={(value) => {
+                  const [year, month] = value.split('-');
+                  return `${month}/${year.slice(2)}`;
+                }}
+              />
+              <YAxis />
+              <Tooltip 
+                formatter={(value) => `€${value.toFixed(2)}`}
+                labelFormatter={(value) => {
+                  const [year, month] = value.split('-');
+                  return `${month}/${year}`;
+                }}
+              />
+              <Legend />
+              <Bar dataKey="expenses" fill="#ef4444" name="Spese" />
+              <Bar dataKey="incomes" fill="#22c55e" name="Entrate" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            Nessun dato disponibile
           </div>
-          <h3 className="text-lg font-semibold text-slate-600 mb-2">Nessun dato disponibile</h3>
-          <p className="text-slate-400 text-sm">
-            Aggiungi spese e entrate per vedere le statistiche
-          </p>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
