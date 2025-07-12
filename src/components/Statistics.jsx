@@ -16,7 +16,32 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
     return { expenses, incomes };
   }, [expenses, incomes]);
 
-  // Riepilogo
+  // Riepilogo del mese corrente
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  const currentMonthExpenses = filteredData.expenses.filter(e => {
+    const date = new Date(e.date);
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+  
+  const currentMonthIncomes = filteredData.incomes.filter(i => {
+    const date = new Date(i.date);
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+  
+  const currentMonthTotalExpenses = currentMonthExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+  const currentMonthTotalIncomes = currentMonthIncomes.reduce((sum, i) => sum + parseFloat(i.amount), 0);
+  const currentMonthBalance = currentMonthTotalIncomes - currentMonthTotalExpenses;
+  
+  // Nome del mese corrente
+  const monthNames = [
+    'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+    'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+  ];
+  const currentMonthName = monthNames[currentMonth];
+  
+  // Riepilogo totale (per compatibilità)
   const totalExpenses = filteredData.expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
   const totalIncomes = filteredData.incomes.reduce((sum, i) => sum + parseFloat(i.amount), 0);
   const balance = totalIncomes - totalExpenses;
@@ -108,13 +133,17 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
   // UI
   return (
     <div className="space-y-6">
-      {/* Riepilogo compatto - bilancio a larghezza piena */}
+      {/* Riepilogo del mese corrente */}
       <div className="card p-6">
         <div className="flex items-center justify-center gap-3">
           <div className="p-2 bg-blue-100 rounded-lg"><DollarSign className="w-6 h-6 text-blue-600" /></div>
           <div className="text-center">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Bilancio</h3>
-            <p className={`text-3xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(balance)}</p>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{currentMonthName}</h3>
+            <p className={`text-3xl font-bold ${currentMonthBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(currentMonthBalance)}</p>
+            <div className="flex gap-4 mt-2 text-xs">
+              <span className="text-red-600">Spese: {formatCurrency(currentMonthTotalExpenses)}</span>
+              <span className="text-green-600">Entrate: {formatCurrency(currentMonthTotalIncomes)}</span>
+            </div>
           </div>
         </div>
       </div>
