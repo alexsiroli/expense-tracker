@@ -7,47 +7,14 @@ import { formatCurrency } from '../utils/formatters';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B6B', '#6366f1', '#f59e42'];
 
-function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncomes, dateRange, categories = [], stores = [] }) {
-  const [periodType, setPeriodType] = useState('month'); // 'month', 'year', 'all', 'custom'
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
+function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncomes, categories = [], stores = [], activeFilters = {} }) {
 
-  // Debug logging
-  console.log('Statistics component received:', { 
-    expensesCount: expenses.length, 
-    incomesCount: incomes.length,
-    currentMonthExpensesCount: currentMonthExpenses.length,
-    currentMonthIncomesCount: currentMonthIncomes.length,
-    dateRange
-  });
 
-  // Filtra dati in base al periodo selezionato
+
+  // I dati arrivano già filtrati dall'App.jsx
   const filteredData = useMemo(() => {
-    let data = dateRange ? { expenses, incomes } : { expenses: currentMonthExpenses, incomes: currentMonthIncomes };
-    
-    if (periodType === 'year') {
-      const now = new Date();
-      const year = now.getFullYear();
-      data = {
-        expenses: expenses.filter(e => new Date(e.date).getFullYear() === year),
-        incomes: incomes.filter(i => new Date(i.date).getFullYear() === year)
-      };
-    } else if (periodType === 'all') {
-      data = { expenses, incomes };
-    } else if (periodType === 'custom' && customStartDate && customEndDate) {
-      data = {
-        expenses: expenses.filter(e => {
-          const date = new Date(e.date);
-          return date >= new Date(customStartDate) && date <= new Date(customEndDate);
-        }),
-        incomes: incomes.filter(i => {
-          const date = new Date(i.date);
-          return date >= new Date(customStartDate) && date <= new Date(customEndDate);
-        })
-      };
-    }
-    return data;
-  }, [expenses, incomes, currentMonthExpenses, currentMonthIncomes, dateRange, periodType, customStartDate, customEndDate]);
+    return { expenses, incomes };
+  }, [expenses, incomes]);
 
   // Riepilogo
   const totalExpenses = filteredData.expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
@@ -114,7 +81,10 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
 
   // Helpers
   const getCategoryIcon = (categoryName) => {
-    const category = categories.find(cat => cat.name === categoryName);
+    // Cerca prima nelle categorie spese, poi nelle entrate
+    const expenseCategory = categories.expense?.find(cat => cat.name === categoryName);
+    const incomeCategory = categories.income?.find(cat => cat.name === categoryName);
+    const category = expenseCategory || incomeCategory;
     return category?.icon || '📦';
   };
 

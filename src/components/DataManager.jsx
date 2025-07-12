@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Download, Upload, Database, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Download, Upload, Database, AlertCircle, CheckCircle, X, Trash2 } from 'lucide-react';
 
-function DataManager({ onImportData }) {
+function DataManager({ onImportData, onResetData }) {
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importError, setImportError] = useState('');
   const [importSuccess, setImportSuccess] = useState(false);
+  const [resetConfirmation, setResetConfirmation] = useState('');
 
   // Funzione per esportare tutti i dati
   const exportData = () => {
@@ -122,6 +124,24 @@ function DataManager({ onImportData }) {
         </div>
       </div>
 
+      {/* Reset Section */}
+      <div className="card p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <Trash2 className="w-5 h-5 text-red-600" />
+          <h4 className="font-semibold text-gray-900 dark:text-gray-100">Reset Completo</h4>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <strong className="text-red-600">ATTENZIONE:</strong> Questa azione eliminerà definitivamente tutti i tuoi dati (spese, entrate, categorie, negozi, conti). Questa azione non può essere annullata.
+        </p>
+        <button
+          onClick={() => setShowResetModal(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105"
+        >
+          <Trash2 className="w-4 h-4" />
+          <span className="font-medium">Reset Completo</span>
+        </button>
+      </div>
+
       {/* Modal Import */}
       {showImportModal && (
         <div className="modal-overlay">
@@ -200,6 +220,95 @@ function DataManager({ onImportData }) {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Reset */}
+      {showResetModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="bg-red-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setResetConfirmation('');
+                  }}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Trash2 className="w-5 h-5" />
+                  Reset Completo
+                </h2>
+                <div className="w-6"></div>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="text-center">
+                <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  ATTENZIONE!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Stai per eliminare <strong>TUTTI</strong> i tuoi dati:
+                </p>
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1 mb-6">
+                  <li>• Tutte le spese e entrate</li>
+                  <li>• Tutte le categorie personalizzate</li>
+                  <li>• Tutti i negozi salvati</li>
+                  <li>• Tutti i conti e saldi</li>
+                  <li>• Tutte le impostazioni</li>
+                </ul>
+                <p className="text-red-600 font-semibold">
+                  Questa azione è <strong>IRREVERSIBILE</strong> e non può essere annullata!
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Per confermare, scrivi <strong>CONFERMA</strong>:
+                </label>
+                <input
+                  type="text"
+                  value={resetConfirmation}
+                  onChange={(e) => setResetConfirmation(e.target.value)}
+                  placeholder="Scrivi CONFERMA per continuare"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setResetConfirmation('');
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (resetConfirmation === 'CONFERMA') {
+                      onResetData();
+                      setShowResetModal(false);
+                      setResetConfirmation('');
+                    }
+                  }}
+                  disabled={resetConfirmation !== 'CONFERMA'}
+                  className="flex-1 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Elimina Tutto
+                </button>
+              </div>
             </div>
           </div>
         </div>

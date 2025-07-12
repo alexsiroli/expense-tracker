@@ -198,6 +198,22 @@
     perspective: 1000px;
   }
 
+  /* Disable browser autocomplete completely */
+  input[autocomplete="off"],
+  input[data-autocomplete="off"] {
+    -webkit-autocomplete: none !important;
+    -moz-autocomplete: none !important;
+    autocomplete: none !important;
+  }
+
+  /* Additional autocomplete prevention */
+  input[type="text"][name="store"] {
+    -webkit-autocomplete: none !important;
+    -moz-autocomplete: none !important;
+    autocomplete: none !important;
+    background-color: transparent !important;
+  }
+
   .autocomplete-item {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;

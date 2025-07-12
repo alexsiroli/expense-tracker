@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -15,6 +15,7 @@ import WalletManager from './components/WalletManager';
 import DataManager from './components/DataManager';
 import LoginForm from './components/LoginForm';
 import UserProfile from './components/UserProfile';
+import FilterDialog from './components/FilterDialog';
 import { formatCurrency } from './utils/formatters';
 
 // Categorie predefinite
@@ -121,6 +122,14 @@ function App() {
   });
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [customColor, setCustomColor] = useState('#6366f1');
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({
+    timeRange: 'all',
+    startDate: '',
+    endDate: '',
+    selectedCategories: [],
+    selectedStores: []
+  });
 
   // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
@@ -153,17 +162,25 @@ function App() {
   }, [categoriesData]);
 
   useEffect(() => {
+    console.log('storesData changed:', storesData);
+    console.log('storesData length:', storesData?.length);
+    
     if (storesData && storesData.length > 0) {
       const storesDoc = storesData[0];
+      console.log('Setting stores from Firestore data:', storesDoc);
       if (storesDoc.stores) {
+        console.log('Setting stores state with:', storesDoc.stores);
         setStores(storesDoc.stores);
         setLastSyncTime(new Date().toISOString());
       } else {
+        console.log('storesDoc missing stores property, using empty array');
         setStores([]);
       }
     } else if (storesData && storesData.length === 0) {
+      console.log('No stores data, using empty array');
       setStores([]);
     } else {
+      console.log('storesData is null/undefined, using empty array');
       setStores([]);
     }
   }, [storesData]);
@@ -194,6 +211,8 @@ function App() {
     }
   }, [user, categoriesData.length, storesData.length]);
 
+
+
   // Pulisci i conti con ID personalizzati (vecchi conti)
   useEffect(() => {
     if (user && walletsData.length > 0) {
@@ -213,9 +232,7 @@ function App() {
 
 
 
-  // Mostra tutte le transazioni (non più filtrate per conto)
-  const filteredExpenses = expenses;
-  const filteredIncomes = incomes;
+
 
   // Calcola il saldo di un conto dinamicamente
   const calculateWalletBalance = (walletId) => {
@@ -462,21 +479,101 @@ function App() {
     [incomes, currentMonth]
   );
 
-  // Filtra i dati per il range di date selezionato
+  // Ottiene i dati filtrati (combina filtri attivi e date range)
   const getFilteredData = () => {
-    if (!dateRange) return { expenses: expenses, incomes: incomes };
-    
-    const dateFilteredExpenses = expenses.filter(expense => {
-      const expenseDate = expense.date.split('T')[0];
-      return expenseDate >= dateRange.startDate && expenseDate <= dateRange.endDate;
-    });
-    
-    const dateFilteredIncomes = incomes.filter(income => {
-      const incomeDate = income.date.split('T')[0];
-      return incomeDate >= dateRange.startDate && incomeDate <= dateRange.endDate;
-    });
-    
-    return { expenses: dateFilteredExpenses, incomes: dateFilteredIncomes };
+    let filteredExpenses = expenses;
+    let filteredIncomes = incomes;
+
+    console.log('Filtri attivi:', activeFilters);
+    console.log('Numero spese iniziali:', expenses.length);
+    console.log('Numero entrate iniziali:', incomes.length);
+
+    // Filtro per tempo
+    if (activeFilters.timeRange !== 'all') {
+      const now = new Date();
+      let startDate, endDate;
+
+      switch (activeFilters.timeRange) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+          break;
+        case 'week':
+          const dayOfWeek = now.getDay();
+          const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract);
+          endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 7);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          break;
+        case 'year':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          endDate = new Date(now.getFullYear() + 1, 0, 1);
+          break;
+        case 'custom':
+          if (activeFilters.startDate && activeFilters.endDate) {
+            startDate = new Date(activeFilters.startDate);
+            endDate = new Date(activeFilters.endDate);
+            endDate.setDate(endDate.getDate() + 1); // Include end date
+          }
+          break;
+      }
+
+      if (startDate && endDate) {
+        console.log('Applicando filtro temporale:', { startDate, endDate, timeRange: activeFilters.timeRange });
+        filteredExpenses = filteredExpenses.filter(expense => {
+          const expenseDate = new Date(expense.date);
+          return expenseDate >= startDate && expenseDate < endDate;
+        });
+        filteredIncomes = filteredIncomes.filter(income => {
+          const incomeDate = new Date(income.date);
+          return incomeDate >= startDate && incomeDate < endDate;
+        });
+        console.log('Spese dopo filtro temporale:', filteredExpenses.length);
+        console.log('Entrate dopo filtro temporale:', filteredIncomes.length);
+      }
+    }
+
+    // Filtro per categorie
+    if (activeFilters.selectedCategories.length > 0) {
+      filteredExpenses = filteredExpenses.filter(expense => 
+        activeFilters.selectedCategories.includes(expense.category)
+      );
+      filteredIncomes = filteredIncomes.filter(income => 
+        activeFilters.selectedCategories.includes(income.category)
+      );
+    }
+
+    // Filtro per negozi
+    if (activeFilters.selectedStores.length > 0) {
+      filteredExpenses = filteredExpenses.filter(expense => 
+        activeFilters.selectedStores.some(store => 
+          expense.store && expense.store.toLowerCase().startsWith(store.toLowerCase())
+        )
+      );
+      filteredIncomes = filteredIncomes.filter(income => 
+        activeFilters.selectedStores.some(store => 
+          income.store && income.store.toLowerCase().startsWith(store.toLowerCase())
+        )
+      );
+    }
+
+    // Filtro per date range (se presente)
+    if (dateRange) {
+      filteredExpenses = filteredExpenses.filter(expense => {
+        const expenseDate = expense.date.split('T')[0];
+        return expenseDate >= dateRange.startDate && expenseDate <= dateRange.endDate;
+      });
+      
+      filteredIncomes = filteredIncomes.filter(income => {
+        const incomeDate = income.date.split('T')[0];
+        return incomeDate >= dateRange.startDate && incomeDate <= dateRange.endDate;
+      });
+    }
+
+    return { expenses: filteredExpenses, incomes: filteredIncomes };
   };
 
   const filteredData = getFilteredData();
@@ -671,18 +768,93 @@ function App() {
 
   // Funzione per aggiungere un nuovo store
   const addStore = async (storeName) => {
+    console.log('addStore chiamato con:', storeName);
+    console.log('Stores attuali:', stores);
+    console.log('storesData:', storesData);
+    
     if (storeName.trim() && !stores.includes(storeName.trim())) {
       const newStores = [...stores, storeName.trim()];
+      console.log('Nuovi stores da salvare:', newStores);
       setStores(newStores);
       
       // Aggiorna Firestore
       if (storesData && storesData.length > 0) {
         const storesDoc = storesData[0];
+        console.log('Aggiornando documento stores esistente con ID:', storesDoc.id);
         await updateDocument('stores', storesDoc.id, { stores: newStores });
       } else {
         // Se non esiste ancora un documento stores, crealo
+        console.log('Creando nuovo documento stores');
         await addDocument('stores', { stores: newStores });
       }
+      console.log('Store aggiunto con successo');
+    } else {
+      console.log('Store già esistente o nome vuoto, non aggiunto');
+    }
+  };
+
+  // Funzione per applicare i filtri
+  const applyFilters = (filters) => {
+    console.log('Applicando filtri:', filters);
+    setActiveFilters(filters);
+  };
+
+  // Funzione per resettare tutti i dati
+  const resetAllData = async () => {
+    try {
+      console.log('Avvio reset completo di tutti i dati...');
+      
+      // Elimina tutti i documenti dalle collezioni Firestore
+      if (expenses.length > 0) {
+        const expenseIds = expenses.map(e => e.id);
+        await deleteMultipleDocuments('expenses', expenseIds);
+        console.log('Eliminate', expenses.length, 'spese');
+      }
+      
+      if (incomes.length > 0) {
+        const incomeIds = incomes.map(i => i.id);
+        await deleteMultipleDocuments('incomes', incomeIds);
+        console.log('Eliminate', incomes.length, 'entrate');
+      }
+      
+      if (wallets.length > 0) {
+        const walletIds = wallets.map(w => w.id);
+        await deleteMultipleDocuments('wallets', walletIds);
+        console.log('Eliminati', wallets.length, 'conti');
+      }
+      
+      if (categoriesData.length > 0) {
+        await deleteDocument('categories', categoriesData[0].id);
+        console.log('Eliminate categorie');
+      }
+      
+      if (storesData.length > 0) {
+        console.log('Eliminando stores con ID:', storesData[0].id);
+        console.log('Stores da eliminare:', storesData[0]);
+        await deleteDocument('stores', storesData[0].id);
+        console.log('Eliminati stores con successo');
+      } else {
+        console.log('Nessun documento stores da eliminare');
+      }
+      
+      // Reset filtri attivi
+      setActiveFilters({
+        timeRange: 'all',
+        startDate: '',
+        endDate: '',
+        selectedCategories: [],
+        selectedStores: []
+      });
+      
+      console.log('Reset completo completato con successo');
+      alert('Tutti i dati sono stati eliminati con successo. L\'applicazione si ricaricherà automaticamente.');
+      
+      // Ricarica la pagina per resettare tutto
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Errore durante il reset:', error);
+      alert('Errore durante l\'eliminazione dei dati: ' + error.message);
     }
   };
   // deleteWallet = (id) => { // This function is now handled by the new updateAllWalletsBalance
@@ -853,18 +1025,33 @@ function App() {
             <div className="animate-fade-in-up">
               <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue spese</h2>
-                  <button
-                    onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="font-medium">Nuovo</span>
-                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Spese</h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowFilterDialog(true)}
+                      className={`flex items-center justify-center w-10 h-10 backdrop-blur-sm text-white rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-2xl active:scale-95 ${
+                        activeFilters.timeRange !== 'all' || 
+                        activeFilters.selectedCategories.length > 0 || 
+                        activeFilters.selectedStores.length > 0
+                          ? 'bg-blue-600/90 hover:bg-blue-700/90 hover:shadow-blue-500/25'
+                          : 'bg-gray-600/90 hover:bg-gray-700/90 hover:shadow-gray-500/25'
+                      }`}
+                      title="Filtri"
+                    >
+                      <Filter className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setShowForm(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span className="font-medium">Nuovo</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             <ExpenseList
-              items={filteredExpenses}
+              items={filteredData.expenses}
               onDelete={confirmDelete}
               onEdit={handleEdit}
               type="expense"
@@ -877,18 +1064,33 @@ function App() {
             <div className="animate-fade-in-up">
               <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue entrate</h2>
-                  <button
-                    onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="font-medium">Nuovo</span>
-                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Entrate</h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowFilterDialog(true)}
+                      className={`flex items-center justify-center w-10 h-10 backdrop-blur-sm text-white rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-2xl active:scale-95 ${
+                        activeFilters.timeRange !== 'all' || 
+                        activeFilters.selectedCategories.length > 0 || 
+                        activeFilters.selectedStores.length > 0
+                          ? 'bg-blue-600/90 hover:bg-blue-700/90 hover:shadow-blue-500/25'
+                          : 'bg-gray-600/90 hover:bg-gray-700/90 hover:shadow-gray-500/25'
+                      }`}
+                      title="Filtri"
+                    >
+                      <Filter className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setShowForm(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span className="font-medium">Nuovo</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             <ExpenseList
-              items={filteredIncomes}
+              items={filteredData.incomes}
               onDelete={confirmDelete}
               onEdit={handleEdit}
               type="income"
@@ -897,19 +1099,40 @@ function App() {
           </div>
         )}
 
-                  {activeTab === 'stats' && (
-            <div className="animate-fade-in-up">
-              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
+        {activeTab === 'stats' && (
+          <div className="animate-fade-in-up">
+            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
+              <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistiche</h2>
+                <button
+                  onClick={() => setShowFilterDialog(true)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    (activeFilters.timeRange !== 'all' || 
+                     activeFilters.selectedCategories.length > 0 || 
+                     activeFilters.selectedStores.length > 0)
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <Filter className="w-4 h-4" />
+                  Filtri
+                  {((activeFilters.timeRange !== 'all' || 
+                     activeFilters.selectedCategories.length > 0 || 
+                     activeFilters.selectedStores.length > 0)) && (
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  )}
+                </button>
               </div>
-            <DateRangePicker onDateRangeChange={setDateRange} />
+            </div>
             <div className="mt-8">
               <Statistics
                 expenses={filteredData.expenses}
                 incomes={filteredData.incomes}
                 currentMonthExpenses={currentMonthExpenses}
                 currentMonthIncomes={currentMonthIncomes}
-                dateRange={dateRange}
+                categories={categories}
+                stores={stores}
+                activeFilters={activeFilters}
               />
             </div>
           </div>
@@ -941,7 +1164,7 @@ function App() {
 
         {activeTab === 'data' && (
           <div className="animate-fade-in-up">
-            <DataManager onImportData={importData} />
+            <DataManager onImportData={importData} onResetData={resetAllData} />
           </div>
         )}
       </div>
@@ -1150,7 +1373,7 @@ function App() {
                   required
                 >
                   <option value="">Seleziona conto di origine</option>
-                  {wallets.map(wallet => (
+                  {getWalletsWithCalculatedBalance().map(wallet => (
                     <option key={wallet.id} value={wallet.id}>
                       {wallet.name} ({formatCurrency(wallet.balance)})
                     </option>
@@ -1170,7 +1393,7 @@ function App() {
                   required
                 >
                   <option value="">Seleziona conto di destinazione</option>
-                  {wallets.map(wallet => (
+                  {getWalletsWithCalculatedBalance().map(wallet => (
                     <option key={wallet.id} value={wallet.id}>
                       {wallet.name} ({formatCurrency(wallet.balance)})
                     </option>
@@ -1242,6 +1465,15 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Filter Dialog */}
+      <FilterDialog
+        isOpen={showFilterDialog}
+        onClose={() => setShowFilterDialog(false)}
+        onApplyFilters={applyFilters}
+        categories={activeTab === 'stats' ? [...(categories.expense || []), ...(categories.income || [])] : (activeTab === 'expenses' ? categories.expense : categories.income)}
+        stores={stores}
+      />
     </div>
   );
 }

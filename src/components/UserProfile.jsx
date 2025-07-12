@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Calendar, FileText, Trash2, X, LogOut } from 'lucide-react';
+import { User, Calendar, FileText, Trash2, X, LogOut, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useFirestore } from '../hooks/useFirestore';
 import { format } from 'date-fns';
@@ -12,6 +12,7 @@ const UserProfile = ({ isOpen, onClose }) => {
   const { data: incomes } = useFirestore().useCollectionData('incomes');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   if (!isOpen) return null;
 
@@ -161,33 +162,86 @@ const UserProfile = ({ isOpen, onClose }) => {
         </div>
       </div>
 
-      {/* Conferma eliminazione */}
+      {/* Conferma eliminazione aggressiva */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full animate-fade-in-up">
-            <div className="p-6">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Elimina Account
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Sei sicuro di voler eliminare il tuo account? Questa azione eliminerà:
-                <br />• Tutti i tuoi dati (spese, entrate, conti, categorie)
-                <br />• Il tuo account di accesso
-                <br /><br />
-                <strong>Questa azione non può essere annullata.</strong>
-              </p>
-              <div className="flex gap-3">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-up">
+            {/* Header rosso */}
+            <div className="bg-red-600/90 backdrop-blur-sm text-white p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
                 <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteConfirmation('');
+                  }}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Trash2 className="w-5 h-5" />
+                  Elimina Account
+                </h2>
+                <div className="w-6"></div>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="text-center">
+                <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  ATTENZIONE!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Stai per eliminare <strong>DEFINITIVAMENTE</strong> il tuo account:
+                </p>
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1 mb-6">
+                  <li>• Tutti i tuoi dati personali</li>
+                  <li>• Tutte le spese e entrate</li>
+                  <li>• Tutte le categorie personalizzate</li>
+                  <li>• Tutti i negozi salvati</li>
+                  <li>• Tutti i conti e saldi</li>
+                  <li>• Il tuo account di accesso</li>
+                  <li>• Tutte le impostazioni</li>
+                </ul>
+                <p className="text-red-600 font-semibold">
+                  Questa azione è <strong>IRREVERSIBILE</strong> e non può essere annullata!
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Per confermare, scrivi <strong>ELIMINA</strong>:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  placeholder="Scrivi ELIMINA per continuare"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteConfirmation('');
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200"
                 >
                   Annulla
                 </button>
                 <button
-                  onClick={handleDeleteAccount}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  type="button"
+                  onClick={() => {
+                    if (deleteConfirmation === 'ELIMINA') {
+                      handleDeleteAccount();
+                    }
+                  }}
+                  disabled={deleteConfirmation !== 'ELIMINA' || isDeleting}
+                  className="flex-1 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
                 >
                   {isDeleting ? (
                     <>
@@ -195,7 +249,10 @@ const UserProfile = ({ isOpen, onClose }) => {
                       Eliminando...
                     </>
                   ) : (
-                    'Elimina'
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Elimina Account
+                    </>
                   )}
                 </button>
               </div>

@@ -49,6 +49,14 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
     };
   }, []);
 
+  // Disabilita l'autocompletamento del browser all'inizializzazione
+  useEffect(() => {
+    if (storeInputRef.current) {
+      storeInputRef.current.setAttribute('autocomplete', 'off');
+      storeInputRef.current.setAttribute('data-autocomplete', 'off');
+    }
+  }, []);
+
   // Filtra i negozi mentre l'utente digita
   useEffect(() => {
     // Mostra tutti i negozi disponibili quando l'input è vuoto e ha focus
@@ -130,6 +138,12 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
   };
 
   const handleStoreInputFocus = () => {
+    // Disabilita completamente l'autocompletamento del browser
+    if (storeInputRef.current) {
+      storeInputRef.current.setAttribute('autocomplete', 'off');
+      storeInputRef.current.setAttribute('data-autocomplete', 'off');
+    }
+    
     // Mostra tutti i negozi disponibili quando l'input è vuoto
     if (!formData.store.trim()) {
       const sortedStores = [...stores].sort((a, b) => 
@@ -270,15 +284,18 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                 onKeyDown={handleStoreInputKeyDown}
                 placeholder="Nome negozio"
                 className="input form-input-with-icon"
-                autoComplete="new-password"
+                autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
                 spellCheck="false"
                 inputMode="text"
                 data-lpignore="true"
                 data-form-type="other"
+                data-autocomplete="off"
                 role="combobox"
                 aria-autocomplete="list"
+                aria-expanded={showStoreSuggestions}
+                aria-haspopup="listbox"
               />
               
               {/* Suggerimenti negozi */}
