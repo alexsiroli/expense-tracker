@@ -909,7 +909,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-28 pb-32">
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-28 pb-10">
       {/* Header con grafica trasparente */}
       <header className="fixed top-0 left-0 w-full z-30 py-6 animate-fade-in">
         <div className="max-w-md mx-auto px-6">
@@ -1195,7 +1195,7 @@ function App() {
       </div>
 
       {/* Navigation Tabs fluttuante in basso */}
-      <div className="fixed bottom-8 left-0 w-full z-30 py-3">
+      <div className="fixed bottom-12 left-0 w-full z-30 py-3">
         <div className="max-w-md mx-auto px-6">
           <div className="glass-card p-2">
             <div className="grid grid-cols-5 gap-2">
@@ -1505,7 +1505,7 @@ function App() {
       <footer className="fixed bottom-0 left-0 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 py-2 z-40">
         <div className="max-w-md mx-auto px-6">
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
               Sviluppato con ❤️ da <span className="font-semibold text-blue-600 dark:text-blue-400">Alex Siroli</span>
             </p>
           </div>
