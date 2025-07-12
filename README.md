@@ -2,6 +2,8 @@
 
 Un'applicazione web moderna e responsive per tracciare spese, entrate e visualizzare statistiche finanziarie. Progettata per l'utilizzo mobile con un'interfaccia intuitiva e grafici interattivi.
 
+> **Sviluppato con ❤️ da [Alex Siroli](https://github.com/alexsiroli)**
+
 ## ✨ Funzionalità
 
 ### 💰 Gestione Finanze
@@ -211,11 +213,21 @@ Questo progetto è distribuito sotto la licenza MIT. Vedi il file `LICENSE` per 
 - [Lucide](https://lucide.dev/) per le icone
 - [date-fns](https://date-fns.org/) per la gestione date
 
+## 👨‍💻 Sviluppatore
+
+**Alex Siroli** - Sviluppatore Full Stack
+
+Questa web app è stata realizzata interamente da Alex Siroli, sviluppatore appassionato di tecnologie moderne e UX design.
+
+- 🌐 [Portfolio](https://alexsiroli.dev)
+- 💼 [LinkedIn](https://linkedin.com/in/alexsiroli)
+- 🐙 [GitHub](https://github.com/alexsiroli)
+
 ## 📞 Supporto
 
 Se hai domande o problemi:
-- Apri una [Issue](https://github.com/tuousername/expense-tracker/issues)
-- Contattami via email: your-email@example.com
+- Apri una [Issue](https://github.com/alexsiroli/expense-tracker/issues)
+- Contattami via email: alex@alexsiroli.dev
 
 ---
 

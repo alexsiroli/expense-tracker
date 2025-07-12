@@ -87,7 +87,7 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
                 <div className="flex items-start gap-4">
                   {/* Category Icon */}
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-xl bg-gray-200/90 dark:bg-gray-700/90 backdrop-blur-sm flex items-center justify-center text-xl">
+                    <div className="w-12 h-12 rounded-xl bg-gray-200/90 dark:bg-gray-700/90 backdrop-blur-sm flex items-center justify-center text-xl mt-3">
                       {getCategoryIcon(item.category)}
                     </div>
                   </div>

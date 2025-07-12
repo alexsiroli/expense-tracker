@@ -113,17 +113,14 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
     <div className="space-y-6">
       {/* Bilancio del periodo filtrato */}
       <div className="card p-6">
-        <div className="flex items-center justify-center gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg"><DollarSign className="w-6 h-6 text-blue-600" /></div>
-          <div className="text-center">
+                  <div className="text-center">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Bilancio</h3>
             <p className={`text-3xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(balance)}</p>
-            <div className="flex gap-4 mt-2 text-xs">
+            <div className="flex justify-center gap-4 mt-2 text-xs">
               <span className="text-red-600">Spese: {formatCurrency(totalExpenses)}</span>
               <span className="text-green-600">Entrate: {formatCurrency(totalIncomes)}</span>
             </div>
           </div>
-        </div>
       </div>
 
       {/* Grafico temporale */}

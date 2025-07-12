@@ -141,6 +141,21 @@ const UserProfile = ({ isOpen, onClose }) => {
             </div>
           </div>
 
+          {/* Credits */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+            <div className="text-center">
+              <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
+                Sviluppato con ❤️
+              </h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Questa web app è stata realizzata da
+              </p>
+              <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">
+                Alex Siroli
+              </p>
+            </div>
+          </div>
+
           {/* Azioni */}
           <div className="space-y-3">
             <button
