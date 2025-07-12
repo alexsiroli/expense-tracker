@@ -924,7 +924,7 @@ function App() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-28 pb-10">
       {/* Header con grafica trasparente */}
-      <header className="fixed top-0 left-0 w-full z-30 py-6 animate-fade-in">
+      <header className="fixed top-0 left-0 w-full z-30 py-0 animate-fade-in">
         <div className="max-w-md mx-auto px-6">
           <div className="bg-blue-600/40 backdrop-blur-md border border-blue-700/60 rounded-2xl p-3 transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/25 active:scale-95">
             <div className="flex items-center justify-between gap-2">
