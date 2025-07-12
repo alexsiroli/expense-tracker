@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -55,6 +55,10 @@ const WALLET_COLORS = [
   '#a21caf', // purple
   '#0ea5e9', // sky
   '#f97316', // amber
+  '#8b5cf6', // violet
+  '#06b6d4', // cyan
+  '#84cc16', // lime
+  '#f472b6', // rose
 ];
 
 // Modello dati conto: { id, name, color, balance, initialBalance }
@@ -101,6 +105,9 @@ function App() {
   const [activeWalletId, setActiveWalletId] = useState(defaultWallet.id);
   const [balanceCollapsed, setBalanceCollapsed] = useState(true);
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showWalletForm, setShowWalletForm] = useState(false);
+  const [editingWallet, setEditingWallet] = useState(null);
+  const [walletFormData, setWalletFormData] = useState({ name: '', color: WALLET_COLORS[0], balance: 0 });
 
   // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
@@ -351,6 +358,35 @@ function App() {
     });
   };
 
+  // Wallet form handlers
+  const handleWalletSubmit = async (e) => {
+    e.preventDefault();
+    if (!walletFormData.name.trim()) return;
+    
+    if (editingWallet) {
+      await editWallet({ ...editingWallet, ...walletFormData });
+      setEditingWallet(null);
+    } else {
+      await addWallet(walletFormData);
+    }
+    
+    setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
+    setShowWalletForm(false);
+  };
+
+  const handleEditWallet = (wallet) => {
+    setEditingWallet(wallet);
+    const balanceToShow = wallet.initialBalance !== undefined ? wallet.initialBalance : wallet.balance;
+    setWalletFormData({ name: wallet.name, color: wallet.color, balance: balanceToShow });
+    setShowWalletForm(true);
+  };
+
+  const handleAddWallet = () => {
+    setEditingWallet(null);
+    setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
+    setShowWalletForm(true);
+  };
+
   // Funzione per gestire i trasferimenti tra conti
   const handleTransfer = async (transferData) => {
     const { fromWalletId, toWalletId, amount } = transferData;
@@ -532,6 +568,8 @@ function App() {
                   onEdit={editWallet}
                   onDelete={deleteWallet}
                   onTransfer={handleTransfer}
+                  onShowForm={handleAddWallet}
+                  onEditWallet={handleEditWallet}
                 />
               </div>
             </>
@@ -737,6 +775,45 @@ function App() {
         isOpen={showUserProfile}
         onClose={() => setShowUserProfile(false)}
       />
+
+      {/* Wallet Manager Modal */}
+      {showWalletForm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+              <div className="flex items-center justify-between">
+                <button onClick={() => setShowWalletForm(false)} className="text-white/80 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold">{editingWallet ? 'Modifica' : 'Aggiungi'} Conto</h2>
+                <div className="w-6"></div>
+              </div>
+            </div>
+            <form onSubmit={handleWalletSubmit} className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Nome</label>
+                <input type="text" value={walletFormData.name} onChange={e => setWalletFormData({ ...walletFormData, name: e.target.value })} placeholder="Nome conto" className="input" required />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Colore</label>
+                <div className="flex gap-2 flex-wrap">
+                  {WALLET_COLORS.map(color => (
+                    <button key={color} type="button" onClick={() => setWalletFormData({ ...walletFormData, color })} className={`w-8 h-8 rounded-full border-2 ${walletFormData.color === color ? 'border-primary scale-110' : 'border-transparent'} transition-all`} style={{ background: color }}></button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Saldo iniziale</label>
+                <input type="number" value={walletFormData.balance} onChange={e => setWalletFormData({ ...walletFormData, balance: parseFloat(e.target.value) || 0 })} className="input" step="0.01" required placeholder="0,00" />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={() => setShowWalletForm(false)} className="btn btn-secondary flex-1">Annulla</button>
+                <button type="submit" className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1">{editingWallet ? 'Modifica' : 'Aggiungi'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
