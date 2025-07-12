@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, Play, Trash2 } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, Play, Trash2, LogOut, User } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -7,10 +7,13 @@ import CategoryManager from './components/CategoryManager';
 import ConfirmDialog from './components/ConfirmDialog';
 import DateRangePicker from './components/DateRangePicker';
 import { useTheme } from './hooks/useTheme';
+import { useAuth } from './hooks/useAuth';
+import { useFirestore } from './hooks/useFirestore';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import WalletManager from './components/WalletManager';
 import DataManager from './components/DataManager';
+import LoginForm from './components/LoginForm';
 import { formatCurrency } from './utils/formatters';
 
 // Categorie predefinite
@@ -64,66 +67,79 @@ const defaultWallet = {
 
 function App() {
   const { theme, toggleTheme } = useTheme();
-  const [expenses, setExpenses] = useState([]);
-  const [incomes, setIncomes] = useState([]);
+  const { user, loading: authLoading, logout } = useAuth();
+  const { 
+    useCollectionData, 
+    addDocument, 
+    updateDocument, 
+    deleteDocument, 
+    deleteMultipleDocuments,
+    loadAllUserData,
+    importUserData,
+    loading: firestoreLoading,
+    error: firestoreError
+  } = useFirestore();
+  
+  // Stati per i dati Firebase
+  const { data: expenses, loading: expensesLoading } = useCollectionData('expenses');
+  const { data: incomes, loading: incomesLoading } = useCollectionData('incomes');
+  const { data: categoriesData, loading: categoriesLoading } = useCollectionData('categories');
+  const { data: storesData, loading: storesLoading } = useCollectionData('stores');
+  const { data: walletsData, loading: walletsLoading } = useCollectionData('wallets');
+  
+  // Stati locali
   const [categories, setCategories] = useState(defaultCategories);
   const [stores, setStores] = useState([]);
+  const [wallets, setWallets] = useState([defaultWallet]);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [activeTab, setActiveTab] = useState('expenses');
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [dateRange, setDateRange] = useState(null);
-  const [wallets, setWallets] = useState(() => {
-    const saved = localStorage.getItem('wallets');
-    if (saved) return JSON.parse(saved);
-    return [defaultWallet];
-  });
-  const [activeWalletId, setActiveWalletId] = useState(() => wallets[0]?.id || defaultWallet.id);
+  const [activeWalletId, setActiveWalletId] = useState(defaultWallet.id);
   const [balanceCollapsed, setBalanceCollapsed] = useState(true);
 
-  // Carica i dati dal localStorage all'avvio
+  // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
-    const savedExpenses = localStorage.getItem('expenses');
-    const savedIncomes = localStorage.getItem('incomes');
-    const savedCategories = localStorage.getItem('categories');
-    const savedStores = localStorage.getItem('stores');
-    
-    if (savedExpenses) {
-      setExpenses(JSON.parse(savedExpenses));
+    if (categoriesData && categoriesData.length > 0) {
+      const categoriesDoc = categoriesData[0];
+      if (categoriesDoc.expense && categoriesDoc.income) {
+        setCategories(categoriesDoc);
+      }
     }
-    if (savedIncomes) {
-      setIncomes(JSON.parse(savedIncomes));
+  }, [categoriesData]);
+
+  useEffect(() => {
+    if (storesData && storesData.length > 0) {
+      const storesDoc = storesData[0];
+      if (storesDoc.stores) {
+        setStores(storesDoc.stores);
+      }
     }
-    if (savedCategories) {
-      setCategories(JSON.parse(savedCategories));
+  }, [storesData]);
+
+  useEffect(() => {
+    if (walletsData && walletsData.length > 0) {
+      setWallets(walletsData);
+      if (walletsData.length > 0 && !activeWalletId) {
+        setActiveWalletId(walletsData[0].id);
+      }
     }
-    if (savedStores) {
-      setStores(JSON.parse(savedStores));
+  }, [walletsData, activeWalletId]);
+
+  // Inizializza i dati di default se l'utente è nuovo
+  useEffect(() => {
+    if (user && categoriesData.length === 0) {
+      addDocument('categories', defaultCategories);
     }
-  }, []);
-
-  // Salva i dati nel localStorage quando cambiano
-  useEffect(() => {
-    localStorage.setItem('expenses', JSON.stringify(expenses));
-  }, [expenses]);
-
-  useEffect(() => {
-    localStorage.setItem('incomes', JSON.stringify(incomes));
-  }, [incomes]);
-
-  useEffect(() => {
-    localStorage.setItem('categories', JSON.stringify(categories));
-  }, [categories]);
-
-  useEffect(() => {
-    localStorage.setItem('stores', JSON.stringify(stores));
-  }, [stores]);
-
-  // Aggiorna localStorage quando cambiano i conti
-  useEffect(() => {
-    localStorage.setItem('wallets', JSON.stringify(wallets));
-  }, [wallets]);
+    if (user && storesData.length === 0) {
+      addDocument('stores', { stores: [] });
+    }
+    if (user && walletsData.length === 0) {
+      addDocument('wallets', defaultWallet);
+    }
+  }, [user, categoriesData.length, storesData.length, walletsData.length]);
 
 
 
@@ -153,53 +169,49 @@ function App() {
   };
 
   // Aggiungi spesa/entrata associata a conto
-  const addExpense = (expense) => {
+  const addExpense = async (expense) => {
     const newExpense = { 
       ...expense, 
-      id: Date.now(), 
       date: expense.date ? new Date(expense.date + 'T00:00:00').toISOString() : new Date().toISOString() 
     };
-    setExpenses([...expenses, newExpense]);
+    await addDocument('expenses', newExpense);
     setShowForm(false);
     setEditingItem(null);
   };
-  const addIncome = (income) => {
+  
+  const addIncome = async (income) => {
     const newIncome = { 
       ...income, 
-      id: Date.now(), 
       date: income.date ? new Date(income.date + 'T00:00:00').toISOString() : new Date().toISOString() 
     };
-    setIncomes([...incomes, newIncome]);
+    await addDocument('incomes', newIncome);
     setShowForm(false);
     setEditingItem(null);
   };
+  
   // Modifica transazione
-  const updateItem = (updatedItem) => {
+  const updateItem = async (updatedItem) => {
     const updatedWithDate = {
       ...updatedItem,
-      id: editingItem.id, // Preserva l'ID originale
       date: updatedItem.date ? new Date(updatedItem.date + 'T00:00:00').toISOString() : new Date().toISOString()
     };
-    if (activeTab === 'expenses') {
-      setExpenses(expenses.map(expense => expense.id === updatedWithDate.id ? updatedWithDate : expense));
-    } else {
-      setIncomes(incomes.map(income => income.id === updatedWithDate.id ? updatedWithDate : income));
-    }
+    
+    const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
+    await updateDocument(collectionName, editingItem.id, updatedWithDate);
+    
     setShowForm(false);
     setEditingItem(null);
   };
+  
   // Elimina transazione
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (itemToDelete && itemToDelete.type === 'wallet') {
       // Elimina conto
-      performWalletDeletion(id);
+      await performWalletDeletion(id);
     } else {
       // Elimina transazione
-      if (activeTab === 'expenses') {
-        setExpenses(expenses.filter(expense => expense.id !== id));
-      } else {
-        setIncomes(incomes.filter(income => income.id !== id));
-      }
+      const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
+      await deleteDocument(collectionName, id);
     }
     setShowConfirmDelete(false);
     setItemToDelete(null);
@@ -219,14 +231,28 @@ function App() {
     }
   };
 
-  const performWalletDeletion = (id) => {
-    setWallets(wallets.filter(w => w.id !== id));
-    setExpenses(expenses.filter(e => e.walletId !== id));
-    setIncomes(incomes.filter(i => i.walletId !== id));
-    if (activeWalletId === id) {
-      setActiveWalletId(wallets[0]?.id || 'wallet-1');
+  const performWalletDeletion = async (id) => {
+    // Elimina il conto
+    await deleteDocument('wallets', id);
+    
+    // Elimina tutte le transazioni collegate
+    const walletExpenses = expenses.filter(e => e.walletId === id);
+    const walletIncomes = incomes.filter(i => i.walletId === id);
+    
+    if (walletExpenses.length > 0) {
+      const expenseIds = walletExpenses.map(e => e.id);
+      await deleteMultipleDocuments('expenses', expenseIds);
     }
-    updateAllWalletsBalance();
+    
+    if (walletIncomes.length > 0) {
+      const incomeIds = walletIncomes.map(i => i.id);
+      await deleteMultipleDocuments('incomes', incomeIds);
+    }
+    
+    if (activeWalletId === id) {
+      const remainingWallets = wallets.filter(w => w.id !== id);
+      setActiveWalletId(remainingWallets[0]?.id || 'wallet-1');
+    }
   };
 
   const confirmDelete = (id) => {
@@ -239,30 +265,37 @@ function App() {
     setShowForm(true);
   };
 
-  const addCategory = (name, icon, type) => {
+  const addCategory = async (name, icon, type) => {
     const newCategory = {
       id: Date.now(),
       name,
       icon
     };
-    setCategories(prev => ({
-      ...prev,
-      [type]: [...prev[type], newCategory]
-    }));
+    
+    const updatedCategories = {
+      ...categories,
+      [type]: [...categories[type], newCategory]
+    };
+    
+    await updateDocument('categories', categoriesData[0].id, updatedCategories);
   };
 
-  const deleteCategory = (id) => {
-    setCategories(prev => ({
-      expense: prev.expense.filter(cat => cat.id !== id),
-      income: prev.income.filter(cat => cat.id !== id)
-    }));
+  const deleteCategory = async (id) => {
+    const updatedCategories = {
+      expense: categories.expense.filter(cat => cat.id !== id),
+      income: categories.income.filter(cat => cat.id !== id)
+    };
+    
+    await updateDocument('categories', categoriesData[0].id, updatedCategories);
   };
 
-  const editCategory = (id, name, icon) => {
-    setCategories(prev => ({
-      expense: prev.expense.map(cat => cat.id === id ? { ...cat, name, icon } : cat),
-      income: prev.income.map(cat => cat.id === id ? { ...cat, name, icon } : cat)
-    }));
+  const editCategory = async (id, name, icon) => {
+    const updatedCategories = {
+      expense: categories.expense.map(cat => cat.id === id ? { ...cat, name, icon } : cat),
+      income: categories.income.map(cat => cat.id === id ? { ...cat, name, icon } : cat)
+    };
+    
+    await updateDocument('categories', categoriesData[0].id, updatedCategories);
   };
 
   const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
@@ -299,36 +332,30 @@ function App() {
   const filteredData = getFilteredData();
 
   // Funzioni gestione conti
-  const addWallet = (wallet) => {
+  const addWallet = async (wallet) => {
     const newWallet = {
       ...wallet,
       id: `wallet-${Date.now()}`,
-      initialBalance: parseFloat(wallet.balance) || 0, // Salva il saldo iniziale
-      balance: parseFloat(wallet.balance) || 0, // Per compatibilità
+      initialBalance: parseFloat(wallet.balance) || 0,
+      balance: parseFloat(wallet.balance) || 0,
     };
-    setWallets([...wallets, newWallet]);
+    await addDocument('wallets', newWallet);
   };
-  const editWallet = (updatedWallet) => {
-    setWallets(wallets.map(w => {
-      if (w.id === updatedWallet.id) {
-        return {
-          ...w,
-          ...updatedWallet,
-          initialBalance: parseFloat(updatedWallet.balance) || 0, // Aggiorna il saldo iniziale
-        };
-      }
-      return w;
-    }));
+  
+  const editWallet = async (updatedWallet) => {
+    await updateDocument('wallets', updatedWallet.id, {
+      ...updatedWallet,
+      initialBalance: parseFloat(updatedWallet.balance) || 0,
+    });
   };
 
   // Funzione per gestire i trasferimenti tra conti
-  const handleTransfer = (transferData) => {
+  const handleTransfer = async (transferData) => {
     const { fromWalletId, toWalletId, amount } = transferData;
     const today = new Date().toISOString().split('T')[0];
     
     // Crea la transazione di uscita (spesa) dal conto di origine
     const outgoingTransaction = {
-      id: Date.now(),
       amount: parseFloat(amount),
       category: 'Trasferimento',
       date: today,
@@ -339,7 +366,6 @@ function App() {
     
     // Crea la transazione di entrata (entrata) nel conto di destinazione
     const incomingTransaction = {
-      id: Date.now() + 1, // ID diverso per evitare conflitti
       amount: parseFloat(amount),
       category: 'Trasferimento',
       date: today,
@@ -349,39 +375,18 @@ function App() {
     };
     
     // Aggiungi entrambe le transazioni
-    setExpenses([...expenses, outgoingTransaction]);
-    setIncomes([...incomes, incomingTransaction]);
+    await addDocument('expenses', outgoingTransaction);
+    await addDocument('incomes', incomingTransaction);
   };
 
   // Funzione per importare i dati
-  const importData = (data) => {
-    // Importa tutti i dati
-    if (data.expenses) {
-      setExpenses(data.expenses);
-      localStorage.setItem('expenses', JSON.stringify(data.expenses));
-    }
-    if (data.incomes) {
-      setIncomes(data.incomes);
-      localStorage.setItem('incomes', JSON.stringify(data.incomes));
-    }
-    if (data.categories) {
-      setCategories(data.categories);
-      localStorage.setItem('categories', JSON.stringify(data.categories));
-    }
-    if (data.stores) {
-      setStores(data.stores);
-      localStorage.setItem('stores', JSON.stringify(data.stores));
-    }
-    if (data.wallets) {
-      setWallets(data.wallets);
-      localStorage.setItem('wallets', JSON.stringify(data.wallets));
-      // Imposta il primo conto come attivo
-      if (data.wallets.length > 0) {
-        setActiveWalletId(data.wallets[0].id);
-      }
-    }
-    if (data.theme) {
-      localStorage.setItem('theme', data.theme);
+  const importData = async (data) => {
+    try {
+      await importUserData(data);
+      alert('Dati importati con successo!');
+    } catch (error) {
+      console.error('Errore durante l\'importazione:', error);
+      alert('Errore durante l\'importazione dei dati.');
     }
   };
   // deleteWallet = (id) => { // This function is now handled by the new updateAllWalletsBalance
@@ -567,8 +572,25 @@ function App() {
     }
   };
 
+  // Mostra loading mentre verifica l'autenticazione
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Caricamento...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostra login se l'utente non è autenticato
+  if (!user) {
+    return <LoginForm />;
+  }
+
   return (
-          <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-28 pb-24">
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-28 pb-24">
       {/* Header con grafica trasparente */}
       <header className="fixed top-0 left-0 w-full z-30 py-6 animate-fade-in">
         <div className="max-w-md mx-auto px-6">
@@ -583,6 +605,10 @@ function App() {
                 </h1>
               </div>
               <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 text-white text-sm">
+                  <User className="w-4 h-4" />
+                  <span>{user.displayName || user.email}</span>
+                </div>
                 <button
                   onClick={toggleTheme}
                   className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95"
@@ -603,6 +629,13 @@ function App() {
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
+                <button
+                  onClick={logout}
+                  className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -616,10 +649,13 @@ function App() {
             <div className="flex items-center gap-3">
               <PiggyBank className="w-6 h-6 text-blue-600" />
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Bilancio Totale</h2>
-              {balanceCollapsed && (
+              {balanceCollapsed && !expensesLoading && !incomesLoading && (
                 <span className={`text-lg font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(balance)}
                 </span>
+              )}
+              {(expensesLoading || incomesLoading) && (
+                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
               )}
             </div>
             <button
