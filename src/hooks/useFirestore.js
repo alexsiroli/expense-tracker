@@ -217,6 +217,27 @@ export const useFirestore = () => {
       
       const batch = writeBatch(db);
       
+      // Estrai tutti i nomi dei negozi dalle spese e entrate importate
+      const extractedStores = new Set();
+      
+      // Estrai negozi dalle spese
+      if (data.expenses) {
+        data.expenses.forEach(expense => {
+          if (expense.store && expense.store.trim()) {
+            extractedStores.add(expense.store.trim());
+          }
+        });
+      }
+      
+      // Estrai negozi dalle entrate
+      if (data.incomes) {
+        data.incomes.forEach(income => {
+          if (income.store && income.store.trim()) {
+            extractedStores.add(income.store.trim());
+          }
+        });
+      }
+      
       // Importa expenses
       if (data.expenses) {
         data.expenses.forEach(expense => {
@@ -239,10 +260,25 @@ export const useFirestore = () => {
         batch.set(categoriesRef, data.categories);
       }
       
-      // Importa stores
-      if (data.stores) {
+      // Importa stores - combina quelli esistenti con quelli estratti dalle transazioni
+      let finalStores = [];
+      
+      // Aggiungi i negozi dal JSON se presenti
+      if (data.stores && Array.isArray(data.stores)) {
+        finalStores = [...data.stores];
+      }
+      
+      // Aggiungi i negozi estratti dalle transazioni
+      extractedStores.forEach(store => {
+        if (!finalStores.includes(store)) {
+          finalStores.push(store);
+        }
+      });
+      
+      // Salva la lista finale dei negozi
+      if (finalStores.length > 0) {
         const storesRef = doc(getUserCollection('stores'), 'default');
-        batch.set(storesRef, { stores: data.stores });
+        batch.set(storesRef, { stores: finalStores });
       }
       
       // Importa wallets
@@ -254,6 +290,9 @@ export const useFirestore = () => {
       }
       
       await batch.commit();
+      
+      console.log('Importazione completata. Negozi estratti:', Array.from(extractedStores));
+      console.log('Lista finale negozi:', finalStores);
     } catch (error) {
       setError('Errore durante l\'importazione: ' + error.message);
       throw error;
