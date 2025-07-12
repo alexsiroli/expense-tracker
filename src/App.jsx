@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
@@ -131,6 +131,8 @@ function App() {
     selectedStores: [],
     selectedWallets: []
   });
+  const [showFloatingMenu, setShowFloatingMenu] = useState(true);
+  const lastScrollY = useRef(window.scrollY);
 
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
   useEffect(() => {
@@ -887,8 +889,19 @@ function App() {
   //   }
   // };
 
-
-
+  useEffect(() => {
+    const handleScroll = () => {
+      const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 20;
+      if (window.scrollY > lastScrollY.current && window.scrollY > 80) {
+        setShowFloatingMenu(false); // scroll down, nascondi
+      } else if (window.scrollY < lastScrollY.current && !isAtBottom) {
+        setShowFloatingMenu(true); // scroll up, mostra SOLO se non sei in fondo
+      }
+      lastScrollY.current = window.scrollY;
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
 
   // Mostra loading mentre verifica l'autenticazione
@@ -1195,7 +1208,7 @@ function App() {
       </div>
 
       {/* Navigation Tabs fluttuante in basso */}
-      <div className="fixed bottom-12 left-0 w-full z-30 py-3">
+      <div className={`fixed bottom-12 left-0 w-full z-30 py-3 transition-all duration-300 ${showFloatingMenu ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-full pointer-events-none'}`}>
         <div className="max-w-md mx-auto px-6">
           <div className="glass-card p-2">
             <div className="grid grid-cols-5 gap-2">
