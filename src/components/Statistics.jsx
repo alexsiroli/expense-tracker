@@ -7,7 +7,7 @@ import { formatCurrency } from '../utils/formatters';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B6B', '#6366f1', '#f59e42'];
 
-function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncomes, categories = [], stores = [], activeFilters = {} }) {
+function Statistics({ expenses, incomes, categories = [], stores = [], activeFilters = {} }) {
 
 
 
@@ -148,22 +148,27 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
         </div>
       </div>
 
-      {/* Grafico temporale con riepilogo */}
+      {/* Riepilogo totale generale */}
+      <div className="card p-6">
+        <div className="flex items-center justify-center gap-3">
+          <div className="p-2 bg-gray-100 rounded-lg"><DollarSign className="w-6 h-6 text-gray-600" /></div>
+          <div className="text-center">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Totale Generale</h3>
+            <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(balance)}</p>
+            <div className="flex gap-4 mt-2 text-xs">
+              <span className="text-red-600">Spese: {formatCurrency(totalExpenses)}</span>
+              <span className="text-green-600">Entrate: {formatCurrency(totalIncomes)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grafico temporale */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <Calendar className="w-5 h-5" /> Andamento temporale
           </h3>
-          <div className="flex gap-4 text-sm">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <span className="text-gray-600 dark:text-gray-400">Spese: {formatCurrency(totalExpenses)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span className="text-gray-600 dark:text-gray-400">Entrate: {formatCurrency(totalIncomes)}</span>
-            </div>
-          </div>
         </div>
         {monthlyData.length > 0 ? (
           <ResponsiveContainer width="100%" height={320}>
