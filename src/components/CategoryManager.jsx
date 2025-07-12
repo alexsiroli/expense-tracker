@@ -62,7 +62,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
           className="flex items-center gap-2 px-4 py-2 bg-purple-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-purple-700/90 transition-all duration-200 transform hover:scale-105"
         >
           <Plus className="w-4 h-4" />
-          <span className="font-medium">Aggiungi</span>
+          <span className="font-medium">Nuovo</span>
         </button>
       </div>
 
@@ -95,7 +95,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
                   <X className="w-6 h-6" />
                 </button>
                 <h2 className="text-xl font-bold">
-                  {editingCategory ? 'Modifica' : 'Aggiungi'} Categoria
+                  {editingCategory ? 'Modifica' : 'Nuovo'} Categoria
                 </h2>
                 <div className="w-6"></div>
               </div>
@@ -150,7 +150,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
                   type="submit"
                   className="flex-1 px-4 py-2 bg-purple-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-purple-700/90 transition-all duration-200 transform hover:scale-105"
                 >
-                  {editingCategory ? 'Modifica' : 'Aggiungi'}
+                  {editingCategory ? 'Modifica' : 'Nuovo'}
                 </button>
               </div>
 

@@ -57,7 +57,7 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete, onTransfer, onShowFor
           className="flex items-center gap-2 px-4 py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
         >
           <Plus className="w-4 h-4" />
-          <span className="font-medium">Nuovo Conto</span>
+          <span className="font-medium">Nuovo</span>
         </button>
       </div>
       <div className="grid grid-cols-1 gap-3">

@@ -6,6 +6,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
     amount: '',
     category: categories.length > 0 ? categories[0].name : '',
     date: new Date().toISOString().split('T')[0],
+    time: new Date().toTimeString().slice(0, 5),
     store: '',
     walletId: selectedWalletId || (wallets[0]?.id ?? '')
   });
@@ -18,10 +19,12 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
   // Inizializza il form con i dati dell'item da modificare
   useEffect(() => {
     if (editingItem) {
+      const itemDate = editingItem.date ? new Date(editingItem.date) : new Date();
       setFormData({
         amount: editingItem.amount?.toString() || '',
         category: editingItem.category || (categories.length > 0 ? categories[0].name : ''),
-        date: editingItem.date ? editingItem.date.split('T')[0] : new Date().toISOString().split('T')[0],
+        date: itemDate.toISOString().split('T')[0],
+        time: itemDate.toTimeString().slice(0, 5),
         store: editingItem.store || '',
         walletId: editingItem.walletId || selectedWalletId || (wallets[0]?.id ?? '')
       });
@@ -75,10 +78,14 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
     // Aggiunge il negozio alla lista se non esiste
     addStoreToSuggestions(formData.store);
     
+    // Combina data e ora per creare un timestamp completo
+    const dateTime = `${formData.date}T${formData.time}:00`;
+    
     onSubmit({
       ...formData,
       amount: parseFloat(formData.amount),
-      store: formData.store.trim()
+      store: formData.store.trim(),
+      date: dateTime
     });
   };
 
@@ -141,7 +148,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
               <ArrowLeft className="w-6 h-6" />
             </button>
             <h2 className="text-xl font-bold">
-              {editingItem ? 'Modifica' : 'Aggiungi'} {type === 'expense' ? 'Spesa' : 'Entrata'}
+              {editingItem ? 'Modifica' : 'Nuovo'} {type === 'expense' ? 'Spesa' : 'Entrata'}
             </h2>
             <div className="w-6"></div>
           </div>
@@ -256,7 +263,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
                 <Tag className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -288,6 +295,23 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                   type="date"
                   name="date"
                   value={formData.date}
+                  onChange={handleChange}
+                  className="input"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                Ora
+              </label>
+              <div>
+                <input
+                  type="time"
+                  name="time"
+                  value={formData.time}
                   onChange={handleChange}
                   className="input"
                   required

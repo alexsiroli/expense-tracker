@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -59,6 +59,7 @@ const WALLET_COLORS = [
   '#06b6d4', // cyan
   '#84cc16', // lime
   '#f472b6', // rose
+  'rainbow', // colore personalizzato
 ];
 
 // Modello dati conto: { id, name, color, balance, initialBalance }
@@ -118,6 +119,8 @@ function App() {
     toWalletId: '',
     amount: ''
   });
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [customColor, setCustomColor] = useState('#6366f1');
 
   // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
@@ -235,7 +238,7 @@ function App() {
   const addExpense = async (expense) => {
     const newExpense = { 
       ...expense, 
-      date: expense.date ? new Date(expense.date + 'T00:00:00').toISOString() : new Date().toISOString() 
+      date: expense.date ? new Date(expense.date).toISOString() : new Date().toISOString() 
     };
     await addDocument('expenses', newExpense);
     setShowForm(false);
@@ -245,7 +248,7 @@ function App() {
   const addIncome = async (income) => {
     const newIncome = { 
       ...income, 
-      date: income.date ? new Date(income.date + 'T00:00:00').toISOString() : new Date().toISOString() 
+      date: income.date ? new Date(income.date).toISOString() : new Date().toISOString() 
     };
     await addDocument('incomes', newIncome);
     setShowForm(false);
@@ -256,7 +259,7 @@ function App() {
   const updateItem = async (updatedItem) => {
     const updatedWithDate = {
       ...updatedItem,
-      date: updatedItem.date ? new Date(updatedItem.date + 'T00:00:00').toISOString() : new Date().toISOString()
+      date: updatedItem.date ? new Date(updatedItem.date).toISOString() : new Date().toISOString()
     };
     
     const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
@@ -598,13 +601,13 @@ function App() {
   // Funzione per gestire i trasferimenti tra conti
   const handleTransfer = async (transferData) => {
     const { fromWalletId, toWalletId, amount } = transferData;
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toISOString();
     
     // Crea la transazione di uscita (spesa) dal conto di origine
     const outgoingTransaction = {
       amount: parseFloat(amount),
       category: 'Trasferimento',
-      date: today,
+      date: now,
       store: 'Trasferimento',
       walletId: fromWalletId,
       type: 'expense'
@@ -614,7 +617,7 @@ function App() {
     const incomingTransaction = {
       amount: parseFloat(amount),
       category: 'Trasferimento',
-      date: today,
+      date: now,
       store: 'Trasferimento',
       walletId: toWalletId,
       type: 'income'
@@ -740,7 +743,7 @@ function App() {
       </header>
 
       {/* Balance Card con design moderno - PRIMA COSA */}
-      <div className="max-w-md mx-auto px-6 pt-4 pb-6 animate-fade-in-up">
+      <div className="max-w-md mx-auto px-6 pt-1 pb-6 animate-fade-in-up">
         <div className={`floating-card ${balanceCollapsed ? 'p-3' : 'p-6'} transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 animate-bounce-in active:scale-95`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -819,21 +822,23 @@ function App() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-6 py-8 -mt-6 relative z-10">
+      <div className="max-w-md mx-auto px-6 py-4 -mt-6 relative z-10">
 
         {/* Content */}
-        {activeTab === 'expenses' && (
-          <div className="animate-fade-in-up">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue spese</h2>
-              <button
-                onClick={() => setShowForm(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95"
-              >
-                <Plus className="w-4 h-4" />
-                <span className="font-medium">Aggiungi Spesa</span>
-              </button>
-            </div>
+                  {activeTab === 'expenses' && (
+            <div className="animate-fade-in-up">
+              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-0 shadow-lg">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue spese</h2>
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="font-medium">Nuovo</span>
+                  </button>
+                </div>
+              </div>
             <ExpenseList
               items={filteredExpenses}
               onDelete={confirmDelete}
@@ -844,18 +849,20 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'incomes' && (
-          <div className="animate-fade-in-up">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue entrate</h2>
-              <button
-                onClick={() => setShowForm(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95"
-              >
-                <Plus className="w-4 h-4" />
-                <span className="font-medium">Aggiungi Entrata</span>
-              </button>
-            </div>
+                  {activeTab === 'incomes' && (
+            <div className="animate-fade-in-up">
+              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-0 shadow-lg">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue entrate</h2>
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="font-medium">Nuovo</span>
+                  </button>
+                </div>
+              </div>
             <ExpenseList
               items={filteredIncomes}
               onDelete={confirmDelete}
@@ -866,8 +873,11 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'stats' && (
-          <div className="animate-fade-in-up">
+                  {activeTab === 'stats' && (
+            <div className="animate-fade-in-up">
+              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-0 shadow-lg">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistiche</h2>
+              </div>
             <DateRangePicker onDateRangeChange={setDateRange} />
             <div className="mt-8">
               <Statistics
@@ -881,9 +891,13 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'categories' && (
-          <div className="space-y-8 animate-fade-in-up">
-            <CategoryManager
+                  {activeTab === 'categories' && (
+            <div className="animate-fade-in-up">
+              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-0 shadow-lg">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Categorie</h2>
+              </div>
+            <div className="space-y-8">
+              <CategoryManager
               categories={categories.expense}
               onAddCategory={addCategory}
               onDeleteCategory={deleteCategory}
@@ -897,6 +911,7 @@ function App() {
               onEditCategory={editCategory}
               type="income"
             />
+            </div>
           </div>
         )}
 
@@ -1031,7 +1046,7 @@ function App() {
                 }} className="text-white/80 hover:text-white transition-colors">
                   <X className="w-6 h-6" />
                 </button>
-                <h2 className="text-xl font-bold">{editingWallet ? 'Modifica' : 'Aggiungi'} Conto</h2>
+                <h2 className="text-xl font-bold">{editingWallet ? 'Modifica' : 'Nuovo'} Conto</h2>
                 <div className="w-6"></div>
               </div>
             </div>
@@ -1044,7 +1059,25 @@ function App() {
                 <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Colore</label>
                 <div className="flex gap-2 flex-wrap">
                   {WALLET_COLORS.map(color => (
-                    <button key={color} type="button" onClick={() => setWalletFormData({ ...walletFormData, color })} className={`w-8 h-8 rounded-full border-2 ${walletFormData.color === color ? 'border-primary scale-110' : 'border-transparent'} transition-all`} style={{ background: color }}></button>
+                    <button 
+                      key={color} 
+                      type="button" 
+                      onClick={() => {
+                        if (color === 'rainbow') {
+                          setShowColorPicker(true);
+                        } else {
+                          setWalletFormData({ ...walletFormData, color });
+                        }
+                      }} 
+                      className={`w-8 h-8 rounded-full border-2 ${walletFormData.color === color ? 'border-primary scale-110' : 'border-transparent'} transition-all flex items-center justify-center`} 
+                      style={{ 
+                        background: color === 'rainbow' 
+                          ? 'white' 
+                          : color 
+                      }}
+                    >
+                      {color === 'rainbow' && <Palette className="w-4 h-4 text-gray-600" />}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -1058,7 +1091,7 @@ function App() {
                   setEditingWallet(null);
                   setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
                 }} className="btn btn-secondary flex-1">Annulla</button>
-                <button type="submit" className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1">{editingWallet ? 'Modifica' : 'Aggiungi'}</button>
+                <button type="submit" className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1">{editingWallet ? 'Modifica' : 'Nuovo'}</button>
               </div>
             </form>
           </div>
@@ -1140,6 +1173,47 @@ function App() {
                 <button type="submit" disabled={!transferFormData.fromWalletId || !transferFormData.toWalletId || !transferFormData.amount || transferFormData.fromWalletId === transferFormData.toWalletId} className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1">Trasferisci</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Color Picker Modal */}
+      {showColorPicker && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+              <div className="flex items-center justify-between">
+                <button onClick={() => setShowColorPicker(false)} className="text-white/80 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold">Scegli Colore</h2>
+                <div className="w-6"></div>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Colore personalizzato</label>
+                <input 
+                  type="color" 
+                  value={customColor}
+                  onChange={(e) => setCustomColor(e.target.value)}
+                  className="w-full h-12 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer"
+                />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={() => setShowColorPicker(false)} className="btn btn-secondary flex-1">Annulla</button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setWalletFormData({ ...walletFormData, color: customColor });
+                    setShowColorPicker(false);
+                  }} 
+                  className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1"
+                >
+                  Conferma
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
