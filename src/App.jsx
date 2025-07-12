@@ -63,7 +63,6 @@ const WALLET_COLORS = [
 
 // Modello dati conto: { id, name, color, balance, initialBalance }
 const defaultWallet = {
-  id: 'wallet-1',
   name: 'Conto Principale',
   color: WALLET_COLORS[0],
   balance: 0,
@@ -90,19 +89,21 @@ function App() {
   const { data: incomes, loading: incomesLoading } = useCollectionData('incomes');
   const { data: categoriesData, loading: categoriesLoading } = useCollectionData('categories');
   const { data: storesData, loading: storesLoading } = useCollectionData('stores');
-  const { data: walletsData, loading: walletsLoading } = useCollectionData('wallets');
+  const { data: walletsData, loading: walletsLoading } = useCollectionData('wallets', 'name');
+  
+
   
   // Stati locali
   const [categories, setCategories] = useState(defaultCategories);
   const [stores, setStores] = useState([]);
-  const [wallets, setWallets] = useState([defaultWallet]);
+  const [wallets, setWallets] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [activeTab, setActiveTab] = useState('expenses');
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [dateRange, setDateRange] = useState(null);
-  const [activeWalletId, setActiveWalletId] = useState(defaultWallet.id);
+  const [activeWalletId, setActiveWalletId] = useState(null);
   const [balanceCollapsed, setBalanceCollapsed] = useState(true);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showWalletForm, setShowWalletForm] = useState(false);
@@ -129,11 +130,16 @@ function App() {
   }, [storesData]);
 
   useEffect(() => {
+    console.log('walletsData changed:', walletsData);
     if (walletsData && walletsData.length > 0) {
+      console.log('Setting wallets from Firestore data:', walletsData);
       setWallets(walletsData);
       if (walletsData.length > 0 && !activeWalletId) {
         setActiveWalletId(walletsData[0].id);
       }
+    } else if (walletsData && walletsData.length === 0) {
+      setWallets([]);
+      setActiveWalletId(null);
     }
   }, [walletsData, activeWalletId]);
 
@@ -145,10 +151,7 @@ function App() {
     if (user && storesData.length === 0) {
       addDocument('stores', { stores: [] });
     }
-    if (user && walletsData.length === 0) {
-      addDocument('wallets', defaultWallet);
-    }
-  }, [user, categoriesData.length, storesData.length, walletsData.length]);
+  }, [user, categoriesData.length, storesData.length]);
 
 
 
@@ -171,10 +174,13 @@ function App() {
 
   // Calcola i saldi di tutti i conti dinamicamente
   const getWalletsWithCalculatedBalance = () => {
-    return wallets.map(wallet => ({
+    console.log('getWalletsWithCalculatedBalance called with wallets:', wallets);
+    const result = wallets.map(wallet => ({
       ...wallet,
       balance: calculateWalletBalance(wallet.id) // Sostituisce il saldo con quello calcolato
     }));
+    console.log('getWalletsWithCalculatedBalance result:', result);
+    return result;
   };
 
   // Aggiungi spesa/entrata associata a conto
@@ -212,55 +218,74 @@ function App() {
     setEditingItem(null);
   };
   
-  // Elimina transazione
+  // Elimina transazione (non wallet)
   const handleDelete = async (id) => {
-    if (itemToDelete && itemToDelete.type === 'wallet') {
-      // Elimina conto
-      await performWalletDeletion(id);
-    } else {
-      // Elimina transazione
-      const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
-      await deleteDocument(collectionName, id);
-    }
+    const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
+    await deleteDocument(collectionName, id);
     setShowConfirmDelete(false);
     setItemToDelete(null);
   };
   // Elimina conto e tutte le transazioni collegate
-  const deleteWallet = (id) => {
-    const wallet = wallets.find(w => w.id === id);
-    const walletExpenses = expenses.filter(e => e.walletId === id);
-    const walletIncomes = incomes.filter(i => i.walletId === id);
+  const deleteWallet = async (walletId) => {
+    console.log('deleteWallet chiamato con walletId:', walletId);
+    const wallet = wallets.find(w => w.id === walletId);
+    console.log('Wallet trovato:', wallet);
     
-    if (walletExpenses.length > 0 || walletIncomes.length > 0) {
-      setItemToDelete({ type: 'wallet', id, wallet, expenses: walletExpenses, incomes: walletIncomes });
-      setShowConfirmDelete(true);
-    } else {
-      // Se non ci sono transazioni, elimina direttamente
-      performWalletDeletion(id);
+    if (!wallet) {
+      console.error('Wallet non trovato');
+      return;
     }
+    
+    // Ora l'ID del wallet è direttamente l'ID del documento Firestore
+    console.log('Usando wallet ID per eliminazione:', walletId);
+    
+    await performWalletDeletion(walletId);
   };
 
-  const performWalletDeletion = async (id) => {
-    // Elimina il conto
-    await deleteDocument('wallets', id);
+  const performWalletDeletion = async (walletId) => {
+    console.log('performWalletDeletion chiamato con wallet ID:', walletId);
     
-    // Elimina tutte le transazioni collegate
-    const walletExpenses = expenses.filter(e => e.walletId === id);
-    const walletIncomes = incomes.filter(i => i.walletId === id);
-    
-    if (walletExpenses.length > 0) {
-      const expenseIds = walletExpenses.map(e => e.id);
-      await deleteMultipleDocuments('expenses', expenseIds);
-    }
-    
-    if (walletIncomes.length > 0) {
-      const incomeIds = walletIncomes.map(i => i.id);
-      await deleteMultipleDocuments('incomes', incomeIds);
-    }
-    
-    if (activeWalletId === id) {
-      const remainingWallets = wallets.filter(w => w.id !== id);
-      setActiveWalletId(remainingWallets[0]?.id || 'wallet-1');
+    try {
+      // Trova il wallet per ottenere l'ID del documento Firestore
+      const wallet = wallets.find(w => w.id === walletId);
+      if (!wallet) {
+        console.error('Wallet non trovato per eliminazione');
+        return;
+      }
+      
+      // Usa l'ID del documento Firestore per eliminare il wallet
+      console.log('Eliminando wallet dal database con ID:', walletId);
+      await deleteDocument('wallets', walletId);
+      console.log('Wallet eliminato con successo');
+      
+      // Elimina le transazioni collegate usando l'ID del wallet
+      const walletExpenses = expenses.filter(e => e.walletId === walletId);
+      const walletIncomes = incomes.filter(i => i.walletId === walletId);
+      
+      if (walletExpenses.length > 0) {
+        console.log('Eliminando', walletExpenses.length, 'spese collegate...');
+        const expenseIds = walletExpenses.map(e => e.id);
+        await deleteMultipleDocuments('expenses', expenseIds);
+        console.log('Spese eliminate con successo');
+      }
+      
+      if (walletIncomes.length > 0) {
+        console.log('Eliminando', walletIncomes.length, 'entrate collegate...');
+        const incomeIds = walletIncomes.map(i => i.id);
+        await deleteMultipleDocuments('incomes', incomeIds);
+        console.log('Entrate eliminate con successo');
+      }
+      
+      if (activeWalletId === walletId) {
+        const remainingWallets = wallets.filter(w => w.id !== walletId);
+        setActiveWalletId(remainingWallets[0]?.id || null);
+        console.log('Active wallet aggiornato a:', remainingWallets[0]?.id || null);
+      }
+      
+      console.log('Eliminazione wallet completata con successo');
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione del wallet:', error);
+      alert('Errore durante l\'eliminazione del conto. Riprova.');
     }
   };
 
@@ -342,49 +367,125 @@ function App() {
 
   // Funzioni gestione conti
   const addWallet = async (wallet) => {
-    const newWallet = {
-      ...wallet,
-      id: `wallet-${Date.now()}`,
-      initialBalance: parseFloat(wallet.balance) || 0,
-      balance: parseFloat(wallet.balance) || 0,
-    };
-    await addDocument('wallets', newWallet);
+    console.log('addWallet chiamato con:', wallet);
+    console.log('User autenticato:', user);
+    console.log('User UID:', user?.uid);
+    
+    try {
+      // Controlla se esiste già un wallet con lo stesso nome
+      const existingWallet = wallets.find(w => w.name === wallet.name);
+      if (existingWallet) {
+        console.log('Wallet con lo stesso nome già esistente:', existingWallet);
+        throw new Error('Esiste già un conto con questo nome');
+      }
+      
+      const newWallet = {
+        ...wallet,
+        // Non specificare un ID personalizzato, lascia che Firestore lo generi
+        initialBalance: parseFloat(wallet.balance) || 0,
+        balance: parseFloat(wallet.balance) || 0,
+      };
+      console.log('Nuovo wallet da creare:', newWallet);
+      
+      const result = await addDocument('wallets', newWallet);
+      console.log('Wallet creato con successo:', result);
+      return result;
+    } catch (error) {
+      console.error('Errore durante la creazione del wallet:', error);
+      console.error('Codice errore:', error.code);
+      console.error('Messaggio errore:', error.message);
+      throw error;
+    }
   };
   
   const editWallet = async (updatedWallet) => {
-    await updateDocument('wallets', updatedWallet.id, {
-      ...updatedWallet,
-      initialBalance: parseFloat(updatedWallet.balance) || 0,
-    });
+    try {
+      // Ora l'ID del wallet è direttamente l'ID del documento Firestore
+      await updateDocument('wallets', updatedWallet.id, {
+        ...updatedWallet,
+        initialBalance: parseFloat(updatedWallet.balance) || 0,
+      });
+    } catch (error) {
+      console.error('Errore durante la modifica del conto:', error);
+      // Se il documento non esiste, prova a crearlo
+      if (error.code === 'not-found') {
+        console.log('Documento non trovato, creo nuovo conto...');
+        await addWallet(updatedWallet);
+      } else {
+        throw error;
+      }
+    }
   };
 
   // Wallet form handlers
   const handleWalletSubmit = async (e) => {
     e.preventDefault();
-    if (!walletFormData.name.trim()) return;
+    console.log('handleWalletSubmit chiamato');
+    console.log('walletFormData:', walletFormData);
+    console.log('editingWallet:', editingWallet);
+    console.log('User:', user);
     
-    if (editingWallet) {
-      await editWallet({ ...editingWallet, ...walletFormData });
-      setEditingWallet(null);
-    } else {
-      await addWallet(walletFormData);
+    try {
+      if (!user) {
+        console.error('Utente non autenticato');
+        alert('Utente non autenticato. Effettua nuovamente l\'accesso.');
+        return;
+      }
+      
+      if (!walletFormData.name.trim()) {
+        console.error('Nome wallet vuoto');
+        return;
+      }
+      
+      if (editingWallet) {
+        console.log('Modificando wallet esistente');
+        await editWallet({ ...editingWallet, ...walletFormData });
+        setEditingWallet(null);
+      } else {
+        console.log('Creando nuovo wallet');
+        await addWallet(walletFormData);
+      }
+      
+      console.log('Wallet salvato con successo');
+      setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
+      setShowWalletForm(false);
+    } catch (error) {
+      console.error('Errore durante il salvataggio del conto:', error);
+      console.error('Codice errore:', error.code);
+      console.error('Messaggio errore:', error.message);
+      
+      // Mostra messaggio specifico per duplicati
+      if (error.message === 'Esiste già un conto con questo nome') {
+        alert('Esiste già un conto con questo nome. Scegli un nome diverso.');
+      } else {
+        alert('Errore durante il salvataggio del conto. Riprova.');
+      }
     }
-    
-    setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
-    setShowWalletForm(false);
   };
 
   const handleEditWallet = (wallet) => {
-    setEditingWallet(wallet);
-    const balanceToShow = wallet.initialBalance !== undefined ? wallet.initialBalance : wallet.balance;
-    setWalletFormData({ name: wallet.name, color: wallet.color, balance: balanceToShow });
-    setShowWalletForm(true);
+    try {
+      console.log('handleEditWallet chiamato con wallet:', wallet);
+      setEditingWallet(wallet);
+      const balanceToShow = wallet.initialBalance !== undefined ? wallet.initialBalance : wallet.balance;
+      setWalletFormData({ name: wallet.name, color: wallet.color, balance: balanceToShow });
+      setShowWalletForm(true);
+      console.log('showWalletForm impostato a true per modifica');
+    } catch (error) {
+      console.error('Errore durante l\'apertura del modal di modifica:', error);
+    }
   };
 
   const handleAddWallet = () => {
-    setEditingWallet(null);
-    setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
-    setShowWalletForm(true);
+    try {
+      console.log('handleAddWallet chiamato');
+      setEditingWallet(null);
+      setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
+      setShowWalletForm(true);
+      console.log('showWalletForm impostato a true');
+    } catch (error) {
+      console.error('Errore durante l\'apertura del modal di aggiunta:', error);
+    }
   };
 
   // Funzione per gestire i trasferimenti tra conti
@@ -562,15 +663,21 @@ function App() {
 
               {/* Sezione gestione conti */}
               <div className="mt-8 animate-fade-in-up">
-                <WalletManager
-                  wallets={getWalletsWithCalculatedBalance()}
-                  onAdd={addWallet}
-                  onEdit={editWallet}
-                  onDelete={deleteWallet}
-                  onTransfer={handleTransfer}
-                  onShowForm={handleAddWallet}
-                  onEditWallet={handleEditWallet}
-                />
+                {(() => {
+                  const walletsWithBalance = getWalletsWithCalculatedBalance();
+                  console.log('Wallets being passed to WalletManager:', walletsWithBalance);
+                  return (
+                    <WalletManager
+                      wallets={walletsWithBalance}
+                      onAdd={addWallet}
+                      onEdit={editWallet}
+                      onDelete={deleteWallet}
+                      onTransfer={handleTransfer}
+                      onShowForm={handleAddWallet}
+                      onEditWallet={handleEditWallet}
+                    />
+                  );
+                })()}
               </div>
             </>
           )}
@@ -778,11 +885,15 @@ function App() {
 
       {/* Wallet Manager Modal */}
       {showWalletForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
             <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
               <div className="flex items-center justify-between">
-                <button onClick={() => setShowWalletForm(false)} className="text-white/80 hover:text-white transition-colors">
+                <button onClick={() => {
+                  setShowWalletForm(false);
+                  setEditingWallet(null);
+                  setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
+                }} className="text-white/80 hover:text-white transition-colors">
                   <X className="w-6 h-6" />
                 </button>
                 <h2 className="text-xl font-bold">{editingWallet ? 'Modifica' : 'Aggiungi'} Conto</h2>
@@ -807,7 +918,11 @@ function App() {
                 <input type="number" value={walletFormData.balance} onChange={e => setWalletFormData({ ...walletFormData, balance: parseFloat(e.target.value) || 0 })} className="input" step="0.01" required placeholder="0,00" />
               </div>
               <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setShowWalletForm(false)} className="btn btn-secondary flex-1">Annulla</button>
+                <button type="button" onClick={() => {
+                  setShowWalletForm(false);
+                  setEditingWallet(null);
+                  setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
+                }} className="btn btn-secondary flex-1">Annulla</button>
                 <button type="submit" className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1">{editingWallet ? 'Modifica' : 'Aggiungi'}</button>
               </div>
             </form>

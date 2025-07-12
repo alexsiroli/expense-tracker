@@ -24,6 +24,21 @@ export const useAuth = () => {
       setLoading(false);
     });
 
+    // Gestisci il risultato del redirect per dispositivi mobili
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log('Redirect result received:', result.user);
+        }
+      } catch (error) {
+        console.error('Error handling redirect result:', error);
+        setError(getErrorMessage(error.code));
+      }
+    };
+
+    handleRedirectResult();
+
     return unsubscribe;
   }, []);
 
@@ -60,10 +75,29 @@ export const useAuth = () => {
       setError(null);
       const provider = new GoogleAuthProvider();
       
-      // Usa sempre popup per evitare problemi di redirect
-      const result = await signInWithPopup(auth, provider);
-      console.log('Google login successful:', result.user);
-      return result.user;
+      // Rileva se siamo su un dispositivo mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      let result;
+      
+      if (isMobile) {
+        // Su mobile, prova prima con popup, se fallisce usa redirect
+        try {
+          result = await signInWithPopup(auth, provider);
+        } catch (popupError) {
+          console.log('Popup failed on mobile, trying redirect...', popupError);
+          // Se il popup fallisce, usa redirect
+          await signInWithRedirect(auth, provider);
+          // Il redirect gestirà il risultato automaticamente
+          return null; // Il risultato verrà gestito da getRedirectResult
+        }
+      } else {
+        // Su desktop, usa sempre popup
+        result = await signInWithPopup(auth, provider);
+      }
+      
+      console.log('Google login successful:', result?.user);
+      return result?.user;
     } catch (error) {
       console.error('Google login error:', error);
       setError(getErrorMessage(error.code));
@@ -116,10 +150,16 @@ export const useAuth = () => {
         return 'Login annullato. Riprova.';
       case 'auth/popup-blocked':
         return 'Popup bloccato. Abilita i popup per questo sito.';
+      case 'auth/popup-closed-by-user':
+        return 'Login annullato. Riprova.';
       case 'auth/requires-recent-login':
         return 'Per eliminare l\'account, devi effettuare nuovamente l\'accesso.';
       case 'auth/user-token-expired':
         return 'Sessione scaduta. Effettua nuovamente l\'accesso.';
+      case 'auth/missing-or-invalid-nonce':
+        return 'Errore di sicurezza. Ricarica la pagina e riprova.';
+      case 'auth/account-exists-with-different-credential':
+        return 'Account già esistente con credenziali diverse.';
       default:
         return `Errore durante l'autenticazione: ${errorCode}. Riprova.`;
     }

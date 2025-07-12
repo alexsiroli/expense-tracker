@@ -22,7 +22,10 @@ export const useFirestore = () => {
 
   // Funzione per ottenere il riferimento alla collezione dell'utente
   const getUserCollection = (collectionName) => {
-    if (!user) throw new Error('Utente non autenticato');
+    if (!user) {
+      console.error('Utente non autenticato');
+      throw new Error('Utente non autenticato');
+    }
     return collection(db, 'users', user.uid, collectionName);
   };
 
@@ -38,20 +41,25 @@ export const useFirestore = () => {
         return;
       }
 
+      console.log(`Setting up listener for collection: ${collectionName}`);
+      console.log(`User: ${user.uid}`);
+
       const q = query(
         getUserCollection(collectionName),
         orderBy(orderByField, 'desc')
       );
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
+        console.log(`Snapshot received for ${collectionName}:`, snapshot.docs.length, 'documents');
         const items = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+        console.log(`Processed ${collectionName} data:`, items);
         setData(items);
         setLoading(false);
       }, (error) => {
-        console.error('Errore nel caricamento dati:', error);
+        console.error(`Errore nel caricamento dati per ${collectionName}:`, error);
         setLoading(false);
       });
 
@@ -63,19 +71,42 @@ export const useFirestore = () => {
 
   // Aggiungi documento
   const addDocument = async (collectionName, document) => {
+    console.log('addDocument chiamato con:', { collectionName, document });
+    console.log('User:', user);
+    console.log('User UID:', user?.uid);
+    
     try {
       setLoading(true);
       setError(null);
       
-      const docRef = await addDoc(getUserCollection(collectionName), {
+      const userCollection = getUserCollection(collectionName);
+      console.log('User collection reference:', userCollection);
+      
+      const docData = {
         ...document,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-      });
+      };
+      console.log('Document data to save:', docData);
+      
+      const docRef = await addDoc(userCollection, docData);
+      console.log('Document created successfully:', docRef);
+      console.log('Document ID:', docRef.id);
       
       return docRef;
     } catch (error) {
-      setError('Errore durante il salvataggio: ' + error.message);
+      console.error('Errore durante il salvataggio:', error);
+      console.error('Codice errore:', error.code);
+      console.error('Messaggio errore:', error.message);
+      console.error('Stack trace:', error.stack);
+      
+      if (error.code === 'permission-denied') {
+        setError('Errore di permessi. Verifica le regole di sicurezza Firestore.');
+      } else if (error.code === 'unavailable') {
+        setError('Servizio non disponibile. Verifica la connessione.');
+      } else {
+        setError('Errore durante il salvataggio: ' + error.message);
+      }
       throw error;
     } finally {
       setLoading(false);
