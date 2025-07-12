@@ -79,13 +79,6 @@ function DataManager({ onImportData, onResetData }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <Database className="w-5 h-5" />
-          Gestione Dati
-        </h3>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Export */}
         <div className="card p-4">

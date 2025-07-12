@@ -108,11 +108,6 @@ function Statistics({ expenses, incomes, currentMonthExpenses, currentMonthIncom
   // UI
   return (
     <div className="space-y-6">
-      {/* Titolo Statistiche */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Statistiche</h3>
-      </div>
-
       {/* Riepilogo compatto - bilancio a larghezza piena */}
       <div className="card p-6">
         <div className="flex items-center justify-center gap-3">

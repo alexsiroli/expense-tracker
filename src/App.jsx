@@ -1164,6 +1164,9 @@ function App() {
 
         {activeTab === 'data' && (
           <div className="animate-fade-in-up">
+            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Gestione Dati</h2>
+            </div>
             <DataManager onImportData={importData} onResetData={resetAllData} />
           </div>
         )}
