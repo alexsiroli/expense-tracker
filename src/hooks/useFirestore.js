@@ -44,22 +44,35 @@ export const useFirestore = () => {
       console.log(`Setting up listener for collection: ${collectionName}`);
       console.log(`User: ${user.uid}`);
 
-      const q = query(
-        getUserCollection(collectionName),
-        orderBy(orderByField, 'desc')
-      );
+      let q;
+      if (orderByField) {
+        q = query(
+          getUserCollection(collectionName),
+          orderBy(orderByField, 'desc')
+        );
+      } else {
+        q = query(getUserCollection(collectionName));
+      }
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
         console.log(`Snapshot received for ${collectionName}:`, snapshot.docs.length, 'documents');
+        console.log(`Snapshot metadata:`, snapshot.metadata);
+        console.log(`Snapshot empty:`, snapshot.empty);
+        
         const items = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
         console.log(`Processed ${collectionName} data:`, items);
+        console.log(`Setting data for ${collectionName}:`, items);
         setData(items);
         setLoading(false);
       }, (error) => {
         console.error(`Errore nel caricamento dati per ${collectionName}:`, error);
+        console.error(`Error code:`, error.code);
+        console.error(`Error message:`, error.message);
+        console.error(`Collection name:`, collectionName);
+        console.error(`Order by field:`, orderByField);
         setLoading(false);
       });
 

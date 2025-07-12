@@ -153,7 +153,7 @@ export const useAuth = () => {
       case 'auth/popup-closed-by-user':
         return 'Login annullato. Riprova.';
       case 'auth/requires-recent-login':
-        return 'Per eliminare l\'account, devi effettuare nuovamente l\'accesso.';
+        return 'Per eliminare l\'account, devi effettuare nuovamente l\'accesso per motivi di sicurezza. Effettua il logout e riaccedi.';
       case 'auth/user-token-expired':
         return 'Sessione scaduta. Effettua nuovamente l\'accesso.';
       case 'auth/missing-or-invalid-nonce':

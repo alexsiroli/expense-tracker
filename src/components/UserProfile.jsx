@@ -39,9 +39,18 @@ const UserProfile = ({ isOpen, onClose }) => {
       
       // Se l'errore è dovuto a login recente richiesto, mostra messaggio specifico
       if (error.code === 'auth/requires-recent-login') {
-        alert('Per eliminare l\'account, devi effettuare nuovamente l\'accesso. Verrai reindirizzato alla pagina di login.');
-        await logout();
-        onClose();
+        const confirmed = confirm(
+          'Per eliminare l\'account, devi effettuare nuovamente l\'accesso per motivi di sicurezza.\n\n' +
+          'Clicca OK per essere reindirizzato alla pagina di login, dove potrai:\n' +
+          '1. Effettuare nuovamente l\'accesso\n' +
+          '2. Tornare qui e riprovare a eliminare l\'account\n\n' +
+          'Vuoi procedere?'
+        );
+        
+        if (confirmed) {
+          await logout();
+          onClose();
+        }
       } else {
         alert(`Errore durante l'eliminazione account: ${error.message}`);
       }

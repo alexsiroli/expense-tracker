@@ -84,11 +84,14 @@ function App() {
     error: firestoreError
   } = useFirestore();
   
+  // Stati per il tracking della sincronizzazione
+  const [lastSyncTime, setLastSyncTime] = useState(null);
+  
   // Stati per i dati Firebase
   const { data: expenses, loading: expensesLoading } = useCollectionData('expenses');
   const { data: incomes, loading: incomesLoading } = useCollectionData('incomes');
-  const { data: categoriesData, loading: categoriesLoading } = useCollectionData('categories');
-  const { data: storesData, loading: storesLoading } = useCollectionData('stores');
+  const { data: categoriesData, loading: categoriesLoading } = useCollectionData('categories', null);
+  const { data: storesData, loading: storesLoading } = useCollectionData('stores', null);
   const { data: walletsData, loading: walletsLoading } = useCollectionData('wallets', 'name');
   
 
@@ -112,11 +115,31 @@ function App() {
 
   // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
+    console.log('categoriesData changed:', categoriesData);
+    console.log('categoriesData length:', categoriesData?.length);
+    console.log('categoriesData type:', typeof categoriesData);
+    console.log('categoriesData timestamp:', new Date().toISOString());
+    
     if (categoriesData && categoriesData.length > 0) {
       const categoriesDoc = categoriesData[0];
+      console.log('Setting categories from Firestore data:', categoriesDoc);
+      console.log('categoriesDoc.expense:', categoriesDoc.expense);
+      console.log('categoriesDoc.income:', categoriesDoc.income);
+      
       if (categoriesDoc.expense && categoriesDoc.income) {
+        console.log('Setting categories state with:', categoriesDoc);
         setCategories(categoriesDoc);
+        setLastSyncTime(new Date().toISOString());
+      } else {
+        console.log('categoriesDoc missing expense or income, using defaults');
+        setCategories(defaultCategories);
       }
+    } else if (categoriesData && categoriesData.length === 0) {
+      console.log('No categories data, using defaults');
+      setCategories(defaultCategories);
+    } else {
+      console.log('categoriesData is null/undefined, using defaults');
+      setCategories(defaultCategories);
     }
   }, [categoriesData]);
 
@@ -131,9 +154,11 @@ function App() {
 
   useEffect(() => {
     console.log('walletsData changed:', walletsData);
+    console.log('walletsData timestamp:', new Date().toISOString());
     if (walletsData && walletsData.length > 0) {
       console.log('Setting wallets from Firestore data:', walletsData);
       setWallets(walletsData);
+      setLastSyncTime(new Date().toISOString());
       if (walletsData.length > 0 && !activeWalletId) {
         setActiveWalletId(walletsData[0].id);
       }
@@ -152,6 +177,23 @@ function App() {
       addDocument('stores', { stores: [] });
     }
   }, [user, categoriesData.length, storesData.length]);
+
+  // Pulisci i conti con ID personalizzati (vecchi conti)
+  useEffect(() => {
+    if (user && walletsData.length > 0) {
+      const walletsWithCustomIds = walletsData.filter(wallet => 
+        wallet.id && wallet.id.startsWith('wallet-')
+      );
+      
+      if (walletsWithCustomIds.length > 0) {
+        console.log('Trovati conti con ID personalizzati da pulire:', walletsWithCustomIds);
+        // Per ora, logghiamo solo. In futuro potremmo volerli migrare
+        walletsWithCustomIds.forEach(wallet => {
+          console.log('Conto con ID personalizzato:', wallet.name, wallet.id);
+        });
+      }
+    }
+  }, [user, walletsData]);
 
 
 
@@ -228,29 +270,48 @@ function App() {
   // Elimina conto e tutte le transazioni collegate
   const deleteWallet = async (walletId) => {
     console.log('deleteWallet chiamato con walletId:', walletId);
+    console.log('Tipo di walletId:', typeof walletId);
+    console.log('Wallets disponibili:', wallets);
+    
     const wallet = wallets.find(w => w.id === walletId);
     console.log('Wallet trovato:', wallet);
     
     if (!wallet) {
       console.error('Wallet non trovato');
+      alert('Wallet non trovato. Riprova.');
       return;
+    }
+    
+    // Verifica se l'ID è un ID personalizzato (vecchio formato)
+    if (walletId.startsWith('wallet-')) {
+      console.log('ATTENZIONE: Eliminando conto con ID personalizzato:', walletId);
+      console.log('Questo potrebbe causare problemi di sincronizzazione');
     }
     
     // Ora l'ID del wallet è direttamente l'ID del documento Firestore
     console.log('Usando wallet ID per eliminazione:', walletId);
     
-    await performWalletDeletion(walletId);
+    try {
+      await performWalletDeletion(walletId);
+      console.log('deleteWallet completato con successo');
+    } catch (error) {
+      console.error('Errore in deleteWallet:', error);
+      alert('Errore durante l\'eliminazione del conto: ' + error.message);
+    }
   };
 
   const performWalletDeletion = async (walletId) => {
     console.log('performWalletDeletion chiamato con wallet ID:', walletId);
+    console.log('Tipo di walletId in performWalletDeletion:', typeof walletId);
     
     try {
       // Trova il wallet per ottenere l'ID del documento Firestore
       const wallet = wallets.find(w => w.id === walletId);
+      console.log('Wallet trovato in performWalletDeletion:', wallet);
+      
       if (!wallet) {
         console.error('Wallet non trovato per eliminazione');
-        return;
+        throw new Error('Wallet non trovato per eliminazione');
       }
       
       // Usa l'ID del documento Firestore per eliminare il wallet
@@ -262,9 +323,13 @@ function App() {
       const walletExpenses = expenses.filter(e => e.walletId === walletId);
       const walletIncomes = incomes.filter(i => i.walletId === walletId);
       
+      console.log('Spese collegate trovate:', walletExpenses.length);
+      console.log('Entrate collegate trovate:', walletIncomes.length);
+      
       if (walletExpenses.length > 0) {
         console.log('Eliminando', walletExpenses.length, 'spese collegate...');
         const expenseIds = walletExpenses.map(e => e.id);
+        console.log('IDs spese da eliminare:', expenseIds);
         await deleteMultipleDocuments('expenses', expenseIds);
         console.log('Spese eliminate con successo');
       }
@@ -272,6 +337,7 @@ function App() {
       if (walletIncomes.length > 0) {
         console.log('Eliminando', walletIncomes.length, 'entrate collegate...');
         const incomeIds = walletIncomes.map(i => i.id);
+        console.log('IDs entrate da eliminare:', incomeIds);
         await deleteMultipleDocuments('incomes', incomeIds);
         console.log('Entrate eliminate con successo');
       }
@@ -285,7 +351,9 @@ function App() {
       console.log('Eliminazione wallet completata con successo');
     } catch (error) {
       console.error('Errore durante l\'eliminazione del wallet:', error);
-      alert('Errore durante l\'eliminazione del conto. Riprova.');
+      console.error('Codice errore:', error.code);
+      console.error('Messaggio errore:', error.message);
+      throw error; // Rilancia l'errore per gestirlo nel chiamante
     }
   };
 
@@ -300,6 +368,10 @@ function App() {
   };
 
   const addCategory = async (name, icon, type) => {
+    console.log('addCategory chiamato con:', { name, icon, type });
+    console.log('categoriesData length:', categoriesData.length);
+    console.log('Current categories:', categories);
+    
     const newCategory = {
       id: Date.now(),
       name,
@@ -311,7 +383,19 @@ function App() {
       [type]: [...categories[type], newCategory]
     };
     
-    await updateDocument('categories', categoriesData[0].id, updatedCategories);
+    console.log('Updated categories to save:', updatedCategories);
+    
+    // Se non ci sono ancora documenti categories, crea il primo documento
+    if (categoriesData.length === 0) {
+      console.log('Creating new categories document');
+      await addDocument('categories', updatedCategories);
+    } else {
+      console.log('Updating existing categories document with ID:', categoriesData[0].id);
+      await updateDocument('categories', categoriesData[0].id, updatedCategories);
+    }
+    
+    // Non aggiornare lo stato locale - lascia che Firestore gestisca la sincronizzazione
+    console.log('Category added successfully - waiting for Firestore sync');
   };
 
   const deleteCategory = async (id) => {
@@ -320,7 +404,15 @@ function App() {
       income: categories.income.filter(cat => cat.id !== id)
     };
     
-    await updateDocument('categories', categoriesData[0].id, updatedCategories);
+    // Se non ci sono ancora documenti categories, crea il primo documento
+    if (categoriesData.length === 0) {
+      await addDocument('categories', updatedCategories);
+    } else {
+      await updateDocument('categories', categoriesData[0].id, updatedCategories);
+    }
+    
+    // Non aggiornare lo stato locale - lascia che Firestore gestisca la sincronizzazione
+    console.log('Category deleted successfully - waiting for Firestore sync');
   };
 
   const editCategory = async (id, name, icon) => {
@@ -329,7 +421,15 @@ function App() {
       income: categories.income.map(cat => cat.id === id ? { ...cat, name, icon } : cat)
     };
     
-    await updateDocument('categories', categoriesData[0].id, updatedCategories);
+    // Se non ci sono ancora documenti categories, crea il primo documento
+    if (categoriesData.length === 0) {
+      await addDocument('categories', updatedCategories);
+    } else {
+      await updateDocument('categories', categoriesData[0].id, updatedCategories);
+    }
+    
+    // Non aggiornare lo stato locale - lascia che Firestore gestisca la sincronizzazione
+    console.log('Category edited successfully - waiting for Firestore sync');
   };
 
   const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
@@ -389,6 +489,7 @@ function App() {
       
       const result = await addDocument('wallets', newWallet);
       console.log('Wallet creato con successo:', result);
+      console.log('Document ID generato da Firestore:', result.id);
       return result;
     } catch (error) {
       console.error('Errore durante la creazione del wallet:', error);
@@ -592,6 +693,10 @@ function App() {
                       })()}
                     </span>
                   </button>
+                </div>
+                {/* Indicatore di sincronizzazione */}
+                <div className="flex items-center gap-1">
+                  <div className={`w-2 h-2 rounded-full ${lastSyncTime ? 'bg-green-400' : 'bg-yellow-400'} animate-pulse`} title={lastSyncTime ? `Ultima sincronizzazione: ${new Date(lastSyncTime).toLocaleTimeString()}` : 'Sincronizzazione in corso...'} />
                 </div>
                 <button
                   onClick={toggleTheme}
