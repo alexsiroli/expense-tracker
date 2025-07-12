@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, Play, Trash2, LogOut, User } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -14,6 +14,7 @@ import { it } from 'date-fns/locale';
 import WalletManager from './components/WalletManager';
 import DataManager from './components/DataManager';
 import LoginForm from './components/LoginForm';
+import UserProfile from './components/UserProfile';
 import { formatCurrency } from './utils/formatters';
 
 // Categorie predefinite
@@ -99,6 +100,7 @@ function App() {
   const [dateRange, setDateRange] = useState(null);
   const [activeWalletId, setActiveWalletId] = useState(defaultWallet.id);
   const [balanceCollapsed, setBalanceCollapsed] = useState(true);
+  const [showUserProfile, setShowUserProfile] = useState(false);
 
   // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
@@ -397,180 +399,9 @@ function App() {
   //   }
   // };
 
-  // Dati demo per testare l'app
-  const demoData = {
-    expenses: [
-      // Luglio 2024: spese estive
-      { id: 1, amount: 45.50, category: 'Alimentari', date: '2024-07-15T00:00:00.000Z', store: 'Supermercato Coop', walletId: 'wallet-1' },
-      { id: 2, amount: 120.00, category: 'Trasporti', date: '2024-07-18T00:00:00.000Z', store: 'Eni', walletId: 'wallet-1' },
-      { id: 3, amount: 89.99, category: 'Shopping', date: '2024-07-20T00:00:00.000Z', store: 'Zara', walletId: 'wallet-1' },
-      { id: 4, amount: 65.00, category: 'Intrattenimento', date: '2024-07-22T00:00:00.000Z', store: 'Cinema', walletId: 'wallet-1' },
-      { id: 5, amount: 150.00, category: 'Bollette', date: '2024-07-25T00:00:00.000Z', store: 'Enel', walletId: 'wallet-1' },
-      { id: 6, amount: 25.50, category: 'Alimentari', date: '2024-07-28T00:00:00.000Z', store: 'Pizzeria', walletId: 'wallet-2' },
-      { id: 7, amount: 200.00, category: 'Shopping', date: '2024-07-30T00:00:00.000Z', store: 'Amazon', walletId: 'wallet-2' },
-      { id: 8, amount: 80.00, category: 'Salute', date: '2024-08-02T00:00:00.000Z', store: 'Farmacia', walletId: 'wallet-2' },
-      { id: 9, amount: 45.00, category: 'Trasporti', date: '2024-08-05T00:00:00.000Z', store: 'ATM', walletId: 'wallet-3' },
-      { id: 10, amount: 180.00, category: 'Educazione', date: '2024-08-10T00:00:00.000Z', store: 'Libreria', walletId: 'wallet-3' },
-      { id: 11, amount: 95.00, category: 'Intrattenimento', date: '2024-08-15T00:00:00.000Z', store: 'Ristorante', walletId: 'wallet-3' },
-      { id: 12, amount: 75.00, category: 'Alimentari', date: '2024-08-18T00:00:00.000Z', store: 'Carrefour', walletId: 'wallet-1' },
-      { id: 13, amount: 300.00, category: 'Shopping', date: '2024-08-20T00:00:00.000Z', store: 'Ikea', walletId: 'wallet-2' },
-      { id: 14, amount: 60.00, category: 'Trasporti', date: '2024-08-25T00:00:00.000Z', store: 'Trenitalia', walletId: 'wallet-1' },
-      { id: 15, amount: 40.00, category: 'Intrattenimento', date: '2024-08-28T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-3' },
-      { id: 16, amount: 15.99, category: 'Abbonamenti', date: '2024-09-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 17, amount: 9.99, category: 'Abbonamenti', date: '2024-09-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      // Settembre: ritorno a scuola
-      { id: 18, amount: 85.00, category: 'Alimentari', date: '2024-09-05T00:00:00.000Z', store: 'Esselunga', walletId: 'wallet-1' },
-      { id: 19, amount: 120.00, category: 'Trasporti', date: '2024-09-08T00:00:00.000Z', store: 'Autostrade', walletId: 'wallet-1' },
-      { id: 20, amount: 250.00, category: 'Shopping', date: '2024-09-12T00:00:00.000Z', store: 'H&M', walletId: 'wallet-2' },
-      { id: 21, amount: 35.00, category: 'Intrattenimento', date: '2024-09-15T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-3' },
-      { id: 22, amount: 180.00, category: 'Bollette', date: '2024-09-18T00:00:00.000Z', store: 'TIM', walletId: 'wallet-1' },
-      { id: 23, amount: 15.99, category: 'Abbonamenti', date: '2024-10-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 24, amount: 9.99, category: 'Abbonamenti', date: '2024-10-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      // Ottobre: spese varie
-      { id: 25, amount: 15.99, category: 'Abbonamenti', date: '2024-11-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 26, amount: 9.99, category: 'Abbonamenti', date: '2024-11-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      { id: 27, amount: 500.00, category: 'Salute', date: '2024-11-15T00:00:00.000Z', store: 'Farmacia', walletId: 'wallet-2' },
-      // Novembre: spese basse, solo ricorrenti
-      { id: 28, amount: 15.99, category: 'Abbonamenti', date: '2024-12-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 29, amount: 9.99, category: 'Abbonamenti', date: '2024-12-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      // Dicembre: regali e feste
-      { id: 30, amount: 15.99, category: 'Abbonamenti', date: '2025-01-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 31, amount: 9.99, category: 'Abbonamenti', date: '2025-01-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      { id: 32, amount: 600.00, category: 'Trasporti', date: '2025-01-10T00:00:00.000Z', store: 'Trenitalia', walletId: 'wallet-1' },
-      { id: 33, amount: 200.00, category: 'Shopping', date: '2025-01-15T00:00:00.000Z', store: 'Amazon', walletId: 'wallet-2' },
-      // Gennaio: spese regolari
-      { id: 34, amount: 15.99, category: 'Abbonamenti', date: '2025-02-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 35, amount: 9.99, category: 'Abbonamenti', date: '2025-02-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      { id: 36, amount: 15.99, category: 'Abbonamenti', date: '2025-03-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 37, amount: 9.99, category: 'Abbonamenti', date: '2025-03-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      // Marzo: spese varie
-      { id: 38, amount: 15.99, category: 'Abbonamenti', date: '2025-04-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 39, amount: 9.99, category: 'Abbonamenti', date: '2025-04-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      // Aprile: spese varie
-      { id: 40, amount: 180.00, category: 'Educazione', date: '2025-04-15T00:00:00.000Z', store: 'Libreria', walletId: 'wallet-3' },
-      // Maggio: spese varie
-      { id: 41, amount: 15.99, category: 'Abbonamenti', date: '2025-05-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 42, amount: 9.99, category: 'Abbonamenti', date: '2025-05-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      { id: 43, amount: 350.00, category: 'Shopping', date: '2025-05-15T00:00:00.000Z', store: 'Ikea', walletId: 'wallet-2' },
-      // Giugno: spese basse
-      { id: 44, amount: 15.99, category: 'Abbonamenti', date: '2025-06-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 45, amount: 9.99, category: 'Abbonamenti', date: '2025-06-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      // Luglio: spese estive
-      { id: 46, amount: 15.99, category: 'Abbonamenti', date: '2025-07-01T00:00:00.000Z', store: 'Netflix', walletId: 'wallet-1' },
-      { id: 47, amount: 9.99, category: 'Abbonamenti', date: '2025-07-01T00:00:00.000Z', store: 'Spotify', walletId: 'wallet-2' },
-      { id: 48, amount: 500.00, category: 'Regali', date: '2025-07-05T00:00:00.000Z', store: 'Famiglia', walletId: 'wallet-1' },
-      { id: 49, amount: 300.00, category: 'Shopping', date: '2025-07-08T00:00:00.000Z', store: 'Amazon', walletId: 'wallet-2' },
-      { id: 50, amount: 100.00, category: 'Intrattenimento', date: '2025-07-10T00:00:00.000Z', store: 'Ristorante', walletId: 'wallet-3' },
-    ],
-    incomes: [
-      // Stipendi regolari da luglio 2024 a luglio 2025
-      { id: 1, amount: 2500.00, category: 'Stipendio', date: '2024-07-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 2, amount: 2500.00, category: 'Stipendio', date: '2024-08-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 3, amount: 2500.00, category: 'Stipendio', date: '2024-09-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 4, amount: 2500.00, category: 'Stipendio', date: '2024-10-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 5, amount: 2500.00, category: 'Stipendio', date: '2024-11-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 6, amount: 2500.00, category: 'Stipendio', date: '2024-12-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 7, amount: 2500.00, category: 'Stipendio', date: '2025-01-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 8, amount: 2500.00, category: 'Stipendio', date: '2025-02-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 9, amount: 2500.00, category: 'Stipendio', date: '2025-03-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 10, amount: 2500.00, category: 'Stipendio', date: '2025-04-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 11, amount: 2500.00, category: 'Stipendio', date: '2025-05-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 12, amount: 2500.00, category: 'Stipendio', date: '2025-06-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 13, amount: 2500.00, category: 'Stipendio', date: '2025-07-01T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      // Bonus e freelance
-      { id: 14, amount: 500.00, category: 'Bonus', date: '2024-07-15T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 15, amount: 200.00, category: 'Bonus', date: '2024-09-10T00:00:00.000Z', store: 'Cliente A', walletId: 'wallet-2' },
-      { id: 16, amount: 300.00, category: 'Freelance', date: '2024-10-20T00:00:00.000Z', store: 'Cliente B', walletId: 'wallet-2' },
-      { id: 17, amount: 400.00, category: 'Freelance', date: '2024-12-15T00:00:00.000Z', store: 'Cliente B', walletId: 'wallet-2' },
-      { id: 18, amount: 200.00, category: 'Investimenti', date: '2025-01-10T00:00:00.000Z', store: 'Banca', walletId: 'wallet-3' },
-      { id: 19, amount: 150.00, category: 'Regali', date: '2024-12-24T00:00:00.000Z', store: 'Famiglia', walletId: 'wallet-1' },
-      { id: 20, amount: 100.00, category: 'Vendite', date: '2025-02-10T00:00:00.000Z', store: 'Amazon', walletId: 'wallet-2' },
-      { id: 21, amount: 200.00, category: 'Bonus', date: '2025-03-31T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 22, amount: 100.00, category: 'Bonus', date: '2025-05-15T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-      { id: 23, amount: 150.00, category: 'Bonus', date: '2025-07-05T00:00:00.000Z', store: 'Azienda SRL', walletId: 'wallet-1' },
-    ],
-    categories: {
-      expense: [
-        { id: 1, name: 'Alimentari', icon: '🍽️' },
-        { id: 2, name: 'Trasporti', icon: '🚗' },
-        { id: 3, name: 'Intrattenimento', icon: '🎮' },
-        { id: 4, name: 'Shopping', icon: '🛍️' },
-        { id: 5, name: 'Bollette', icon: '💡' },
-        { id: 6, name: 'Salute', icon: '🏥' },
-        { id: 7, name: 'Educazione', icon: '📚' },
-        { id: 8, name: 'Trasferimento', icon: '💸' },
-        { id: 9, name: 'Abbonamenti', icon: '📱' },
-        { id: 10, name: 'Altro', icon: '📦' }
-      ],
-      income: [
-        { id: 11, name: 'Stipendio', icon: '💼' },
-        { id: 12, name: 'Freelance', icon: '💻' },
-        { id: 13, name: 'Investimenti', icon: '📈' },
-        { id: 14, name: 'Regali', icon: '🎁' },
-        { id: 15, name: 'Vendite', icon: '🛒' },
-        { id: 16, name: 'Bonus', icon: '🎯' },
-        { id: 17, name: 'Trasferimento', icon: '💸' },
-        { id: 18, name: 'Altro', icon: '📦' }
-      ]
-    },
-    stores: [
-      'Supermercato Coop', 'Eni', 'Zara', 'Cinema', 'Enel', 'Pizzeria', 'Amazon', 'Farmacia', 
-      'ATM', 'Libreria', 'Ristorante', 'Carrefour', 'Ikea', 'Trenitalia', 'Netflix',
-      'Azienda SRL', 'Cliente A', 'Banca', 'Famiglia', 'Esselunga', 'Autostrade', 'H&M', 'Spotify', 'TIM', 'Cliente B'
-    ],
-    wallets: [
-      { id: 'wallet-1', name: 'Conto Principale', color: '#6366f1', balance: 0, initialBalance: 1000 },
-      { id: 'wallet-2', name: 'Conto Risparmi', color: '#10b981', balance: 0, initialBalance: 500 },
-      { id: 'wallet-3', name: 'Conto Investimenti', color: '#f59e42', balance: 0, initialBalance: 2000 }
-    ]
-  };
 
-  // Funzione per caricare i dati demo
-  const loadDemoData = () => {
-    if (window.confirm('Vuoi caricare i dati demo? I dati esistenti verranno sostituiti.')) {
-      console.log('Loading demo data...', demoData);
-      
-      setExpenses(demoData.expenses);
-      setIncomes(demoData.incomes);
-      setCategories(demoData.categories);
-      setStores(demoData.stores);
-      setWallets(demoData.wallets);
-      setActiveWalletId('wallet-1');
-      
-      // Salva i dati demo nel localStorage
-      localStorage.setItem('expenses', JSON.stringify(demoData.expenses));
-      localStorage.setItem('incomes', JSON.stringify(demoData.incomes));
-      localStorage.setItem('categories', JSON.stringify(demoData.categories));
-      localStorage.setItem('stores', JSON.stringify(demoData.stores));
-      localStorage.setItem('wallets', JSON.stringify(demoData.wallets));
-      
-      console.log('Demo data loaded and saved to localStorage');
-      alert('Dati demo caricati con successo! Ora puoi esplorare tutte le funzionalità dell\'app.');
-    }
-  };
 
-  // Funzione per cancellare tutti i dati
-  const clearAllData = () => {
-    if (window.confirm('Sei sicuro di voler cancellare tutti i dati? Questa azione non può essere annullata.')) {
-      // Resetta tutti gli stati
-      setExpenses([]);
-      setIncomes([]);
-      setCategories(defaultCategories);
-      setStores([]);
-      setWallets([defaultWallet]);
-      setActiveWalletId('wallet-1');
-      
-      // Pulisce il localStorage
-      localStorage.removeItem('expenses');
-      localStorage.removeItem('incomes');
-      localStorage.removeItem('categories');
-      localStorage.removeItem('stores');
-      localStorage.removeItem('wallets');
-      
-      console.log('All data cleared');
-      alert('Tutti i dati sono stati cancellati con successo!');
-    }
-  };
+
 
   // Mostra loading mentre verifica l'autenticazione
   if (authLoading) {
@@ -595,46 +426,41 @@ function App() {
       <header className="fixed top-0 left-0 w-full z-30 py-6 animate-fade-in">
         <div className="max-w-md mx-auto px-6">
           <div className="bg-blue-600/40 backdrop-blur-md border border-blue-700/60 rounded-2xl p-3 transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/25 active:scale-95">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm flex-shrink-0">
                   <Wallet className="w-4 h-4" />
                 </div>
-                <h1 className="text-lg font-bold text-white animate-fade-in-up">
+                <h1 className="text-lg font-bold text-white animate-fade-in-up flex-shrink-0">
                   MoneyTracker
                 </h1>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 text-white text-sm">
-                  <User className="w-4 h-4" />
-                  <span>{user.displayName || user.email}</span>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowUserProfile(true)}
+                    className="w-7 h-7 bg-white/20 rounded-lg backdrop-blur-sm border border-white/30 flex items-center justify-center hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95 cursor-pointer"
+                  >
+                    <span className="text-white text-xs font-semibold">
+                      {(() => {
+                        const name = user.displayName || user.email;
+                        const words = name.split(' ').filter(word => word.length > 0);
+                        if (words.length >= 2) {
+                          return (words[0][0] + words[1][0]).toUpperCase();
+                        } else if (words.length === 1) {
+                          return words[0].substring(0, 2).toUpperCase();
+                        } else {
+                          return name.substring(0, 2).toUpperCase();
+                        }
+                      })()}
+                    </span>
+                  </button>
                 </div>
                 <button
                   onClick={toggleTheme}
-                  className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95"
+                  className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95 flex-shrink-0"
                 >
                   {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={loadDemoData}
-                  className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95"
-                  title="Carica dati demo"
-                >
-                  <Play className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={clearAllData}
-                  className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95"
-                  title="Cancella tutti i dati"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={logout}
-                  className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -904,6 +730,12 @@ function App() {
             ? `Sei sicuro di voler eliminare il conto "${itemToDelete?.wallet?.name}"? Questa azione eliminerà anche ${itemToDelete?.expenses?.length || 0} spese e ${itemToDelete?.incomes?.length || 0} entrate collegate. Questa azione non può essere annullata.`
             : "Sei sicuro di voler eliminare questa transazione? Questa azione non può essere annullata."
         }
+      />
+
+      {/* User Profile Modal */}
+      <UserProfile 
+        isOpen={showUserProfile}
+        onClose={() => setShowUserProfile(false)}
       />
     </div>
   );
