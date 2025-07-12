@@ -2,14 +2,14 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Configurazione Firebase
+// Configurazione Firebase usando variabili d'ambiente
 const firebaseConfig = {
-  apiKey: "AIzaSyDigO-IbSyJB8q-xvU1mHsTPrqm7Sne6xU",
-  authDomain: "money-tracker-6c88c.firebaseapp.com",
-  projectId: "money-tracker-6c88c",
-  storageBucket: "money-tracker-6c88c.firebasestorage.app",
-  messagingSenderId: "66841048485",
-  appId: "1:66841048485:web:db403f1dd5d0abdfad644c"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Inizializza Firebase

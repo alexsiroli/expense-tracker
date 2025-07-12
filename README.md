@@ -46,6 +46,28 @@ Un'applicazione web moderna e responsive per tracciare spese, entrate e visualiz
 ### Prerequisiti
 - Node.js (versione 16 o superiore)
 - npm o yarn
+- Account Firebase (per autenticazione e database)
+
+### Configurazione Firebase
+
+1. **Crea un progetto Firebase**
+   - Vai su [Firebase Console](https://console.firebase.google.com/)
+   - Crea un nuovo progetto
+   - Abilita Authentication e Firestore
+
+2. **Configura le variabili d'ambiente**
+   - Crea un file `.env` nella root del progetto
+   - Aggiungi le tue credenziali Firebase:
+
+```bash
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
 
 ### Installazione
 
@@ -60,12 +82,16 @@ cd expense-tracker
 npm install
 ```
 
-3. **Avvia l'applicazione in modalità sviluppo**
+3. **Configura le variabili d'ambiente**
+   - Copia il file `.env.example` in `.env`
+   - Inserisci le tue credenziali Firebase
+
+4. **Avvia l'applicazione in modalità sviluppo**
 ```bash
 npm run dev
 ```
 
-4. **Apri il browser**
+5. **Apri il browser**
 L'applicazione sarà disponibile all'indirizzo `http://localhost:5173`
 
 ### Build per Produzione
