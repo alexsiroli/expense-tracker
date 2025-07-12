@@ -1,0 +1,12 @@
+{
+  "name": "firebase-cleanup",
+  "version": "1.0.0",
+  "description": "Script per eliminare tutti gli utenti da Firebase",
+  "main": "delete-all-users.js",
+  "scripts": {
+    "delete-users": "node delete-all-users.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+} 

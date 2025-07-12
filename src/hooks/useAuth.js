@@ -8,7 +8,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  deleteUser
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
 
@@ -79,6 +80,22 @@ export const useAuth = () => {
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      if (!user) {
+        throw new Error('Nessun utente autenticato');
+      }
+      
+      // Elimina l'account utente
+      await deleteUser(user);
+      console.log('Account eliminato con successo');
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione account:', error);
+      setError(getErrorMessage(error.code));
+      throw error;
+    }
+  };
+
   const getErrorMessage = (errorCode) => {
     switch (errorCode) {
       case 'auth/user-not-found':
@@ -99,6 +116,10 @@ export const useAuth = () => {
         return 'Login annullato. Riprova.';
       case 'auth/popup-blocked':
         return 'Popup bloccato. Abilita i popup per questo sito.';
+      case 'auth/requires-recent-login':
+        return 'Per eliminare l\'account, devi effettuare nuovamente l\'accesso.';
+      case 'auth/user-token-expired':
+        return 'Sessione scaduta. Effettua nuovamente l\'accesso.';
       default:
         return `Errore durante l'autenticazione: ${errorCode}. Riprova.`;
     }
@@ -112,6 +133,7 @@ export const useAuth = () => {
     register,
     loginWithGoogle,
     logout,
+    deleteAccount,
     clearError: () => setError(null)
   };
 }; 

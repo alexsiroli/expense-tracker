@@ -6,10 +6,12 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
 const UserProfile = ({ isOpen, onClose }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
+  const { deleteAllUserData } = useFirestore();
   const { data: expenses } = useFirestore().useCollectionData('expenses');
   const { data: incomes } = useFirestore().useCollectionData('incomes');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -19,8 +21,34 @@ const UserProfile = ({ isOpen, onClose }) => {
     : 'Data non disponibile';
 
   const handleDeleteAccount = async () => {
-    // TODO: Implementare eliminazione account
-    alert('Funzionalità di eliminazione account in sviluppo');
+    try {
+      setIsDeleting(true);
+      
+      // Prima elimina tutti i dati Firestore
+      await deleteAllUserData();
+      
+      // Poi elimina l'account utente
+      await deleteAccount();
+      
+      // Chiudi il modal
+      onClose();
+      
+      console.log('Account eliminato con successo');
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione account:', error);
+      
+      // Se l'errore è dovuto a login recente richiesto, mostra messaggio specifico
+      if (error.code === 'auth/requires-recent-login') {
+        alert('Per eliminare l\'account, devi effettuare nuovamente l\'accesso. Verrai reindirizzato alla pagina di login.');
+        await logout();
+        onClose();
+      } else {
+        alert(`Errore durante l'eliminazione account: ${error.message}`);
+      }
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -133,20 +161,33 @@ const UserProfile = ({ isOpen, onClose }) => {
                 Elimina Account
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Sei sicuro di voler eliminare il tuo account? Questa azione eliminerà tutti i tuoi dati e non può essere annullata.
+                Sei sicuro di voler eliminare il tuo account? Questa azione eliminerà:
+                <br />• Tutti i tuoi dati (spese, entrate, conti, categorie)
+                <br />• Il tuo account di accesso
+                <br /><br />
+                <strong>Questa azione non può essere annullata.</strong>
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200"
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Annulla
                 </button>
                 <button
                   onClick={handleDeleteAccount}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-xl transition-colors duration-200"
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Elimina
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Eliminando...
+                    </>
+                  ) : (
+                    'Elimina'
+                  )}
                 </button>
               </div>
             </div>

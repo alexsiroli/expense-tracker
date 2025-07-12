@@ -218,6 +218,37 @@ export const useFirestore = () => {
     }
   };
 
+  // Elimina tutti i dati dell'utente
+  const deleteAllUserData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const collections = ['expenses', 'incomes', 'categories', 'stores', 'wallets'];
+      
+      for (const collectionName of collections) {
+        const querySnapshot = await getDocs(getUserCollection(collectionName));
+        
+        if (querySnapshot.docs.length > 0) {
+          const batch = writeBatch(db);
+          
+          querySnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+          
+          await batch.commit();
+        }
+      }
+      
+      console.log('Tutti i dati dell\'utente eliminati con successo');
+    } catch (error) {
+      setError('Errore durante l\'eliminazione dei dati: ' + error.message);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     error,
@@ -228,6 +259,7 @@ export const useFirestore = () => {
     deleteMultipleDocuments,
     loadAllUserData,
     importUserData,
+    deleteAllUserData,
     clearError: () => setError(null)
   };
 }; 
