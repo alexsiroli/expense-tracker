@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Euro, Tag, Calendar, Save, ArrowLeft, Store, Search, Wallet } from 'lucide-react';
 
-function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [], categories = [], wallets = [], selectedWalletId }) {
+function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [], categories = [], wallets = [], selectedWalletId, onAddStore }) {
   const [formData, setFormData] = useState({
     amount: '',
     category: categories.length > 0 ? categories[0].name : '',
@@ -51,32 +51,30 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
 
   // Filtra i negozi mentre l'utente digita
   useEffect(() => {
-    if (formData.store.trim()) {
-      const filtered = stores.filter(store => 
-        store.toLowerCase().includes(formData.store.toLowerCase())
-      );
-      setStoreSuggestions(filtered);
-      setShowStoreSuggestions(filtered.length > 0);
-    } else {
+    // Mostra tutti i negozi disponibili quando l'input è vuoto e ha focus
+    if (!formData.store.trim() && storeInputRef.current === document.activeElement) {
+      setStoreSuggestions(stores.slice(0, 5)); // Mostra solo i primi 5
+      setShowStoreSuggestions(stores.length > 0);
+    } else if (!formData.store.trim()) {
+      // Nascondi suggerimenti quando l'input è vuoto e non ha focus
       setStoreSuggestions([]);
       setShowStoreSuggestions(false);
     }
   }, [formData.store, stores]);
 
   // Aggiunge il negozio alla lista se non esiste
-  const addStoreToSuggestions = (storeName) => {
-    if (storeName.trim() && !stores.includes(storeName.trim())) {
-      const newStores = [...stores, storeName.trim()];
-      localStorage.setItem('stores', JSON.stringify(newStores));
+  const addStoreToSuggestions = async (storeName) => {
+    if (storeName.trim() && !stores.includes(storeName.trim()) && onAddStore) {
+      await onAddStore(storeName.trim());
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.amount) return;
     
     // Aggiunge il negozio alla lista se non esiste
-    addStoreToSuggestions(formData.store);
+    await addStoreToSuggestions(formData.store);
     
     // Combina data e ora per creare un timestamp completo
     const dateTime = `${formData.date}T${formData.time}:00`;
@@ -95,6 +93,29 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
       ...prev,
       [name]: value
     }));
+    
+    // Mostra suggerimenti per i negozi mentre l'utente digita
+    if (name === 'store' && value.trim()) {
+      const filtered = stores.filter(store => 
+        store.toLowerCase().includes(value.toLowerCase())
+      );
+      
+      // Ordina: prima quelli che iniziano con il testo, poi quelli che lo contengono, tutto in ordine alfabetico
+      const sorted = filtered.sort((a, b) => {
+        const aStartsWith = a.toLowerCase().startsWith(value.toLowerCase());
+        const bStartsWith = b.toLowerCase().startsWith(value.toLowerCase());
+        
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        return a.localeCompare(b, 'it', { sensitivity: 'base' });
+      });
+      
+      setStoreSuggestions(sorted);
+      setShowStoreSuggestions(true);
+    } else if (name === 'store' && !value.trim()) {
+      setStoreSuggestions([]);
+      setShowStoreSuggestions(false);
+    }
   };
 
   const handleStoreSelect = (store) => {
@@ -109,7 +130,30 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
   };
 
   const handleStoreInputFocus = () => {
-    if (formData.store.trim() && storeSuggestions.length > 0) {
+    // Mostra tutti i negozi disponibili quando l'input è vuoto
+    if (!formData.store.trim()) {
+      const sortedStores = [...stores].sort((a, b) => 
+        a.localeCompare(b, 'it', { sensitivity: 'base' })
+      );
+      setStoreSuggestions(sortedStores.slice(0, 5));
+      setShowStoreSuggestions(stores.length > 0);
+    } else {
+      // Filtra i negozi che contengono il testo digitato
+      const filtered = stores.filter(store => 
+        store.toLowerCase().includes(formData.store.toLowerCase())
+      );
+      
+      // Ordina: prima quelli che iniziano con il testo, poi quelli che lo contengono, tutto in ordine alfabetico
+      const sorted = filtered.sort((a, b) => {
+        const aStartsWith = a.toLowerCase().startsWith(formData.store.toLowerCase());
+        const bStartsWith = b.toLowerCase().startsWith(formData.store.toLowerCase());
+        
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        return a.localeCompare(b, 'it', { sensitivity: 'base' });
+      });
+      
+      setStoreSuggestions(sorted);
       setShowStoreSuggestions(true);
     }
   };
@@ -226,11 +270,15 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                 onKeyDown={handleStoreInputKeyDown}
                 placeholder="Nome negozio"
                 className="input form-input-with-icon"
-                autoComplete="off"
+                autoComplete="new-password"
                 autoCorrect="off"
                 autoCapitalize="off"
                 spellCheck="false"
                 inputMode="text"
+                data-lpignore="true"
+                data-form-type="other"
+                role="combobox"
+                aria-autocomplete="list"
               />
               
               {/* Suggerimenti negozi */}
@@ -239,25 +287,32 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                   ref={suggestionsRef}
                   className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto autocomplete-suggestions"
                 >
-                  {storeSuggestions.map((store, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleStoreSelect(store);
-                      }}
-                      onTouchStart={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      className="autocomplete-item w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors flex items-center gap-2"
-                    >
-                      <Search className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                      <span className="truncate">{store}</span>
-                    </button>
-                  ))}
+                  {storeSuggestions.length > 0 ? (
+                    storeSuggestions.map((store, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleStoreSelect(store);
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        className="autocomplete-item w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors flex items-center gap-2"
+                      >
+                        <Search className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{store}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                      <Search className="w-4 h-4" />
+                      <span>Nessun negozio trovato</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

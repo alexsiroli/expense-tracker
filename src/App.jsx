@@ -157,7 +157,14 @@ function App() {
       const storesDoc = storesData[0];
       if (storesDoc.stores) {
         setStores(storesDoc.stores);
+        setLastSyncTime(new Date().toISOString());
+      } else {
+        setStores([]);
       }
+    } else if (storesData && storesData.length === 0) {
+      setStores([]);
+    } else {
+      setStores([]);
     }
   }, [storesData]);
 
@@ -661,6 +668,23 @@ function App() {
       alert('Errore durante l\'importazione dei dati.');
     }
   };
+
+  // Funzione per aggiungere un nuovo store
+  const addStore = async (storeName) => {
+    if (storeName.trim() && !stores.includes(storeName.trim())) {
+      const newStores = [...stores, storeName.trim()];
+      setStores(newStores);
+      
+      // Aggiorna Firestore
+      if (storesData && storesData.length > 0) {
+        const storesDoc = storesData[0];
+        await updateDocument('stores', storesDoc.id, { stores: newStores });
+      } else {
+        // Se non esiste ancora un documento stores, crealo
+        await addDocument('stores', { stores: newStores });
+      }
+    }
+  };
   // deleteWallet = (id) => { // This function is now handled by the new updateAllWalletsBalance
   //   setWallets(wallets.filter(w => w.id !== id));
   //   // TODO: elimina anche tutte le transazioni collegate a questo portafoglio
@@ -743,7 +767,7 @@ function App() {
       </header>
 
       {/* Balance Card con design moderno - PRIMA COSA */}
-      <div className="max-w-md mx-auto px-6 pt-1 pb-6 animate-fade-in-up">
+      <div className="max-w-md mx-auto px-6 -mt-4 pb-6 animate-fade-in-up">
         <div className={`floating-card ${balanceCollapsed ? 'p-3' : 'p-6'} transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 animate-bounce-in active:scale-95`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -827,7 +851,7 @@ function App() {
         {/* Content */}
                   {activeTab === 'expenses' && (
             <div className="animate-fade-in-up">
-              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-0 shadow-lg">
+              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue spese</h2>
                   <button
@@ -851,7 +875,7 @@ function App() {
 
                   {activeTab === 'incomes' && (
             <div className="animate-fade-in-up">
-              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-0 shadow-lg">
+              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Le tue entrate</h2>
                   <button
@@ -875,7 +899,7 @@ function App() {
 
                   {activeTab === 'stats' && (
             <div className="animate-fade-in-up">
-              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-0 shadow-lg">
+              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistiche</h2>
               </div>
             <DateRangePicker onDateRangeChange={setDateRange} />
@@ -893,7 +917,7 @@ function App() {
 
                   {activeTab === 'categories' && (
             <div className="animate-fade-in-up">
-              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-0 shadow-lg">
+              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Categorie</h2>
               </div>
             <div className="space-y-8">
@@ -1011,6 +1035,7 @@ function App() {
           categories={activeTab === 'expenses' ? categories.expense : categories.income}
           wallets={wallets}
           selectedWalletId={activeWalletId}
+          onAddStore={addStore}
         />
       )}
 
