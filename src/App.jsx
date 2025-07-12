@@ -128,8 +128,19 @@ function App() {
     startDate: '',
     endDate: '',
     selectedCategories: [],
-    selectedStores: []
+    selectedStores: [],
+    selectedWallets: []
   });
+
+  // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
+  useEffect(() => {
+    if (wallets.length > 0) {
+      setActiveFilters(prev => ({
+        ...prev,
+        selectedWallets: wallets.map(w => w.id)
+      }));
+    }
+  }, [wallets]);
 
   // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
@@ -465,8 +476,8 @@ function App() {
     console.log('Category edited successfully - waiting for Firestore sync');
   };
 
-  const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
-  const totalIncomes = incomes.reduce((sum, income) => sum + parseFloat(income.amount), 0);
+  const totalExpenses = expenses.filter(expense => expense.category !== 'Trasferimento').reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+  const totalIncomes = incomes.filter(income => income.category !== 'Trasferimento').reduce((sum, income) => sum + parseFloat(income.amount), 0);
   const balance = totalIncomes - totalExpenses;
 
   const currentMonth = format(new Date(), 'yyyy-MM', { locale: it });
@@ -557,6 +568,16 @@ function App() {
         activeFilters.selectedStores.some(store => 
           income.store && income.store.toLowerCase().startsWith(store.toLowerCase())
         )
+      );
+    }
+
+    // Filtro per conti
+    if (activeFilters.selectedWallets && activeFilters.selectedWallets.length > 0) {
+      filteredExpenses = filteredExpenses.filter(expense => 
+        activeFilters.selectedWallets.includes(expense.walletId)
+      );
+      filteredIncomes = filteredIncomes.filter(income => 
+        activeFilters.selectedWallets.includes(income.walletId)
       );
     }
 
@@ -843,7 +864,8 @@ function App() {
         startDate: '',
         endDate: '',
         selectedCategories: [],
-        selectedStores: []
+        selectedStores: [],
+        selectedWallets: []
       });
       
       console.log('Reset completo completato con successo');
@@ -944,10 +966,10 @@ function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <PiggyBank className="w-6 h-6 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Bilancio Totale</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{format(new Date(), 'MMMM yyyy', { locale: it }).replace(/^\w/, c => c.toUpperCase())}</h2>
               {balanceCollapsed && !expensesLoading && !incomesLoading && (
-                <span className={`text-lg font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(balance)}
+                <span className={`text-lg font-bold ${(currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency((currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)))}
                 </span>
               )}
               {(expensesLoading || incomesLoading) && (
@@ -973,8 +995,8 @@ function App() {
           {!balanceCollapsed && (
             <>
               <div className="text-center mt-4 animate-fade-in-up">
-                <div className={`text-4xl font-bold mb-4 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(balance)}
+                <div className={`text-4xl font-bold mb-4 ${(currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency((currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)))}
                 </div>
                 <div className="flex justify-center gap-6 text-sm">
                   <div className="text-green-600 transform hover:scale-105 transition-all duration-200 active:scale-95">
@@ -982,14 +1004,14 @@ function App() {
                       <TrendingUp className="w-4 h-4" />
                       Entrate
                     </div>
-                    <div className="text-lg font-bold">{formatCurrency(totalIncomes)}</div>
+                    <div className="text-lg font-bold">{formatCurrency(currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0))}</div>
                   </div>
                   <div className="text-red-600 transform hover:scale-105 transition-all duration-200 active:scale-95">
                     <div className="flex items-center gap-1 font-semibold">
                       <TrendingDown className="w-4 h-4" />
                       Spese
                     </div>
-                    <div className="text-lg font-bold">{formatCurrency(totalExpenses)}</div>
+                    <div className="text-lg font-bold">{formatCurrency(currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0))}</div>
                   </div>
                 </div>
               </div>
@@ -1476,6 +1498,7 @@ function App() {
         onApplyFilters={applyFilters}
         categories={activeTab === 'stats' ? [...(categories.expense || []), ...(categories.income || [])] : (activeTab === 'expenses' ? categories.expense : categories.income)}
         stores={stores}
+        wallets={getWalletsWithCalculatedBalance()}
       />
     </div>
   );

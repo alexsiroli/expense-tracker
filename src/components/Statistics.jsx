@@ -16,40 +16,18 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
     return { expenses, incomes };
   }, [expenses, incomes]);
 
-  // Riepilogo del mese corrente
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
   
-  const currentMonthExpenses = filteredData.expenses.filter(e => {
-    const date = new Date(e.date);
-    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-  });
-  
-  const currentMonthIncomes = filteredData.incomes.filter(i => {
-    const date = new Date(i.date);
-    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-  });
-  
-  const currentMonthTotalExpenses = currentMonthExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
-  const currentMonthTotalIncomes = currentMonthIncomes.reduce((sum, i) => sum + parseFloat(i.amount), 0);
-  const currentMonthBalance = currentMonthTotalIncomes - currentMonthTotalExpenses;
-  
-  // Nome del mese corrente
-  const monthNames = [
-    'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-    'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
-  ];
-  const currentMonthName = monthNames[currentMonth];
   
   // Riepilogo totale (per compatibilità)
-  const totalExpenses = filteredData.expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
-  const totalIncomes = filteredData.incomes.reduce((sum, i) => sum + parseFloat(i.amount), 0);
+  const totalExpenses = filteredData.expenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0);
+  const totalIncomes = filteredData.incomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0);
   const balance = totalIncomes - totalExpenses;
+  
 
   // Statistiche temporali (per mese)
   const monthlyData = useMemo(() => {
     const months = {};
-    [...filteredData.expenses, ...filteredData.incomes].forEach(item => {
+    [...filteredData.expenses.filter(e => e.category !== 'Trasferimento'), ...filteredData.incomes.filter(i => i.category !== 'Trasferimento')].forEach(item => {
       const date = new Date(item.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       if (!months[monthKey]) months[monthKey] = { month: monthKey, Spese: 0, Entrate: 0 };
@@ -62,14 +40,14 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
   // Statistiche per categoria
   const expenseByCategory = useMemo(() => {
     const acc = {};
-    filteredData.expenses.forEach(e => {
+    filteredData.expenses.filter(e => e.category !== 'Trasferimento').forEach(e => {
       acc[e.category] = (acc[e.category] || 0) + parseFloat(e.amount);
     });
     return acc;
   }, [filteredData]);
   const incomeByCategory = useMemo(() => {
     const acc = {};
-    filteredData.incomes.forEach(i => {
+    filteredData.incomes.filter(i => i.category !== 'Trasferimento').forEach(i => {
       acc[i.category] = (acc[i.category] || 0) + parseFloat(i.amount);
     });
     return acc;
@@ -80,7 +58,7 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
   // Statistiche per negozio
   const expenseByStore = useMemo(() => {
     const acc = {};
-    filteredData.expenses.forEach(e => {
+    filteredData.expenses.filter(e => e.category !== 'Trasferimento').forEach(e => {
       const store = e.store || 'Senza negozio';
       acc[store] = (acc[store] || 0) + parseFloat(e.amount);
     });
@@ -88,7 +66,7 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
   }, [filteredData]);
   const incomeByStore = useMemo(() => {
     const acc = {};
-    filteredData.incomes.forEach(i => {
+    filteredData.incomes.filter(i => i.category !== 'Trasferimento').forEach(i => {
       const store = i.store || 'Senza negozio';
       acc[store] = (acc[store] || 0) + parseFloat(i.amount);
     });
@@ -133,28 +111,13 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
   // UI
   return (
     <div className="space-y-6">
-      {/* Riepilogo del mese corrente */}
+      {/* Bilancio del periodo filtrato */}
       <div className="card p-6">
         <div className="flex items-center justify-center gap-3">
           <div className="p-2 bg-blue-100 rounded-lg"><DollarSign className="w-6 h-6 text-blue-600" /></div>
           <div className="text-center">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{currentMonthName}</h3>
-            <p className={`text-3xl font-bold ${currentMonthBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(currentMonthBalance)}</p>
-            <div className="flex gap-4 mt-2 text-xs">
-              <span className="text-red-600">Spese: {formatCurrency(currentMonthTotalExpenses)}</span>
-              <span className="text-green-600">Entrate: {formatCurrency(currentMonthTotalIncomes)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Riepilogo totale generale */}
-      <div className="card p-6">
-        <div className="flex items-center justify-center gap-3">
-          <div className="p-2 bg-gray-100 rounded-lg"><DollarSign className="w-6 h-6 text-gray-600" /></div>
-          <div className="text-center">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Totale Generale</h3>
-            <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(balance)}</p>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Bilancio</h3>
+            <p className={`text-3xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(balance)}</p>
             <div className="flex gap-4 mt-2 text-xs">
               <span className="text-red-600">Spese: {formatCurrency(totalExpenses)}</span>
               <span className="text-green-600">Entrate: {formatCurrency(totalIncomes)}</span>

@@ -1,20 +1,39 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Calendar, Tag, Store, Search, Filter, Clock } from 'lucide-react';
+import { X, Calendar, Tag, Store, Search, Filter, Clock, Wallet, ChevronDown, ChevronUp } from 'lucide-react';
 
-function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], stores = [] }) {
+function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], stores = [], wallets = [] }) {
   const [filters, setFilters] = useState({
     timeRange: 'all', // all, today, week, month, year, custom
     startDate: '',
     endDate: '',
     selectedCategories: [],
     selectedStores: [],
+    selectedWallets: wallets.map(w => w.id), // Di default tutti selezionati
     searchStore: ''
   });
 
   const [storeSuggestions, setStoreSuggestions] = useState([]);
   const [showStoreSuggestions, setShowStoreSuggestions] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    time: false,
+    categories: false,
+    wallets: false,
+    stores: false
+  });
   const storeSearchRef = useRef(null);
   const suggestionsRef = useRef(null);
+
+  // Reset delle sezioni espanse quando il dialog si apre
+  useEffect(() => {
+    if (isOpen) {
+      setExpandedSections({
+        time: false,
+        categories: false,
+        wallets: false,
+        stores: false
+      });
+    }
+  }, [isOpen]);
 
   // Gestisce il click fuori dai suggerimenti per chiuderli
   useEffect(() => {
@@ -49,6 +68,22 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], stores
       selectedCategories: prev.selectedCategories.includes(category)
         ? prev.selectedCategories.filter(c => c !== category)
         : [...prev.selectedCategories, category]
+    }));
+  };
+
+  const handleWalletToggle = (walletId) => {
+    setFilters(prev => ({
+      ...prev,
+      selectedWallets: prev.selectedWallets.includes(walletId)
+        ? prev.selectedWallets.filter(w => w !== walletId)
+        : [...prev.selectedWallets, walletId]
+    }));
+  };
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
     }));
   };
 
@@ -108,6 +143,7 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], stores
       endDate: '',
       selectedCategories: [],
       selectedStores: [],
+      selectedWallets: wallets.map(w => w.id), // Reset a tutti selezionati
       searchStore: ''
     });
   };
@@ -127,9 +163,9 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], stores
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
         {/* Header */}
-        <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+        <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <button
               onClick={onClose}
@@ -137,7 +173,7 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], stores
             >
               <X className="w-6 h-6" />
             </button>
-            <h2 className="text-xl font-bold flex items-center gap-2">
+            <h2 className="text-lg font-bold flex items-center gap-2">
               <Filter className="w-5 h-5" />
               Filtri
             </h2>
@@ -146,180 +182,267 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], stores
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(90vh-120px)]">
           {/* Filtro per tempo */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              Periodo
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { value: 'all', label: 'Tutti' },
-                { value: 'today', label: 'Oggi' },
-                { value: 'week', label: 'Settimana' },
-                { value: 'month', label: 'Mese' },
-                { value: 'year', label: 'Anno' },
-                { value: 'custom', label: 'Personalizzato' }
-              ].map(range => (
-                <button
-                  key={range.value}
-                  onClick={() => handleTimeRangeChange(range.value)}
-                  className={`p-3 rounded-lg text-sm font-medium transition-all ${
-                    filters.timeRange === range.value
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  {range.label}
-                </button>
-              ))}
-            </div>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+            <button
+              onClick={() => toggleSection('time')}
+              className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <span className="font-semibold text-gray-900 dark:text-gray-100">Periodo</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {getTimeRangeLabel(filters.timeRange)}
+                </span>
+              </div>
+              {expandedSections.time ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.time && (
+              <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'all', label: 'Tutti' },
+                    { value: 'today', label: 'Oggi' },
+                    { value: 'week', label: 'Settimana' },
+                    { value: 'month', label: 'Mese' },
+                    { value: 'year', label: 'Anno' },
+                    { value: 'custom', label: 'Personalizzato' }
+                  ].map(range => (
+                    <button
+                      key={range.value}
+                      onClick={() => handleTimeRangeChange(range.value)}
+                      className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                        filters.timeRange === range.value
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Date personalizzate */}
-            {filters.timeRange === 'custom' && (
-              <div className="mt-4 space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Data inizio
-                  </label>
-                  <input
-                    type="date"
-                    value={filters.startDate}
-                    onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="input w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Data fine
-                  </label>
-                  <input
-                    type="date"
-                    value={filters.endDate}
-                    onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="input w-full"
-                  />
-                </div>
+                {/* Date personalizzate */}
+                {filters.timeRange === 'custom' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Data inizio
+                      </label>
+                      <input
+                        type="date"
+                        value={filters.startDate}
+                        onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                        className="input w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Data fine
+                      </label>
+                      <input
+                        type="date"
+                        value={filters.endDate}
+                        onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                        className="input w-full"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           {/* Filtro per categorie */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Tag className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              Categorie
-            </label>
-            <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
-              {categories.map(category => (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategoryToggle(category.name)}
-                  className={`p-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
-                    filters.selectedCategories.includes(category.name)
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  <span>{category.icon}</span>
-                  <span className="truncate">{category.name}</span>
-                </button>
-              ))}
-            </div>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+            <button
+              onClick={() => toggleSection('categories')}
+              className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Tag className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <span className="font-semibold text-gray-900 dark:text-gray-100">Categorie</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {filters.selectedCategories.length > 0 ? `${filters.selectedCategories.length} selezionate` : 'Tutte'}
+                </span>
+              </div>
+              {expandedSections.categories ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.categories && (
+              <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
+                  {categories.map(category => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryToggle(category.name)}
+                      className={`p-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
+                        filters.selectedCategories.includes(category.name)
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      <span>{category.icon}</span>
+                      <span className="truncate">{category.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Filtro per conti */}
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+            <button
+              onClick={() => toggleSection('wallets')}
+              className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <span className="font-semibold text-gray-900 dark:text-gray-100">Conti</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {filters.selectedWallets.length > 0 ? `${filters.selectedWallets.length} selezionati` : 'Tutti'}
+                </span>
+              </div>
+              {expandedSections.wallets ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.wallets && (
+              <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                  {wallets.map(wallet => (
+                    <button
+                      key={wallet.id}
+                      onClick={() => handleWalletToggle(wallet.id)}
+                      className={`p-3 rounded-lg text-sm font-medium transition-all flex items-center justify-between ${
+                        filters.selectedWallets.includes(wallet.id)
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-4 h-4 rounded-full" 
+                          style={{ backgroundColor: wallet.color === 'rainbow' ? '#6366f1' : wallet.color }}
+                        />
+                        <span className="truncate">{wallet.name}</span>
+                      </div>
+                      <span className="text-xs opacity-75">
+                        {filters.selectedWallets.includes(wallet.id) ? 'Selezionato' : 'Non selezionato'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Filtro per negozi */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Store className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              Negozi
-            </label>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+            <button
+              onClick={() => toggleSection('stores')}
+              className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Store className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <span className="font-semibold text-gray-900 dark:text-gray-100">Negozi</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {filters.selectedStores.length > 0 ? `${filters.selectedStores.length} selezionati` : 'Tutti'}
+                </span>
+              </div>
+              {expandedSections.stores ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </button>
             
-            {/* Ricerca negozi */}
-            <div className="relative mb-3">
-              <input
-                ref={storeSearchRef}
-                type="text"
-                value={filters.searchStore}
-                onChange={(e) => handleStoreSearch(e.target.value)}
-                placeholder="Cerca negozi..."
-                className="input w-full pr-10"
-                autoComplete="new-password"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-                data-lpignore="true"
-                data-form-type="other"
-                role="combobox"
-                aria-autocomplete="list"
-              />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              
-              {/* Suggerimenti negozi */}
-              {showStoreSuggestions && (
-                <div 
-                  ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto"
-                >
-                  {storeSuggestions.length > 0 ? (
-                    storeSuggestions.map((store, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleStoreSelect(store);
-                        }}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors flex items-center gap-2"
-                      >
-                        <Search className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{store}</span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                      <Search className="w-4 h-4" />
-                      <span>Nessun negozio trovato</span>
+            {expandedSections.stores && (
+              <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                {/* Ricerca negozi */}
+                <div className="relative">
+                  <input
+                    ref={storeSearchRef}
+                    type="text"
+                    value={filters.searchStore}
+                    onChange={(e) => handleStoreSearch(e.target.value)}
+                    placeholder="Cerca negozi..."
+                    className="input w-full pr-10"
+                    autoComplete="new-password"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    role="combobox"
+                    aria-autocomplete="list"
+                  />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  
+                  {/* Suggerimenti negozi */}
+                  {showStoreSuggestions && (
+                    <div 
+                      ref={suggestionsRef}
+                      className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto"
+                    >
+                      {storeSuggestions.length > 0 ? (
+                        storeSuggestions.map((store, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleStoreSelect(store);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors flex items-center gap-2"
+                          >
+                            <Search className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{store}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                          <Search className="w-4 h-4" />
+                          <span>Nessun negozio trovato</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            {/* Negozi selezionati */}
-            {filters.selectedStores.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {filters.selectedStores.map(store => (
-                  <div
-                    key={store}
-                    className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-lg text-sm"
-                  >
-                    <span className="truncate">{store}</span>
-                    <button
-                      onClick={() => removeStore(store)}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                {/* Negozi selezionati */}
+                {filters.selectedStores.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {filters.selectedStores.map(store => (
+                      <div
+                        key={store}
+                        className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-lg text-sm"
+                      >
+                        <span className="truncate">{store}</span>
+                        <button
+                          onClick={() => removeStore(store)}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
 
           {/* Azioni */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-2">
             <button
               onClick={handleResetFilters}
-              className="btn btn-secondary flex-1"
+              className="btn btn-secondary flex-1 py-2"
             >
               Reset
             </button>
             <button
               onClick={handleApplyFilters}
-              className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1"
+              className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1 py-2"
             >
               Applica Filtri
             </button>
