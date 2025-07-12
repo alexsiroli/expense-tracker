@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Plus, ArrowRight, MoreVertical, Edit, Trash2, X } from 'lucide-react';
-import TransferModal from './TransferModal';
 import { formatCurrency } from '../utils/formatters';
 
-function WalletManager({ wallets, onAdd, onEdit, onDelete, onTransfer, onShowForm, onEditWallet }) {
-  const [showTransferModal, setShowTransferModal] = useState(false);
+function WalletManager({ wallets, onAdd, onEdit, onDelete, onTransfer, onShowForm, onEditWallet, onShowTransferModal }) {
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [showWalletActions, setShowWalletActions] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -84,7 +82,7 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete, onTransfer, onShowFor
       {wallets.length > 1 && (
         <div className="mt-6">
           <button
-            onClick={() => setShowTransferModal(true)}
+            onClick={onShowTransferModal}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-purple-700/90 transition-all duration-200 transform hover:scale-105"
           >
             <ArrowRight className="w-4 h-4" />
@@ -92,13 +90,6 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete, onTransfer, onShowFor
           </button>
         </div>
       )}
-      {/* Modal Trasferimento */}
-      <TransferModal
-        isOpen={showTransferModal}
-        onClose={() => setShowTransferModal(false)}
-        onTransfer={onTransfer}
-        wallets={wallets}
-      />
       {/* Modal Azioni Wallet */}
       {showWalletActions && selectedWallet && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999]">

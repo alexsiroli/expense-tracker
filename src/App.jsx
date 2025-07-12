@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -112,6 +112,12 @@ function App() {
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [editingWallet, setEditingWallet] = useState(null);
   const [walletFormData, setWalletFormData] = useState({ name: '', color: WALLET_COLORS[0], balance: 0 });
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferFormData, setTransferFormData] = useState({
+    fromWalletId: '',
+    toWalletId: '',
+    amount: ''
+  });
 
   // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
@@ -619,6 +625,29 @@ function App() {
     await addDocument('incomes', incomingTransaction);
   };
 
+  const handleTransferSubmit = (e) => {
+    e.preventDefault();
+    if (!transferFormData.fromWalletId || !transferFormData.toWalletId || !transferFormData.amount || transferFormData.fromWalletId === transferFormData.toWalletId) {
+      return;
+    }
+    
+    handleTransfer(transferFormData);
+    setTransferFormData({ fromWalletId: '', toWalletId: '', amount: '' });
+    setShowTransferModal(false);
+  };
+
+  const handleTransferChange = (e) => {
+    const { name, value } = e.target;
+    setTransferFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleShowTransferModal = () => {
+    setShowTransferModal(true);
+  };
+
   // Funzione per importare i dati
   const importData = async (data) => {
     try {
@@ -780,6 +809,7 @@ function App() {
                       onTransfer={handleTransfer}
                       onShowForm={handleAddWallet}
                       onEditWallet={handleEditWallet}
+                      onShowTransferModal={handleShowTransferModal}
                     />
                   );
                 })()}
@@ -1029,6 +1059,85 @@ function App() {
                   setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
                 }} className="btn btn-secondary flex-1">Annulla</button>
                 <button type="submit" className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1">{editingWallet ? 'Modifica' : 'Aggiungi'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Modal */}
+      {showTransferModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+              <div className="flex items-center justify-between">
+                <button onClick={() => {
+                  setShowTransferModal(false);
+                  setTransferFormData({ fromWalletId: '', toWalletId: '', amount: '' });
+                }} className="text-white/80 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold">Trasferimento tra Conti</h2>
+                <div className="w-6"></div>
+              </div>
+            </div>
+            <form onSubmit={handleTransferSubmit} className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Conto di origine</label>
+                <select
+                  name="fromWalletId"
+                  value={transferFormData.fromWalletId}
+                  onChange={handleTransferChange}
+                  className="input"
+                  required
+                >
+                  <option value="">Seleziona conto di origine</option>
+                  {wallets.map(wallet => (
+                    <option key={wallet.id} value={wallet.id}>
+                      {wallet.name} ({formatCurrency(wallet.balance)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-center">
+                <ArrowRight className="w-6 h-6 text-gray-400" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Conto di destinazione</label>
+                <select
+                  name="toWalletId"
+                  value={transferFormData.toWalletId}
+                  onChange={handleTransferChange}
+                  className="input"
+                  required
+                >
+                  <option value="">Seleziona conto di destinazione</option>
+                  {wallets.map(wallet => (
+                    <option key={wallet.id} value={wallet.id}>
+                      {wallet.name} ({formatCurrency(wallet.balance)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Importo</label>
+                <input
+                  type="number"
+                  name="amount"
+                  value={transferFormData.amount}
+                  onChange={handleTransferChange}
+                  placeholder="0,00"
+                  step="0.01"
+                  className="input"
+                  required
+                />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={() => {
+                  setShowTransferModal(false);
+                  setTransferFormData({ fromWalletId: '', toWalletId: '', amount: '' });
+                }} className="btn btn-secondary flex-1">Annulla</button>
+                <button type="submit" disabled={!transferFormData.fromWalletId || !transferFormData.toWalletId || !transferFormData.amount || transferFormData.fromWalletId === transferFormData.toWalletId} className="btn bg-blue-600 text-white hover:bg-blue-700 flex-1">Trasferisci</button>
               </div>
             </form>
           </div>
