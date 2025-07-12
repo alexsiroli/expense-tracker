@@ -59,35 +59,16 @@ export const useAuth = () => {
       setError(null);
       const provider = new GoogleAuthProvider();
       
-      // Su mobile usa redirect, su desktop usa popup
-      if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        await signInWithRedirect(auth, provider);
-      } else {
-        const result = await signInWithPopup(auth, provider);
-        return result.user;
-      }
+      // Usa sempre popup per evitare problemi di redirect
+      const result = await signInWithPopup(auth, provider);
+      console.log('Google login successful:', result.user);
+      return result.user;
     } catch (error) {
+      console.error('Google login error:', error);
       setError(getErrorMessage(error.code));
       throw error;
     }
   };
-
-  // Gestisce il risultato del redirect (per mobile)
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          // Login con Google completato
-          console.log('Google login successful:', result.user);
-        }
-      } catch (error) {
-        setError(getErrorMessage(error.code));
-      }
-    };
-
-    handleRedirectResult();
-  }, []);
 
   const logout = async () => {
     try {
@@ -112,8 +93,14 @@ export const useAuth = () => {
         return 'Email non valida.';
       case 'auth/too-many-requests':
         return 'Troppi tentativi. Riprova più tardi.';
+      case 'auth/operation-not-allowed':
+        return 'Login con Google non abilitato. Abilitalo in Firebase Console.';
+      case 'auth/popup-closed-by-user':
+        return 'Login annullato. Riprova.';
+      case 'auth/popup-blocked':
+        return 'Popup bloccato. Abilita i popup per questo sito.';
       default:
-        return 'Errore durante l\'autenticazione. Riprova.';
+        return `Errore durante l'autenticazione: ${errorCode}. Riprova.`;
     }
   };
 
