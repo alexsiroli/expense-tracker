@@ -148,6 +148,8 @@ function App() {
   const [lastPartyTime, setLastPartyTime] = useState(0);
   const [lastFooterTapTime, setLastFooterTapTime] = useState(0);
   const [longPressProgress, setLongPressProgress] = useState(0);
+  const longPressTimer = useRef(null);
+  const progressTimer = useRef(null);
   const [flameMode, setFlameMode] = useState(false);
   const [angelicMode, setAngelicMode] = useState(false);
   const [timeTravelMode, setTimeTravelMode] = useState(false);
@@ -397,99 +399,97 @@ function App() {
     updateThemeColor(rainbowMode, theme);
   }, []);
 
-  // Gestione easter egg - Tap lungo per modalità party
-  useEffect(() => {
-    let longPressTimer = null;
-    let progressTimer = null;
+  // Gestione easter egg - Long press sul titolo per party mode
+  const handleTouchStart = (event) => {
+    // Solo per il titolo dell'app
+    if (event.target.closest('.app-title')) {
+      // Reset progress
+      setLongPressProgress(0);
+      
+      // Avvia timer di progresso (ogni 100ms)
+      progressTimer.current = setInterval(() => {
+        setLongPressProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressTimer.current);
+            return 100;
+          }
+          return prev + 3.33; // 100% in 3 secondi (100/30 = 3.33)
+        });
+      }, 100);
 
-    const handleTouchStart = (event) => {
-      // Solo per il titolo dell'app
-      if (event.target.closest('.app-title')) {
+      longPressTimer.current = setTimeout(async () => {
+        console.log('Long press detected!'); // Debug
+        
+        const now = Date.now();
+        if (now - lastPartyTime > 3000) { // 3 secondi tra attivazioni
+          console.log('Party mode toggled!'); // Debug
+          setPartyMode(prev => !prev);
+          setLastPartyTime(now);
+          
+          if (!partyMode) {
+            // Attiva modalità party usando il nuovo sistema
+            const setters = {
+              setRainbowMode,
+              setPartyMode,
+              setRetroMode,
+              setFlameMode,
+              setAngelicMode,
+              setTimeTravelMode
+            };
+            
+            activateEasterEgg('tapLungo', setters);
+            
+            // Salva il completamento nel database
+            await saveEasterEggCompletion('tapLungo', setEasterEggCompleted);
+            // Piccolo delay per assicurarsi che il database sia aggiornato
+            await new Promise(resolve => setTimeout(resolve, 100));
+            await loadEasterEggsWithStatus();
+            
+            const easterEgg = getEasterEgg('tapLungo');
+            if (easterEgg) {
+              setTimeout(() => {
+                alert(easterEgg.activationMessage);
+              }, 100);
+            }
+          } else {
+            // Disattiva modalità party silenziosamente
+          }
+        }
+        
         // Reset progress
         setLongPressProgress(0);
-        
-        // Avvia timer di progresso (ogni 100ms)
-        progressTimer = setInterval(() => {
-          setLongPressProgress(prev => {
-            if (prev >= 100) {
-              clearInterval(progressTimer);
-              return 100;
-            }
-            return prev + 3.33; // 100% in 3 secondi (100/30 = 3.33)
-          });
-        }, 100);
+      }, 3000); // 3 secondi di tap lungo
+    }
+  };
 
-        longPressTimer = setTimeout(async () => {
-          console.log('Long press detected!'); // Debug
-          
-          const now = Date.now();
-          if (now - lastPartyTime > 3000) { // 3 secondi tra attivazioni
-            console.log('Party mode toggled!'); // Debug
-            setPartyMode(prev => !prev);
-            setLastPartyTime(now);
-            
-            if (!partyMode) {
-              // Attiva modalità party usando il nuovo sistema
-              const setters = {
-                setRainbowMode,
-                setPartyMode,
-                setRetroMode,
-                setFlameMode,
-                setAngelicMode,
-                setTimeTravelMode
-              };
-              
-              activateEasterEgg('tapLungo', setters);
-              
-                        // Salva il completamento nel database
-          await saveEasterEggCompletion('tapLungo', setEasterEggCompleted);
-          // Piccolo delay per assicurarsi che il database sia aggiornato
-          await new Promise(resolve => setTimeout(resolve, 100));
-          await loadEasterEggsWithStatus();
-              
-              const easterEgg = getEasterEgg('tapLungo');
-              if (easterEgg) {
-                setTimeout(() => {
-                  alert(easterEgg.activationMessage);
-                }, 100);
-              }
-            } else {
-              // Disattiva modalità party silenziosamente
-            }
-          }
-          
-          // Reset progress
-          setLongPressProgress(0);
-        }, 3000); // 3 secondi di tap lungo
-      }
-    };
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (progressTimer.current) {
+      clearInterval(progressTimer.current);
+      progressTimer.current = null;
+    }
+    // Reset progress
+    setLongPressProgress(0);
+  };
 
-    const handleTouchEnd = () => {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-      }
-      if (progressTimer) {
-        clearInterval(progressTimer);
-        progressTimer = null;
-      }
-      // Reset progress
-      setLongPressProgress(0);
-    };
+  const handleTouchMove = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (progressTimer.current) {
+      clearInterval(progressTimer.current);
+      progressTimer.current = null;
+    }
+    // Reset progress
+    setLongPressProgress(0);
+  };
 
-    const handleTouchMove = () => {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-      }
-      if (progressTimer) {
-        clearInterval(progressTimer);
-        progressTimer = null;
-      }
-      // Reset progress
-      setLongPressProgress(0);
-    };
-
+  // Gestione easter egg - Tap lungo per modalità party
+  useEffect(() => {
     // Aggiungi event listeners
     document.addEventListener('touchstart', handleTouchStart);
     document.addEventListener('touchend', handleTouchEnd);
@@ -499,11 +499,11 @@ function App() {
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchmove', handleTouchMove);
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
       }
-      if (progressTimer) {
-        clearInterval(progressTimer);
+      if (progressTimer.current) {
+        clearInterval(progressTimer.current);
       }
     };
   }, [partyMode, lastPartyTime]);
@@ -613,24 +613,8 @@ function App() {
         }, 100);
       }
       
-      // Disattiva automaticamente dopo 30 secondi per gli easter egg temporanei
-      if (activatedEgg === 'uscitaDiabolica' || activatedEgg === 'entrataAngelica' || activatedEgg === 'timeTravel') {
-        setTimeout(() => {
-          const setters = {
-            setRainbowMode,
-            setPartyMode,
-            setRetroMode,
-            setFlameMode,
-            setAngelicMode,
-            setTimeTravelMode
-          };
-          
-          // Disattiva tutti gli easter egg
-          setters.setFlameMode(false);
-          setters.setAngelicMode(false);
-          setters.setTimeTravelMode(false);
-        }, 30000);
-      }
+      // Gli effetti delle transazioni speciali sono ora permanenti
+      // (rimossi i timeout di 30 secondi)
     }
     
     await addDocument('expenses', newExpense);
@@ -673,24 +657,8 @@ function App() {
         }, 100);
       }
       
-      // Disattiva automaticamente dopo 30 secondi per gli easter egg temporanei
-      if (activatedEgg === 'uscitaDiabolica' || activatedEgg === 'entrataAngelica' || activatedEgg === 'timeTravel') {
-        setTimeout(() => {
-          const setters = {
-            setRainbowMode,
-            setPartyMode,
-            setRetroMode,
-            setFlameMode,
-            setAngelicMode,
-            setTimeTravelMode
-          };
-          
-          // Disattiva tutti gli easter egg
-          setters.setFlameMode(false);
-          setters.setAngelicMode(false);
-          setters.setTimeTravelMode(false);
-        }, 30000);
-      }
+      // Gli effetti delle transazioni speciali sono ora permanenti
+      // (rimossi i timeout di 30 secondi)
     }
     
     await addDocument('incomes', newIncome);
@@ -1433,6 +1401,9 @@ function App() {
                         ? `hsl(${longPressProgress * 3.6}, 100%, 70%)` // Da bianco a arcobaleno
                         : 'white'
                     }}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchMove={handleTouchMove}
                   >
                     MoneyTracker
                   </h1>
