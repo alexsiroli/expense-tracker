@@ -133,6 +133,8 @@ function App() {
   });
   const [showFloatingMenu, setShowFloatingMenu] = useState(true);
   const lastScrollY = useRef(window.scrollY);
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true); // Di default è espanso
+  const [scrollDirection, setScrollDirection] = useState('down');
 
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
   useEffect(() => {
@@ -829,19 +831,19 @@ function App() {
       
       // Elimina tutti i documenti dalle collezioni Firestore
       if (expenses.length > 0) {
-        const expenseIds = expenses.map(e => e.id);
+        const expenseIds = expenses.map(e => String(e.id));
         await deleteMultipleDocuments('expenses', expenseIds);
         console.log('Eliminate', expenses.length, 'spese');
       }
       
       if (incomes.length > 0) {
-        const incomeIds = incomes.map(i => i.id);
+        const incomeIds = incomes.map(i => String(i.id));
         await deleteMultipleDocuments('incomes', incomeIds);
         console.log('Eliminate', incomes.length, 'entrate');
       }
       
       if (wallets.length > 0) {
-        const walletIds = wallets.map(w => w.id);
+        const walletIds = wallets.map(w => String(w.id));
         await deleteMultipleDocuments('wallets', walletIds);
         console.log('Eliminati', wallets.length, 'conti');
       }
@@ -891,13 +893,27 @@ function App() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 20;
-      if (window.scrollY > lastScrollY.current && window.scrollY > 80) {
-        setShowFloatingMenu(false); // scroll down, nascondi
-      } else if (window.scrollY < lastScrollY.current && !isAtBottom) {
-        setShowFloatingMenu(true); // scroll up, mostra SOLO se non sei in fondo
+      const currentScrollY = window.scrollY;
+      const isAtBottom = window.innerHeight + currentScrollY >= document.body.offsetHeight - 20;
+      const collapseThreshold = 50; // Soglia per compattare l'header
+
+      // Gestione header espandibile - Grande di default, si compatta quando scorri
+      if (currentScrollY <= collapseThreshold) {
+        setIsHeaderExpanded(true);
+        setScrollDirection('up');
+      } else {
+        setIsHeaderExpanded(false);
+        if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
+          setScrollDirection('down');
+          setShowFloatingMenu(false); // scroll down, nascondi
+        } else if (currentScrollY < lastScrollY.current && !isAtBottom) {
+          setScrollDirection('up');
+          setShowFloatingMenu(true); // scroll up, mostra SOLO se non sei in fondo
+        } else {
+          setScrollDirection('up'); // No scroll, reset direction
+        }
       }
-      lastScrollY.current = window.scrollY;
+      lastScrollY.current = currentScrollY;
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -922,27 +938,34 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pt-20 pb-10">
-      {/* Header con grafica trasparente */}
-      <header className="fixed top-0 left-0 w-full z-30 py-0 animate-fade-in">
+    <div className={`min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
+      {/* Header espandibile con grafica trasparente */}
+      <header className={`fixed top-0 left-0 w-full z-20 py-0 animate-fade-in header-transition header-parallax ${isHeaderExpanded ? 'h-20' : 'h-16'}`}>
         <div className="max-w-md mx-auto px-6 mt-2">
-          <div className="bg-blue-600/40 backdrop-blur-md border border-blue-700/60 rounded-2xl p-3 transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/25 active:scale-95">
+          <div className={`bg-gradient-to-r from-blue-600/50 to-purple-600/50 backdrop-blur-md border border-blue-500/40 rounded-xl transform hover:scale-102 header-content-transition hover:shadow-xl hover:shadow-blue-500/20 active:scale-98 ${isHeaderExpanded ? 'p-3' : 'p-2.5'}`}>
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm flex-shrink-0">
-                  <Wallet className="w-4 h-4" />
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <div className={`${isHeaderExpanded ? 'p-2.5' : 'p-2'} bg-white/25 rounded-lg backdrop-blur-sm flex-shrink-0 shadow-sm`}>
+                  <Wallet className={`${isHeaderExpanded ? 'w-5 h-5' : 'w-4 h-4'} text-white`} />
                 </div>
-                <h1 className="text-lg font-bold text-white animate-fade-in-up flex-shrink-0">
-                  MoneyTracker
-                </h1>
+                <div className={`flex flex-col ${isHeaderExpanded ? 'gap-1' : 'gap-0'}`}>
+                  <h1 className={`font-bold text-white animate-fade-in-up flex-shrink-0 ${isHeaderExpanded ? 'text-xl' : 'text-lg'} tracking-tight`}>
+                    MoneyTracker
+                  </h1>
+                  {isHeaderExpanded && (
+                    <p className="text-white/70 text-xs font-medium animate-fade-in-up tracking-wide">
+                      Gestisci le tue finanze in modo intelligente
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setShowUserProfile(true)}
-                    className="w-7 h-7 bg-white/20 rounded-lg backdrop-blur-sm border border-white/30 flex items-center justify-center hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95 cursor-pointer"
+                    className={`${isHeaderExpanded ? 'w-8 h-8' : 'w-7 h-7'} bg-white/25 rounded-lg backdrop-blur-sm border border-white/40 flex items-center justify-center hover:bg-white/35 transform hover:scale-105 active:scale-95 cursor-pointer shadow-sm`}
                   >
-                    <span className="text-white text-xs font-semibold">
+                    <span className={`text-white font-semibold ${isHeaderExpanded ? 'text-sm' : 'text-xs'}`}>
                       {(() => {
                         const name = user.displayName || user.email;
                         const words = name.split(' ').filter(word => word.length > 0);
@@ -959,13 +982,13 @@ function App() {
                 </div>
                 {/* Indicatore di sincronizzazione */}
                 <div className="flex items-center gap-1">
-                  <div className={`w-2 h-2 rounded-full ${lastSyncTime ? 'bg-green-400' : 'bg-yellow-400'} animate-pulse`} title={lastSyncTime ? `Ultima sincronizzazione: ${new Date(lastSyncTime).toLocaleTimeString()}` : 'Sincronizzazione in corso...'} />
+                  <div className={`${isHeaderExpanded ? 'w-2 h-2' : 'w-1.5 h-1.5'} rounded-full ${lastSyncTime ? 'bg-green-400' : 'bg-yellow-400'} animate-pulse transition-all duration-200 shadow-sm`} title={lastSyncTime ? `Ultima sincronizzazione: ${new Date(lastSyncTime).toLocaleTimeString()}` : 'Sincronizzazione in corso...'} />
                 </div>
                 <button
                   onClick={toggleTheme}
-                  className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all duration-200 transform hover:scale-110 active:scale-95 flex-shrink-0"
+                  className={`${isHeaderExpanded ? 'w-8 h-8' : 'w-7 h-7'} bg-white/25 rounded-lg backdrop-blur-sm hover:bg-white/35 transform hover:scale-105 active:scale-95 flex-shrink-0 shadow-sm flex items-center justify-center`}
                 >
-                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  {theme === 'dark' ? <Sun className={`${isHeaderExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'} text-white`} /> : <Moon className={`${isHeaderExpanded ? 'w-4 h-4' : 'w-3.5 h-3.5'} text-white`} />}
                 </button>
               </div>
             </div>
@@ -974,7 +997,7 @@ function App() {
       </header>
 
       {/* Balance Card con design moderno - PRIMA COSA */}
-      <div className="max-w-md mx-auto px-6 mt-0 pb-6 animate-fade-in-up">
+      <div className="max-w-md mx-auto px-6 mt-4 pb-6 animate-fade-in-up">
         <div className={`floating-card ${balanceCollapsed ? 'p-3' : 'p-6'} transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 animate-bounce-in active:scale-95`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

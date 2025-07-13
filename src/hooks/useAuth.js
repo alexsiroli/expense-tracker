@@ -44,10 +44,15 @@ export const useAuth = () => {
 
   const login = async (email, password) => {
     try {
+      console.log('Tentativo di login con email:', email);
       setError(null);
       const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Login riuscito per utente:', result.user.email);
       return result.user;
     } catch (error) {
+      console.error('Errore durante il login:', error);
+      console.error('Codice errore:', error.code);
+      console.error('Messaggio errore:', error.message);
       setError(getErrorMessage(error.code));
       throw error;
     }
@@ -55,16 +60,23 @@ export const useAuth = () => {
 
   const register = async (email, password, displayName) => {
     try {
+      console.log('Tentativo di registrazione con email:', email);
       setError(null);
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Registrazione riuscita per utente:', result.user.email);
       
       // Aggiorna il profilo con il nome
       if (displayName) {
+        console.log('Aggiornamento profilo con displayName:', displayName);
         await updateProfile(result.user, { displayName });
+        console.log('Profilo aggiornato con successo');
       }
       
       return result.user;
     } catch (error) {
+      console.error('Errore durante la registrazione:', error);
+      console.error('Codice errore:', error.code);
+      console.error('Messaggio errore:', error.message);
       setError(getErrorMessage(error.code));
       throw error;
     }
@@ -131,27 +143,27 @@ export const useAuth = () => {
   };
 
   const getErrorMessage = (errorCode) => {
+    console.log('Errore autenticazione Firebase:', errorCode);
+    
     switch (errorCode) {
       case 'auth/user-not-found':
-        return 'Utente non trovato. Verifica la tua email.';
+        return 'Utente non trovato. Verifica la tua email o registrati.';
       case 'auth/wrong-password':
-        return 'Password errata. Riprova.';
+        return 'Password errata. Verifica la password inserita.';
       case 'auth/email-already-in-use':
-        return 'Email già registrata. Usa un\'altra email o accedi.';
+        return 'Email già registrata. Usa un\'altra email o accedi con quella esistente.';
       case 'auth/weak-password':
         return 'Password troppo debole. Usa almeno 6 caratteri.';
       case 'auth/invalid-email':
-        return 'Email non valida.';
+        return 'Email non valida. Inserisci un\'email corretta.';
       case 'auth/too-many-requests':
-        return 'Troppi tentativi. Riprova più tardi.';
+        return 'Troppi tentativi di accesso. Riprova più tardi.';
       case 'auth/operation-not-allowed':
-        return 'Login con Google non abilitato. Abilitalo in Firebase Console.';
+        return 'Login con Google non abilitato. Contatta l\'amministratore.';
       case 'auth/popup-closed-by-user':
         return 'Login annullato. Riprova.';
       case 'auth/popup-blocked':
         return 'Popup bloccato. Abilita i popup per questo sito.';
-      case 'auth/popup-closed-by-user':
-        return 'Login annullato. Riprova.';
       case 'auth/requires-recent-login':
         return 'Per eliminare l\'account, devi effettuare nuovamente l\'accesso per motivi di sicurezza. Effettua il logout e riaccedi.';
       case 'auth/user-token-expired':
@@ -160,8 +172,12 @@ export const useAuth = () => {
         return 'Errore di sicurezza. Ricarica la pagina e riprova.';
       case 'auth/account-exists-with-different-credential':
         return 'Account già esistente con credenziali diverse.';
+      case 'auth/network-request-failed':
+        return 'Errore di connessione. Verifica la tua connessione internet.';
+      case 'auth/internal-error':
+        return 'Errore interno del server. Riprova più tardi.';
       default:
-        return `Errore durante l'autenticazione: ${errorCode}. Riprova.`;
+        return `Errore durante l'autenticazione (${errorCode}). Riprova o contatta il supporto.`;
     }
   };
 
