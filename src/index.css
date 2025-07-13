@@ -421,4 +421,105 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* Easter Egg - Party Mode Animations */
+  @keyframes party-bounce {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+    }
+    25% {
+      transform: translateY(-10px) scale(1.05);
+    }
+    50% {
+      transform: translateY(-5px) scale(1.1);
+    }
+    75% {
+      transform: translateY(-15px) scale(1.05);
+    }
+  }
+
+  @keyframes party-rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(5deg);
+    }
+    75% {
+      transform: rotate(-5deg);
+    }
+    100% {
+      transform: rotate(0deg);
+    }
+  }
+
+  @keyframes party-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes party-shake {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translateX(-2px);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translateX(2px);
+    }
+  }
+
+  @keyframes party-glow {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.6);
+    }
+  }
+
+  .party-mode .animate-party-bounce {
+    animation: party-bounce 0.6s ease-in-out infinite;
+  }
+
+  .party-mode .animate-party-rotate {
+    animation: party-rotate 0.8s ease-in-out infinite;
+  }
+
+  .party-mode .animate-party-pulse {
+    animation: party-pulse 0.5s ease-in-out infinite;
+  }
+
+  .party-mode .animate-party-shake {
+    animation: party-shake 0.3s ease-in-out infinite;
+  }
+
+  .party-mode .animate-party-glow {
+    animation: party-glow 1s ease-in-out infinite;
+  }
+
+  /* Effetti party per elementi specifici */
+  .party-mode .glass-card,
+  .party-mode .floating-card {
+    animation: party-bounce 0.8s ease-in-out infinite;
+  }
+
+  .party-mode .tab-active {
+    animation: party-pulse 0.6s ease-in-out infinite;
+  }
+
+  .party-mode .header-content-transition {
+    animation: party-rotate 1s ease-in-out infinite;
+  }
+
+  .party-mode .animate-bounce-in {
+    animation: party-shake 0.4s ease-in-out infinite;
+  }
 }

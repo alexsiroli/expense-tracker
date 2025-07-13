@@ -358,6 +358,22 @@ const UserProfile = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">2</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                        Tap Lungo
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Tap lungo sul titolo per party mode
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Placeholder per futuri easter egg */}
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700 opacity-50">
                   <div className="flex items-center gap-3">

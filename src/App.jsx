@@ -136,8 +136,11 @@ function App() {
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true); // Di default è espanso
   const [scrollDirection, setScrollDirection] = useState('down');
   const [rainbowMode, setRainbowMode] = useState(false);
+  const [partyMode, setPartyMode] = useState(false);
   const [walletTapCount, setWalletTapCount] = useState(0);
   const [lastTapTime, setLastTapTime] = useState(0);
+  const [lastPartyTime, setLastPartyTime] = useState(0);
+  const [longPressProgress, setLongPressProgress] = useState(0);
 
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
   useEffect(() => {
@@ -310,10 +313,114 @@ function App() {
     updateThemeColor(rainbowMode, theme);
   }, [rainbowMode, theme]);
 
+  // Gestione classe party-mode sul body
+  useEffect(() => {
+    const body = document.body;
+    if (partyMode) {
+      body.classList.add('party-mode');
+    } else {
+      body.classList.remove('party-mode');
+    }
+  }, [partyMode]);
+
   // Aggiorna il colore della Dynamic Island all'avvio dell'app
   useEffect(() => {
     updateThemeColor(rainbowMode, theme);
   }, []);
+
+  // Gestione easter egg - Tap lungo per modalità party
+  useEffect(() => {
+    let longPressTimer = null;
+    let progressTimer = null;
+
+    const handleTouchStart = (event) => {
+      // Solo per il titolo dell'app
+      if (event.target.closest('.app-title')) {
+        // Reset progress
+        setLongPressProgress(0);
+        
+        // Avvia timer di progresso (ogni 100ms)
+        progressTimer = setInterval(() => {
+          setLongPressProgress(prev => {
+            if (prev >= 100) {
+              clearInterval(progressTimer);
+              return 100;
+            }
+            return prev + 3.33; // 100% in 3 secondi (100/30 = 3.33)
+          });
+        }, 100);
+
+        longPressTimer = setTimeout(() => {
+          console.log('Long press detected!'); // Debug
+          
+          const now = Date.now();
+          if (now - lastPartyTime > 3000) { // 3 secondi tra attivazioni
+            console.log('Party mode toggled!'); // Debug
+            setPartyMode(prev => !prev);
+            setLastPartyTime(now);
+            
+            if (!partyMode) {
+              // Attiva modalità party
+              setTimeout(() => {
+                alert('🎉 PARTY MODE ATTIVATA! 🎊\n\nTap lungo di 3 secondi di nuovo per disattivare! 💃');
+              }, 100);
+            } else {
+              // Disattiva modalità party
+              setTimeout(() => {
+                alert('🎉 PARTY MODE DISATTIVATA! 🌙\n\nTap lungo di 3 secondi di nuovo per riattivare! ✨');
+              }, 100);
+            }
+          }
+          
+          // Reset progress
+          setLongPressProgress(0);
+        }, 3000); // 3 secondi di tap lungo
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+      }
+      // Reset progress
+      setLongPressProgress(0);
+    };
+
+    const handleTouchMove = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+      }
+      // Reset progress
+      setLongPressProgress(0);
+    };
+
+    // Aggiungi event listeners
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('touchmove', handleTouchMove);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+      if (progressTimer) {
+        clearInterval(progressTimer);
+      }
+    };
+  }, [partyMode, lastPartyTime]);
 
   // Calcola il saldo di un conto dinamicamente
   const calculateWalletBalance = (walletId) => {
@@ -1019,7 +1126,14 @@ function App() {
                   <Wallet className={`${isHeaderExpanded ? 'w-5 h-5' : 'w-4 h-4'} text-white`} />
                 </div>
                 <div className={`flex flex-col ${isHeaderExpanded ? 'gap-1' : 'gap-0'}`}>
-                  <h1 className={`font-bold text-white animate-fade-in-up flex-shrink-0 ${isHeaderExpanded ? 'text-xl' : 'text-lg'} tracking-tight`}>
+                  <h1 
+                    className={`app-title font-bold animate-fade-in-up flex-shrink-0 ${isHeaderExpanded ? 'text-xl' : 'text-lg'} tracking-tight cursor-pointer transition-all duration-100`}
+                    style={{
+                      color: longPressProgress > 0 
+                        ? `hsl(${longPressProgress * 3.6}, 100%, 70%)` // Da bianco a arcobaleno
+                        : 'white'
+                    }}
+                  >
                     MoneyTracker
                   </h1>
                   {isHeaderExpanded && (
