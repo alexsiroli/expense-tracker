@@ -19,7 +19,7 @@ import UserProfile from './components/UserProfile';
 import FilterDialog from './components/FilterDialog';
 import { formatCurrency } from './utils/formatters';
 import TransactionDetailDialog from './components/TransactionDetailDialog';
-import { getEasterEgg, getAllEasterEggs, activateEasterEgg, handleTransactionEasterEggs, saveEasterEggCompletion, getEasterEggsWithCompletionStatus } from './utils/easterEggs';
+import { getEasterEgg, getAllEasterEggs, activateEasterEgg, saveEasterEggCompletion, getEasterEggsWithCompletionStatus } from './utils/easterEggs';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -584,37 +584,33 @@ function App() {
       date: expense.date ? new Date(expense.date).toISOString() : new Date().toISOString() 
     };
     
-    // Gestione easter egg per le transazioni con priorità
-    const setters = {
-      setRainbowMode,
-      setPartyMode,
-      setRetroMode,
-      setFlameMode,
-      setAngelicMode,
-      setTimeTravelMode
-    };
+    // Controlla se la transazione attiva un easter egg (solo per salvare il completamento)
+    const transactionDate = new Date(expense.date);
+    const isTimeTravelDate = transactionDate.getFullYear() === 1999 && 
+                            transactionDate.getMonth() === 11 && 
+                            transactionDate.getDate() === 31;
     
-    const activatedEgg = handleTransactionEasterEggs(expense.amount, expense.date, setters);
+    let activatedEgg = null;
+    if (isTimeTravelDate) {
+      activatedEgg = 'timeTravel';
+    } else if (parseFloat(expense.amount) === 888) {
+      activatedEgg = 'entrataAngelica';
+    } else if (parseFloat(expense.amount) === 666) {
+      activatedEgg = 'uscitaDiabolica';
+    }
     
-    // Mostra il messaggio di attivazione se un easter egg è stato attivato
+    // Salva il completamento easter egg se attivato
     if (activatedEgg) {
       const easterEgg = getEasterEgg(activatedEgg);
       if (easterEgg) {
-        // Salva il completamento nel database
         console.log('[EASTER EGG] Salvataggio completamento per', activatedEgg);
         await saveEasterEggCompletion(activatedEgg, setEasterEggCompleted);
-        // Piccolo delay per assicurarsi che il database sia aggiornato
         await new Promise(resolve => setTimeout(resolve, 100));
-        console.log('[EASTER EGG] Ricarico stato medagliere...');
         await loadEasterEggsWithStatus();
-        console.log('[EASTER EGG] Stato medagliere dopo update:', easterEggsWithStatus);
         setTimeout(() => {
           alert(easterEgg.activationMessage);
         }, 100);
       }
-      
-      // Gli effetti delle transazioni speciali sono ora permanenti
-      // (rimossi i timeout di 30 secondi)
     }
     
     await addDocument('expenses', newExpense);
@@ -628,37 +624,33 @@ function App() {
       date: income.date ? new Date(income.date).toISOString() : new Date().toISOString() 
     };
     
-    // Gestione easter egg per le transazioni con priorità
-    const setters = {
-      setRainbowMode,
-      setPartyMode,
-      setRetroMode,
-      setFlameMode,
-      setAngelicMode,
-      setTimeTravelMode
-    };
+    // Controlla se la transazione attiva un easter egg (solo per salvare il completamento)
+    const transactionDate = new Date(income.date);
+    const isTimeTravelDate = transactionDate.getFullYear() === 1999 && 
+                            transactionDate.getMonth() === 11 && 
+                            transactionDate.getDate() === 31;
     
-    const activatedEgg = handleTransactionEasterEggs(income.amount, income.date, setters);
+    let activatedEgg = null;
+    if (isTimeTravelDate) {
+      activatedEgg = 'timeTravel';
+    } else if (parseFloat(income.amount) === 888) {
+      activatedEgg = 'entrataAngelica';
+    } else if (parseFloat(income.amount) === 666) {
+      activatedEgg = 'uscitaDiabolica';
+    }
     
-    // Mostra il messaggio di attivazione se un easter egg è stato attivato
+    // Salva il completamento easter egg se attivato
     if (activatedEgg) {
       const easterEgg = getEasterEgg(activatedEgg);
       if (easterEgg) {
-        // Salva il completamento nel database
         console.log('[EASTER EGG] Salvataggio completamento per', activatedEgg);
         await saveEasterEggCompletion(activatedEgg, setEasterEggCompleted);
-        // Piccolo delay per assicurarsi che il database sia aggiornato
         await new Promise(resolve => setTimeout(resolve, 100));
-        console.log('[EASTER EGG] Ricarico stato medagliere...');
         await loadEasterEggsWithStatus();
-        console.log('[EASTER EGG] Stato medagliere dopo update:', easterEggsWithStatus);
         setTimeout(() => {
           alert(easterEgg.activationMessage);
         }, 100);
       }
-      
-      // Gli effetti delle transazioni speciali sono ora permanenti
-      // (rimossi i timeout di 30 secondi)
     }
     
     await addDocument('incomes', newIncome);
@@ -1567,9 +1559,6 @@ function App() {
               type="expense"
               categories={categories.expense}
               onShowDetail={(item) => { setSelectedTransaction(item); setShowTransactionDialog(true); }}
-              flameMode={flameMode}
-              angelicMode={angelicMode}
-              timeTravelMode={timeTravelMode}
             />
           </div>
         )}
@@ -1610,9 +1599,6 @@ function App() {
               type="income"
               categories={categories.income}
               onShowDetail={(item) => { setSelectedTransaction(item); setShowTransactionDialog(true); }}
-              flameMode={flameMode}
-              angelicMode={angelicMode}
-              timeTravelMode={timeTravelMode}
             />
           </div>
         )}

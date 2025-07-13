@@ -3,7 +3,36 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { formatCurrency } from '../utils/formatters';
 
-function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDetail, flameMode = false, angelicMode = false, timeTravelMode = false }) {
+// Funzioni helper per determinare gli effetti speciali delle transazioni
+const isDiabolicTransaction = (item, type) => {
+  return type === 'expense' && parseFloat(item.amount) === 666;
+};
+
+const isAngelicTransaction = (item, type) => {
+  return type === 'income' && parseFloat(item.amount) === 888;
+};
+
+const isTimeTravelTransaction = (item) => {
+  const transactionDate = new Date(item.date);
+  return transactionDate.getFullYear() === 1999 && 
+         transactionDate.getMonth() === 11 && 
+         transactionDate.getDate() === 31;
+};
+
+const getTransactionEffect = (item, type) => {
+  if (isTimeTravelTransaction(item)) {
+    return 'animate-glitch';
+  }
+  if (isDiabolicTransaction(item, type)) {
+    return 'animate-flame';
+  }
+  if (isAngelicTransaction(item, type)) {
+    return 'animate-angelic';
+  }
+  return '';
+};
+
+function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDetail }) {
   const formatDate = (dateString) => {
     return format(new Date(dateString), 'dd MMM yyyy', { locale: it });
   };
@@ -85,15 +114,7 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
             {dateItems.map((item) => (
               <div
                 key={item.id}
-                className={`expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                  flameMode && item.amount === 666 ? 'animate-flame' : ''
-                } ${
-                  angelicMode && type === 'income' && parseFloat(item.amount) === 888 ? 'animate-angelic' : ''
-                } ${
-                  timeTravelMode && new Date(item.date).getFullYear() === 1999 && 
-                  new Date(item.date).getMonth() === 11 && 
-                  new Date(item.date).getDate() === 31 ? 'animate-glitch' : ''
-                }`}
+                className={`expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${getTransactionEffect(item, type)}`}
                 onClick={() => onShowDetail && onShowDetail(item)}
               >
                 <div className="flex items-start gap-3">
