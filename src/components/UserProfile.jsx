@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useFirestore } from '../hooks/useFirestore';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { getAllEasterEggs } from '../utils/easterEggs';
 
 const UserProfile = ({ isOpen, onClose }) => {
   const { user, logout, deleteAccount } = useAuth();
@@ -15,8 +16,7 @@ const UserProfile = ({ isOpen, onClose }) => {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [showEasterEggs, setShowEasterEggs] = useState(false);
   const [creditsTapCount, setCreditsTapCount] = useState(0);
-  const [showTapCounter, setShowTapCounter] = useState(false);
-  const lastCreditsTapTime = useRef(0);
+  const [lastCreditsTapTime, setLastCreditsTapTime] = useState(0);
 
   if (!isOpen) return null;
 
@@ -28,7 +28,7 @@ const UserProfile = ({ isOpen, onClose }) => {
   // Gestione easter egg - Tap segreto sui crediti
   const handleCreditsTap = () => {
     const now = Date.now();
-    const timeDiff = now - lastCreditsTapTime.current;
+    const timeDiff = now - lastCreditsTapTime;
     
     // Reset se è passato troppo tempo (> 3 secondi)
     if (timeDiff > 3000) {
@@ -37,20 +37,12 @@ const UserProfile = ({ isOpen, onClose }) => {
       setCreditsTapCount(prev => prev + 1);
     }
     
-    lastCreditsTapTime.current = now;
-    
-    // Mostra il contatore se abbiamo fatto almeno 5 tap
-    if (creditsTapCount >= 4) { // 4 perché questo è il 5° tap
-      setShowTapCounter(true);
-      // Nascondi il contatore dopo 2 secondi
-      setTimeout(() => setShowTapCounter(false), 2000);
-    }
+    setLastCreditsTapTime(now);
     
     // Se abbiamo raggiunto 8 tap rapidi
     if (creditsTapCount >= 7) { // 7 perché questo è l'8° tap
       setShowEasterEggs(true);
       setCreditsTapCount(0);
-      setShowTapCounter(false);
     }
   };
 
@@ -318,145 +310,80 @@ const UserProfile = ({ isOpen, onClose }) => {
       {/* Modal Easter Eggs */}
       {showEasterEggs && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-up">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full animate-fade-in-up">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-t-2xl">
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-t-2xl">
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => setShowEasterEggs(false)}
                   className="text-white/80 hover:text-white transition-colors"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  🎉 Easter Eggs
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                  🏆 Easter Eggs
                 </h2>
-                <div className="w-6"></div>
+                <div className="w-5"></div>
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6">
               <div className="text-center mb-6">
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Scopri tutti gli easter egg nascosti nell'app!
+                  Colleziona tutte le medaglie nascoste!
                 </p>
               </div>
 
-              {/* Lista Easter Eggs */}
-              <div className="space-y-3">
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">1</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                        Tap Segreto
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Tema arcobaleno nascosto
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">2</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                        Tap Lungo
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Tap lungo sul titolo per party mode
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">3</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                        Tema Segreto
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Doppio tap sul footer per tema retro
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-xl p-4 border border-red-200 dark:border-red-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">4</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                        Uscita Diabolica
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Aggiungi spesa €666.00 per fiamme
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">5</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                        Entrata Angelica
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Aggiungi entrata €888.00 per tema celestiale (30s)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">6</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                        Time Travel
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Crea transazione al 31/12/1999 per effetto glitch (30s)
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              {/* Griglia distintivi stile medaglie Pokémon */}
+              <div className="grid grid-cols-3 gap-4">
+                {getAllEasterEggs().map((egg, index) => {
+                  const badgeColors = [
+                    'from-red-500 to-pink-500', // Rosso
+                    'from-blue-500 to-cyan-500', // Blu
+                    'from-green-500 to-emerald-500', // Verde
+                    'from-yellow-500 to-orange-500', // Giallo
+                    'from-purple-500 to-indigo-500', // Viola
+                    'from-teal-500 to-blue-500' // Turchese
+                  ];
+                  
+                  const badgeIcons = ['🌈', '🎉', '🎮', '📺', '👼', '⏰'];
+                  
+                  return (
+                    <button
+                      key={egg.id}
+                      onClick={() => {
+                        // Mostra popup con info easter egg
+                        alert(`${egg.title}\n\n${egg.description}`);
+                      }}
+                      className="group relative"
+                    >
+                      <div className={`
+                        w-16 h-16 mx-auto rounded-full bg-gradient-to-br ${badgeColors[index]} 
+                        shadow-lg border-4 border-white dark:border-gray-700
+                        flex items-center justify-center text-2xl
+                        transform transition-all duration-300
+                        hover:scale-110 hover:shadow-xl
+                        active:scale-95
+                        group-hover:animate-pulse
+                      `}>
+                        {badgeIcons[index]}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="text-center pt-4">
+              <div className="text-center pt-6">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Continua a esplorare l'app per trovare altri easter egg! 🔍
+                  Tocca una medaglia per scoprire il suo segreto! 🔍
                 </p>
               </div>
-                          </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Mini popup contatore tap */}
-        {showTapCounter && (
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium z-50">
-            Ancora {8 - creditsTapCount}...
-          </div>
-        )}
+
       </div>
     );
   };

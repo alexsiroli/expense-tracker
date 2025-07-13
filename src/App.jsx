@@ -19,6 +19,7 @@ import UserProfile from './components/UserProfile';
 import FilterDialog from './components/FilterDialog';
 import { formatCurrency } from './utils/formatters';
 import TransactionDetailDialog from './components/TransactionDetailDialog';
+import { getEasterEgg, getAllEasterEggs, activateEasterEgg, handleTransactionEasterEggs } from './utils/easterEggs';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -207,14 +208,26 @@ function App() {
           setRainbowMode(false);
           setWalletTapCount(0);
         } else {
-          // Attiva il tema arcobaleno
-          setRainbowMode(true);
+          // Attiva il tema arcobaleno usando il nuovo sistema
+          const setters = {
+            setRainbowMode,
+            setPartyMode,
+            setRetroMode,
+            setFlameMode,
+            setAngelicMode,
+            setTimeTravelMode
+          };
+          
+          activateEasterEgg('tapSegreto', setters);
           setWalletTapCount(0);
           
-          // Mostra un messaggio di successo più simpatico
-          setTimeout(() => {
-            alert('🎉 EGG EASTER TROVATO! 🌈\n\nHai scoperto il segreto del portafoglio!\nOra tutta l\'app è arcobaleno! ✨\n\nTap 5 volte di nuovo per tornare normale 😉');
-          }, 100);
+          // Mostra il messaggio dal sistema centralizzato
+          const easterEgg = getEasterEgg('tapSegreto');
+          if (easterEgg) {
+            setTimeout(() => {
+              alert(easterEgg.activationMessage);
+            }, 100);
+          }
         }
       }
     };
@@ -405,10 +418,24 @@ function App() {
             setLastPartyTime(now);
             
             if (!partyMode) {
-              // Attiva modalità party
-              setTimeout(() => {
-                alert('🎉 PARTY MODE ATTIVATA! 🎊\n\nTap lungo di 3 secondi di nuovo per disattivare! 💃');
-              }, 100);
+              // Attiva modalità party usando il nuovo sistema
+              const setters = {
+                setRainbowMode,
+                setPartyMode,
+                setRetroMode,
+                setFlameMode,
+                setAngelicMode,
+                setTimeTravelMode
+              };
+              
+              activateEasterEgg('tapLungo', setters);
+              
+              const easterEgg = getEasterEgg('tapLungo');
+              if (easterEgg) {
+                setTimeout(() => {
+                  alert(easterEgg.activationMessage);
+                }, 100);
+              }
             } else {
               // Disattiva modalità party silenziosamente
             }
@@ -479,10 +506,24 @@ function App() {
       setLastFooterTapTime(0); // Reset per evitare attivazioni multiple
       
       if (!retroMode) {
-        // Attiva tema retro
-        setTimeout(() => {
-          alert('🎮 TEMA RETRO ATTIVATO! 🕹️\n\nDoppio tap di nuovo sul footer per tornare normale! 👾');
-        }, 100);
+        // Attiva tema retro usando il nuovo sistema
+        const setters = {
+          setRainbowMode,
+          setPartyMode,
+          setRetroMode,
+          setFlameMode,
+          setAngelicMode,
+          setTimeTravelMode
+        };
+        
+        activateEasterEgg('temaSegreto', setters);
+        
+        const easterEgg = getEasterEgg('temaSegreto');
+        if (easterEgg) {
+          setTimeout(() => {
+            alert(easterEgg.activationMessage);
+          }, 100);
+        }
       } else {
         // Disattiva tema retro silenziosamente
       }
@@ -520,40 +561,45 @@ function App() {
       date: expense.date ? new Date(expense.date).toISOString() : new Date().toISOString() 
     };
     
-    // Easter Egg - Uscita Diabolica
-    if (expense.amount === 666) {
-      setFlameMode(true);
-      setTimeout(() => {
-        alert('🔥 USCITA DIABOLICA ATTIVATA! 🔥\n\nIl tile dell\'app ora brucia con le fiamme dell\'inferno! 😈\n\nAggiungi una spesa normale per spegnere le fiamme! 💦');
-      }, 100);
+    // Gestione easter egg per le transazioni con priorità
+    const setters = {
+      setRainbowMode,
+      setPartyMode,
+      setRetroMode,
+      setFlameMode,
+      setAngelicMode,
+      setTimeTravelMode
+    };
+    
+    const activatedEgg = handleTransactionEasterEggs(expense.amount, expense.date, setters);
+    
+    // Mostra il messaggio di attivazione se un easter egg è stato attivato
+    if (activatedEgg) {
+      const easterEgg = getEasterEgg(activatedEgg);
+      if (easterEgg) {
+        setTimeout(() => {
+          alert(easterEgg.activationMessage);
+        }, 100);
+      }
       
-      // Disattiva le fiamme dopo 30 secondi
-      setTimeout(() => {
-        setFlameMode(false);
-      }, 30000);
-    } else if (flameMode) {
-      // Disattiva le fiamme se si aggiunge una spesa normale silenziosamente
-      setFlameMode(false);
-    }
-
-    // Easter Egg - Time Travel
-    const transactionDate = new Date(expense.date);
-    const targetDate = new Date('1999-12-31');
-    if (transactionDate.getFullYear() === 1999 && 
-        transactionDate.getMonth() === 11 && 
-        transactionDate.getDate() === 31) {
-      setTimeTravelMode(true);
-      setTimeout(() => {
-        alert('⏰ TIME TRAVEL ATTIVATO! ⏰\n\nHai viaggiato nel tempo al 31/12/1999!\nIl tile della transazione ora ha un effetto glitchato! 🌌\n\nIl glitch si disattiverà automaticamente tra 30 secondi! ⚡');
-      }, 100);
-      
-      // Disattiva il glitch dopo 30 secondi
-      setTimeout(() => {
-        setTimeTravelMode(false);
-      }, 30000);
-    } else if (timeTravelMode) {
-      // Disattiva il glitch se si aggiunge una transazione normale silenziosamente
-      setTimeTravelMode(false);
+      // Disattiva automaticamente dopo 30 secondi per gli easter egg temporanei
+      if (activatedEgg === 'uscitaDiabolica' || activatedEgg === 'entrataAngelica' || activatedEgg === 'timeTravel') {
+        setTimeout(() => {
+          const setters = {
+            setRainbowMode,
+            setPartyMode,
+            setRetroMode,
+            setFlameMode,
+            setAngelicMode,
+            setTimeTravelMode
+          };
+          
+          // Disattiva tutti gli easter egg
+          setters.setFlameMode(false);
+          setters.setAngelicMode(false);
+          setters.setTimeTravelMode(false);
+        }, 30000);
+      }
     }
     
     await addDocument('expenses', newExpense);
@@ -567,40 +613,45 @@ function App() {
       date: income.date ? new Date(income.date).toISOString() : new Date().toISOString() 
     };
     
-    // Easter Egg - Entrata Angelica
-    if (parseFloat(income.amount) === 888) {
-      setAngelicMode(true);
-      setTimeout(() => {
-        alert('🌟 EGG EASTER TROVATO! 👼\n\nHai scoperto l\'entrata angelica!\nOra l\'app ha un tema celestiale! ✨\n\nIl tema si disattiverà automaticamente tra 30 secondi! 😇');
-      }, 100);
+    // Gestione easter egg per le transazioni con priorità
+    const setters = {
+      setRainbowMode,
+      setPartyMode,
+      setRetroMode,
+      setFlameMode,
+      setAngelicMode,
+      setTimeTravelMode
+    };
+    
+    const activatedEgg = handleTransactionEasterEggs(income.amount, income.date, setters);
+    
+    // Mostra il messaggio di attivazione se un easter egg è stato attivato
+    if (activatedEgg) {
+      const easterEgg = getEasterEgg(activatedEgg);
+      if (easterEgg) {
+        setTimeout(() => {
+          alert(easterEgg.activationMessage);
+        }, 100);
+      }
       
-      // Disattiva il tema angelico dopo 30 secondi
-      setTimeout(() => {
-        setAngelicMode(false);
-      }, 30000);
-    } else if (angelicMode) {
-      // Disattiva il tema angelico se si aggiunge un'entrata normale silenziosamente
-      setAngelicMode(false);
-    }
-
-    // Easter Egg - Time Travel
-    const transactionDate = new Date(income.date);
-    const targetDate = new Date('1999-12-31');
-    if (transactionDate.getFullYear() === 1999 && 
-        transactionDate.getMonth() === 11 && 
-        transactionDate.getDate() === 31) {
-      setTimeTravelMode(true);
-      setTimeout(() => {
-        alert('⏰ TIME TRAVEL ATTIVATO! ⏰\n\nHai viaggiato nel tempo al 31/12/1999!\nIl tile della transazione ora ha un effetto glitchato! 🌌\n\nIl glitch si disattiverà automaticamente tra 30 secondi! ⚡');
-      }, 100);
-      
-      // Disattiva il glitch dopo 30 secondi
-      setTimeout(() => {
-        setTimeTravelMode(false);
-      }, 30000);
-    } else if (timeTravelMode) {
-      // Disattiva il glitch se si aggiunge una transazione normale silenziosamente
-      setTimeTravelMode(false);
+      // Disattiva automaticamente dopo 30 secondi per gli easter egg temporanei
+      if (activatedEgg === 'uscitaDiabolica' || activatedEgg === 'entrataAngelica' || activatedEgg === 'timeTravel') {
+        setTimeout(() => {
+          const setters = {
+            setRainbowMode,
+            setPartyMode,
+            setRetroMode,
+            setFlameMode,
+            setAngelicMode,
+            setTimeTravelMode
+          };
+          
+          // Disattiva tutti gli easter egg
+          setters.setFlameMode(false);
+          setters.setAngelicMode(false);
+          setters.setTimeTravelMode(false);
+        }, 30000);
+      }
     }
     
     await addDocument('incomes', newIncome);
