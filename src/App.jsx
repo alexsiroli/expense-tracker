@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -143,6 +143,14 @@ function App() {
   const [lastPartyTime, setLastPartyTime] = useState(0);
   const [lastFooterTapTime, setLastFooterTapTime] = useState(0);
   const [longPressProgress, setLongPressProgress] = useState(0);
+  
+  // Stati per modal dei componenti figli
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '📦' });
+  const [categoryType, setCategoryType] = useState('expense');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
   useEffect(() => {
@@ -1096,6 +1104,49 @@ function App() {
       alert('Errore durante l\'eliminazione dei dati: ' + error.message);
     }
   };
+
+  // Funzioni per gestire modal dei componenti figli
+  const handleShowCategoryForm = (type, category = null) => {
+    setCategoryType(type);
+    if (category) {
+      setEditingCategory(category);
+      setCategoryFormData({ name: category.name, icon: category.icon });
+    } else {
+      setEditingCategory(null);
+      setCategoryFormData({ name: '', icon: '📦' });
+    }
+    setShowCategoryForm(true);
+  };
+
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    if (!categoryFormData.name.trim()) return;
+
+    if (editingCategory) {
+      await editCategory(editingCategory.id, categoryFormData.name, categoryFormData.icon);
+    } else {
+      await addCategory(categoryFormData.name, categoryFormData.icon, categoryType);
+    }
+    
+    setCategoryFormData({ name: '', icon: '📦' });
+    setShowCategoryForm(false);
+    setEditingCategory(null);
+  };
+
+  const handleCategoryCancel = () => {
+    setShowCategoryForm(false);
+    setEditingCategory(null);
+    setCategoryFormData({ name: '', icon: '📦' });
+  };
+
+  const handleCategoryDelete = async () => {
+    if (editingCategory) {
+      await deleteCategory(editingCategory.id);
+      setShowCategoryForm(false);
+      setEditingCategory(null);
+      setCategoryFormData({ name: '', icon: '📦' });
+    }
+  };
   // deleteWallet = (id) => { // This function is now handled by the new updateAllWalletsBalance
   //   setWallets(wallets.filter(w => w.id !== id));
   //   // TODO: elimina anche tutte le transazioni collegate a questo portafoglio
@@ -1429,6 +1480,7 @@ function App() {
               onDeleteCategory={deleteCategory}
               onEditCategory={editCategory}
               type="expense"
+              onShowForm={handleShowCategoryForm}
             />
             <CategoryManager
               categories={categories.income}
@@ -1436,6 +1488,7 @@ function App() {
               onDeleteCategory={deleteCategory}
               onEditCategory={editCategory}
               type="income"
+              onShowForm={handleShowCategoryForm}
             />
             </div>
           </div>
@@ -1446,7 +1499,12 @@ function App() {
             <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Gestione Dati</h2>
             </div>
-            <DataManager onImportData={importData} onResetData={resetAllData} />
+            <DataManager 
+              onImportData={importData} 
+              onResetData={resetAllData} 
+              onShowImportModal={() => setShowImportModal(true)}
+              onShowResetModal={() => setShowResetModal(true)}
+            />
           </div>
         )}
       </div>
@@ -1748,12 +1806,251 @@ function App() {
         </div>
       )}
 
+      {/* Category Form Modal */}
+      {showCategoryForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+            <div className="bg-purple-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+              <div className="flex items-center justify-between">
+                <button onClick={handleCategoryCancel} className="text-white/80 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold">
+                  {editingCategory ? 'Modifica' : 'Nuovo'} Categoria
+                </h2>
+                <div className="w-6"></div>
+              </div>
+            </div>
+
+            <form onSubmit={handleCategorySubmit} className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Nome Categoria
+                </label>
+                <input
+                  type="text"
+                  value={categoryFormData.name}
+                  onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                  placeholder="Nome categoria"
+                  className="input"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Icona
+                </label>
+                <div className="relative">
+                  <div className="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto scrollbar-hide emoji-scroll-container">
+                    {[
+                      // Cibo e bevande
+                      '🍽️', '🍔', '🍕', '🍣', '🍦', '🍰', '🍩', '🍪', '🍫', '🍬', '🍭', '🍮', '🍯', '🍼', '🥛', '☕', '🍵', '🍶', '🍷', '🍸', '🍹', '🍺', '🍻', '🥂', '🥃',
+                      // Trasporti
+                      '🚗', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🚚', '🚛', '🚜', '🛴', '🚲', '🛵', '🏍️', '🚨', '🚔', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🚃',
+                      // Shopping e acquisti
+                      '🛍️', '🛒', '🛍️', '💄', '👗', '👠', '👡', '👢', '👕', '👖', '🧥', '🧦', '🧤', '🧣', '👒', '🎩', '👑', '💍', '💎', '💐', '🌹', '🌷', '🌼', '🌻', '🌺',
+                      // Tecnologia
+                      '💻', '🖥️', '⌨️', '🖱️', '📱', '📲', '📟', '📠', '🔋', '💡', '🔌', '🔌', '💻', '🖨️', '📷', '📹', '🎥', '📺', '📻', '🎙️', '🎚️', '🎛️', '📻', '📱', '📲',
+                      // Casa e famiglia
+                      '🏠', '🏡', '🏘️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏨', '🏪', '🏫', '🏩', '💒', '⛪', '🕌', '🕍', '🛕', '⛩️', '🕋', '⛲', '⛺', '🌁',
+                      // Sport e attività
+                      '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🎯', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽',
+                      // Musica e intrattenimento
+                      '🎸', '🎤', '🎧', '🎼', '🎹', '🥁', '🪘', '🎷', '🎺', '🎻', '🪕', '🎬', '🎭', '🎨', '🎪', '🎟️', '🎫', '🎗️', '🎖️', '🏆', '🏅', '🥇', '🥈', '🥉', '⚱️',
+                      // Animali e natura
+                      '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🐣', '🦆', '🦅', '🦉', '🦇', '🐺',
+                      // Viaggi e luoghi
+                      '✈️', '🛩️', '🛫', '🛬', '🛰️', '🚀', '🛸', '🚁', '🚂', '🚃', '🚄', '🚅', '🚆', '🚇', '🚈', '🚉', '🚊', '🚝', '🚞', '🚋', '🚌', '🚍', '🚎', '🚐', '🚑',
+                      // Salute e benessere
+                      '🏥', '💊', '💉', '🩺', '🩹', '🩻', '🩼', '🩽', '🩾', '🩿', '🪑', '🪒', '🧴', '🧼', '🛁', '🚿', '🪣', '🧽', '🪞', '🪟', '🪠', '🪡', '🪢', '🪣', '🪤',
+                      // Lavoro e ufficio
+                      '💼', '📁', '📂', '📄', '📃', '📑', '📋', '📝', '✏️', '🖊️', '🖋️', '✒️', '🖌️', '🖍️', '📏', '📐', '✂️', '🗃️', '🗄️', '🗑️', '🔒', '🔓', '🔏', '🔐', '🔑',
+                      // Finanza e denaro
+                      '💰', '🪙', '💴', '💵', '💶', '💷', '🪙', '💳', '🧾', '💸', '🪙', '💎', '💍', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎',
+                      // Educazione e studio
+                      '📚', '📖', '📕', '📗', '📘', '📙', '📓', '📔', '📒', '📃', '📄', '📑', '🔖', '🏷️', '📎', '🖇️', '📐', '📏', '✂️', '🖊️', '🖋️', '✒️', '🖌️', '🖍️', '📝',
+                      // Tempo libero e hobby
+                      '🎮', '🕹️', '🎲', '🧩', '🎭', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🎷', '🎺', '🎻', '🪕', '🎸', '🎤', '🎧', '🎼', '🎹', '🥁', '🎷', '🎺', '🎻'
+                    ].map((icon) => (
+                      <button
+                        key={icon}
+                        type="button"
+                        onClick={() => setCategoryFormData({ ...categoryFormData, icon })}
+                        className={`p-2 rounded-lg text-lg transition-all emoji-scroll-item ${
+                          categoryFormData.icon === icon
+                            ? 'bg-blue-600 text-white shadow-lg'
+                            : 'bg-secondary hover:bg-gray-100 dark:hover:bg-gray-700/80'
+                        }`}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white dark:from-gray-800 to-transparent pointer-events-none"></div>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={handleCategoryCancel} className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200">
+                  Annulla
+                </button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-purple-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-purple-700/90 transition-all duration-200 transform hover:scale-105">
+                  {editingCategory ? 'Modifica' : 'Nuovo'}
+                </button>
+              </div>
+
+              {/* Pulsante elimina solo in modifica */}
+              {editingCategory && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    className="w-full px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2"
+                    onClick={handleCategoryDelete}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Elimina categoria
+                  </button>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+            <div className="bg-green-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+              <div className="flex items-center justify-between">
+                <button onClick={() => setShowImportModal(false)} className="text-white/80 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold">Importa Dati</h2>
+                <div className="w-6"></div>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Seleziona File di Backup
+                </label>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (e) => {
+                        try {
+                          const data = JSON.parse(e.target.result);
+                          importData(data);
+                          setShowImportModal(false);
+                        } catch (error) {
+                          alert('Errore durante l\'importazione: ' + error.message);
+                        }
+                      };
+                      reader.readAsText(file);
+                    }
+                  }}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span className="font-medium">Importa</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+            <div className="bg-red-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+              <div className="flex items-center justify-between">
+                <button onClick={() => setShowResetModal(false)} className="text-white/80 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Trash2 className="w-5 h-5" />
+                  Reset Completo
+                </h2>
+                <div className="w-6"></div>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="text-center">
+                <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  ATTENZIONE!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Stai per eliminare <strong>TUTTI</strong> i tuoi dati:
+                </p>
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1 mb-6">
+                  <li>• Tutte le spese e entrate</li>
+                  <li>• Tutte le categorie personalizzate</li>
+                  <li>• Tutti i negozi salvati</li>
+                  <li>• Tutti i conti e saldi</li>
+                  <li>• Tutte le impostazioni</li>
+                </ul>
+                <p className="text-red-600 font-semibold">
+                  Questa azione è <strong>IRREVERSIBILE</strong> e non può essere annullata!
+                </p>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetAllData();
+                    setShowResetModal(false);
+                  }}
+                  className="flex-1 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl font-medium hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Elimina Tutto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filter Dialog */}
       <FilterDialog
         isOpen={showFilterDialog}
         onClose={() => setShowFilterDialog(false)}
         onApplyFilters={applyFilters}
-        categories={activeTab === 'stats' ? [...(categories.expense || []), ...(categories.income || [])] : (activeTab === 'expenses' ? categories.expense : categories.income)}
+        categories={categories}
+        activeTab={activeTab}
         stores={stores}
         wallets={getWalletsWithCalculatedBalance()}
       />

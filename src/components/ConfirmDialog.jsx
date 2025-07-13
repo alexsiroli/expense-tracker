@@ -4,8 +4,8 @@ function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, type = 'dan
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content p-6">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700 p-6">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
             <AlertTriangle className="w-8 h-8 text-destructive" />

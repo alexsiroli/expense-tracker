@@ -150,7 +150,7 @@
   }
 
   .modal-overlay {
-    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50;
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999];
   }
 
   .modal-content {
@@ -168,10 +168,21 @@
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  .emoji-scroll-container {
+    scroll-snap-type: y proximity;
+    scroll-padding: 0.5rem;
+  }
+
+  .emoji-scroll-item {
+    scroll-snap-align: start;
   }
 
   /* Miglioramenti per i form */

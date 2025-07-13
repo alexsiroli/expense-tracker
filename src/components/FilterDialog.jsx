@@ -1,7 +1,28 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Calendar, Tag, Store, Search, Filter, Clock, Wallet, ChevronDown, ChevronUp } from 'lucide-react';
 
-function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], stores = [], wallets = [] }) {
+function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], activeTab = 'expenses', stores = [], wallets = [] }) {
+  // Ottieni le categorie appropriate basandosi sull'activeTab
+  const getCategoriesForTab = () => {
+    if (activeTab === 'stats') {
+      return {
+        expense: categories.expense || [],
+        income: categories.income || []
+      };
+    } else if (activeTab === 'expenses') {
+      return {
+        expense: categories.expense || [],
+        income: []
+      };
+    } else {
+      return {
+        expense: [],
+        income: categories.income || []
+      };
+    }
+  };
+
+  const { expense: expenseCategories, income: incomeCategories } = getCategoriesForTab();
   const [filters, setFilters] = useState({
     timeRange: 'all', // all, today, week, month, year, custom
     startDate: '',
@@ -273,21 +294,51 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], stores
             
             {expandedSections.categories && (
               <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
-                  {categories.map(category => (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryToggle(category.name)}
-                      className={`p-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
-                        filters.selectedCategories.includes(category.name)
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                      }`}
-                    >
-                      <span>{category.icon}</span>
-                      <span className="truncate">{category.name}</span>
-                    </button>
-                  ))}
+                <div className="max-h-48 overflow-y-auto space-y-3">
+                  {/* Categorie Spese */}
+                  {expenseCategories.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {expenseCategories.map(category => (
+                        <button
+                          key={category.id}
+                          onClick={() => handleCategoryToggle(category.name)}
+                          className={`p-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
+                            filters.selectedCategories.includes(category.name)
+                              ? 'bg-red-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          <span>{category.icon}</span>
+                          <span className="truncate">{category.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Linea separatrice se ci sono entrambi i tipi */}
+                  {expenseCategories.length > 0 && incomeCategories.length > 0 && (
+                    <div className="border-t border-gray-300 dark:border-gray-600 my-2"></div>
+                  )}
+
+                  {/* Categorie Entrate */}
+                  {incomeCategories.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {incomeCategories.map(category => (
+                        <button
+                          key={category.id}
+                          onClick={() => handleCategoryToggle(category.name)}
+                          className={`p-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
+                            filters.selectedCategories.includes(category.name)
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          <span>{category.icon}</span>
+                          <span className="truncate">{category.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
