@@ -226,6 +226,8 @@ function App() {
           
           // Salva il completamento nel database
           await saveEasterEggCompletion('tapSegreto', setEasterEggCompleted);
+          // Piccolo delay per assicurarsi che il database sia aggiornato
+          await new Promise(resolve => setTimeout(resolve, 100));
           await loadEasterEggsWithStatus();
           
           setWalletTapCount(0);
@@ -439,9 +441,11 @@ function App() {
               
               activateEasterEgg('tapLungo', setters);
               
-              // Salva il completamento nel database
-              await saveEasterEggCompletion('tapLungo', setEasterEggCompleted);
-              await loadEasterEggsWithStatus();
+                        // Salva il completamento nel database
+          await saveEasterEggCompletion('tapLungo', setEasterEggCompleted);
+          // Piccolo delay per assicurarsi che il database sia aggiornato
+          await new Promise(resolve => setTimeout(resolve, 100));
+          await loadEasterEggsWithStatus();
               
               const easterEgg = getEasterEgg('tapLungo');
               if (easterEgg) {
@@ -533,6 +537,8 @@ function App() {
         
         // Salva il completamento nel database
         await saveEasterEggCompletion('temaSegreto', setEasterEggCompleted);
+        // Piccolo delay per assicurarsi che il database sia aggiornato
+        await new Promise(resolve => setTimeout(resolve, 100));
         await loadEasterEggsWithStatus();
         
         const easterEgg = getEasterEgg('temaSegreto');
@@ -595,8 +601,13 @@ function App() {
       const easterEgg = getEasterEgg(activatedEgg);
       if (easterEgg) {
         // Salva il completamento nel database
+        console.log('[EASTER EGG] Salvataggio completamento per', activatedEgg);
         await saveEasterEggCompletion(activatedEgg, setEasterEggCompleted);
+        // Piccolo delay per assicurarsi che il database sia aggiornato
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log('[EASTER EGG] Ricarico stato medagliere...');
         await loadEasterEggsWithStatus();
+        console.log('[EASTER EGG] Stato medagliere dopo update:', easterEggsWithStatus);
         setTimeout(() => {
           alert(easterEgg.activationMessage);
         }, 100);
@@ -650,8 +661,13 @@ function App() {
       const easterEgg = getEasterEgg(activatedEgg);
       if (easterEgg) {
         // Salva il completamento nel database
+        console.log('[EASTER EGG] Salvataggio completamento per', activatedEgg);
         await saveEasterEggCompletion(activatedEgg, setEasterEggCompleted);
+        // Piccolo delay per assicurarsi che il database sia aggiornato
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log('[EASTER EGG] Ricarico stato medagliere...');
         await loadEasterEggsWithStatus();
+        console.log('[EASTER EGG] Stato medagliere dopo update:', easterEggsWithStatus);
         setTimeout(() => {
           alert(easterEgg.activationMessage);
         }, 100);
@@ -1356,13 +1372,26 @@ function App() {
   }, [isAnyModalOpen]);
 
   const loadEasterEggsWithStatus = async () => {
-    const eggsWithStatus = await getEasterEggsWithCompletionStatus(getCompletedEasterEggs);
-    setEasterEggsWithStatus(eggsWithStatus);
+    try {
+      const eggsWithStatus = await getEasterEggsWithCompletionStatus(getCompletedEasterEggs);
+      console.log('Easter eggs with status loaded:', eggsWithStatus);
+      setEasterEggsWithStatus(eggsWithStatus);
+    } catch (error) {
+      console.error('Errore nel caricamento easter eggs:', error);
+    }
   };
 
+  // Hook per caricare gli easter eggs quando l'utente cambia
   useEffect(() => {
     if (user) loadEasterEggsWithStatus();
   }, [user]);
+
+  // Hook per gestire la funzione di caricamento easter eggs in UserProfile
+  useEffect(() => {
+    if (showUserProfile && window.loadEasterEggsWithStatus) {
+      setLoadEasterEggsWithStatusFn(() => window.loadEasterEggsWithStatus);
+    }
+  }, [showUserProfile]);
 
   // Mostra loading mentre verifica l'autenticazione
   if (authLoading) {
@@ -1380,13 +1409,6 @@ function App() {
   if (!user) {
     return <LoginForm />;
   }
-
-  // In useEffect, quando UserProfile viene montato, salva la funzione:
-  useEffect(() => {
-    if (showUserProfile && window.loadEasterEggsWithStatus) {
-      setLoadEasterEggsWithStatusFn(() => window.loadEasterEggsWithStatus);
-    }
-  }, [showUserProfile]);
 
   return (
     <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} ${partyMode ? 'party-mode' : ''} ${retroMode ? 'retro-mode' : ''} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>

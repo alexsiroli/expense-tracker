@@ -11,7 +11,8 @@ import {
   where, 
   orderBy,
   onSnapshot,
-  writeBatch
+  writeBatch,
+  setDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from './useAuth';
@@ -348,21 +349,19 @@ export const useFirestore = () => {
     try {
       setLoading(true);
       setError(null);
-      
       const userDoc = doc(db, 'users', user.uid);
       const userSnapshot = await getDoc(userDoc);
-      
       let completedEasterEggs = [];
       if (userSnapshot.exists()) {
         completedEasterEggs = userSnapshot.data().completedEasterEggs || [];
       }
-      
       if (!completedEasterEggs.includes(easterEggId)) {
         completedEasterEggs.push(easterEggId);
-        await updateDoc(userDoc, {
+        // Usa setDoc con merge:true per creare il documento se non esiste
+        await setDoc(userDoc, {
           completedEasterEggs,
           updatedAt: new Date().toISOString()
-        });
+        }, { merge: true });
       }
     } catch (error) {
       setError('Errore nel salvataggio easter egg: ' + error.message);

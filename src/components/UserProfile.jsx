@@ -324,24 +324,19 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
         </div>
       )}
 
-      {/* Modal Easter Eggs */}
+      {/* Easter Egg Modal (Medagliere) */}
       {showEasterEggs && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full animate-fade-in-up">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => setShowEasterEggs(false)}
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-                <h2 className="text-lg font-bold flex items-center gap-2">
-                  🏆 Easter Eggs
-                </h2>
-                <div className="w-5"></div>
-              </div>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-sm w-full animate-fade-in-up">
+            {/* Header con X di chiusura */}
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl flex items-center justify-between">
+              <h2 className="text-xl font-bold">Easter Egg</h2>
+              <button
+                onClick={() => setShowEasterEggs(false)}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
 
             <div className="p-6">
