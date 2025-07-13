@@ -135,6 +135,9 @@ function App() {
   const lastScrollY = useRef(window.scrollY);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true); // Di default è espanso
   const [scrollDirection, setScrollDirection] = useState('down');
+  const [rainbowMode, setRainbowMode] = useState(false);
+  const [walletTapCount, setWalletTapCount] = useState(0);
+  const [lastTapTime, setLastTapTime] = useState(0);
 
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
   useEffect(() => {
@@ -145,6 +148,63 @@ function App() {
       }));
     }
   }, [wallets]);
+
+  // Gestione easter egg - Tap segreto sul logo del portafoglio
+  const handleWalletTap = () => {
+    const now = Date.now();
+    const timeDiff = now - lastTapTime;
+    
+    // Reset se è passato troppo tempo (> 2 secondi)
+    if (timeDiff > 2000) {
+      setWalletTapCount(1);
+    } else {
+      setWalletTapCount(prev => prev + 1);
+    }
+    
+    setLastTapTime(now);
+    
+    // Se abbiamo raggiunto 5 tap rapidi
+    if (walletTapCount >= 4) { // 4 perché questo è il 5° tap
+      if (rainbowMode) {
+        // Disattiva il tema arcobaleno
+        setRainbowMode(false);
+        setWalletTapCount(0);
+        // Nessun popup per la disattivazione
+      } else {
+        // Attiva il tema arcobaleno
+        setRainbowMode(true);
+        setWalletTapCount(0);
+        
+        // Mostra un messaggio di successo più simpatico
+        setTimeout(() => {
+          alert('🎉 EGG EASTER TROVATO! 🌈\n\nHai scoperto il segreto del portafoglio!\nOra tutta l\'app è arcobaleno! ✨\n\nTap 5 volte di nuovo per tornare normale 😉');
+        }, 100);
+      }
+    }
+  };
+
+  // Funzione per aggiornare il colore della Dynamic Island e barra di stato
+  const updateThemeColor = (isRainbow, currentTheme) => {
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (!themeColorMeta) return;
+
+    let newColor;
+    if (isRainbow && currentTheme === 'dark') {
+      // Tema scuro + arcobaleno
+      newColor = '#271925'; // Colore personalizzato per il tema arcobaleno scuro
+    } else if (isRainbow && currentTheme === 'light') {
+      // Tema chiaro + arcobaleno
+      newColor = '#FEEDD2'; // Colore personalizzato per il tema arcobaleno chiaro
+    } else if (currentTheme === 'dark') {
+      // Tema scuro normale
+      newColor = '#111828'; // Colore scuro originale
+    } else {
+      // Tema chiaro normale
+      newColor = '#FFFFFF'; // Colore bianco per il tema light
+    }
+
+    themeColorMeta.setAttribute('content', newColor);
+  };
 
   // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
@@ -245,9 +305,15 @@ function App() {
     }
   }, [user, walletsData]);
 
+  // Aggiorna il colore della Dynamic Island quando cambia il tema
+  useEffect(() => {
+    updateThemeColor(rainbowMode, theme);
+  }, [rainbowMode, theme]);
 
-
-
+  // Aggiorna il colore della Dynamic Island all'avvio dell'app
+  useEffect(() => {
+    updateThemeColor(rainbowMode, theme);
+  }, []);
 
   // Calcola il saldo di un conto dinamicamente
   const calculateWalletBalance = (walletId) => {
@@ -938,14 +1004,18 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
+    <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
       {/* Header espandibile con grafica trasparente */}
       <header className={`fixed top-0 left-0 w-full z-20 py-0 animate-fade-in header-transition header-parallax ${isHeaderExpanded ? 'h-20' : 'h-16'}`}>
         <div className="max-w-md mx-auto px-6 mt-2">
-          <div className={`bg-gradient-to-r from-blue-600/50 to-purple-600/50 backdrop-blur-md border border-blue-500/40 rounded-xl transform hover:scale-102 header-content-transition hover:shadow-xl hover:shadow-blue-500/20 active:scale-98 ${isHeaderExpanded ? 'p-3' : 'p-2.5'}`}>
+          <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/50 via-yellow-500/50 via-green-500/50 via-blue-500/50 via-purple-500/50 to-pink-500/50' : 'bg-gradient-to-r from-blue-600/50 to-purple-600/50'} backdrop-blur-md border ${rainbowMode ? 'border-rainbow-500/40' : 'border-blue-500/40'} rounded-xl transform hover:scale-102 header-content-transition hover:shadow-xl ${rainbowMode ? 'hover:shadow-rainbow-500/20' : 'hover:shadow-blue-500/20'} active:scale-98 ${isHeaderExpanded ? 'p-3' : 'p-2.5'}`}>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className={`${isHeaderExpanded ? 'p-2.5' : 'p-2'} bg-white/25 rounded-lg backdrop-blur-sm flex-shrink-0 shadow-sm`}>
+                <div 
+                  className={`${isHeaderExpanded ? 'p-2.5' : 'p-2'} ${rainbowMode ? 'bg-gradient-to-r from-red-400/30 via-yellow-400/30 via-green-400/30 via-blue-400/30 via-purple-400/30 to-pink-400/30' : 'bg-white/25'} rounded-lg backdrop-blur-sm flex-shrink-0 shadow-sm cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95`}
+                  onClick={handleWalletTap}
+                  title={rainbowMode ? "Tap 5 volte rapidamente per disattivare il tema arcobaleno! 🌙" : "Tap 5 volte rapidamente per un easter egg! 🎉"}
+                >
                   <Wallet className={`${isHeaderExpanded ? 'w-5 h-5' : 'w-4 h-4'} text-white`} />
                 </div>
                 <div className={`flex flex-col ${isHeaderExpanded ? 'gap-1' : 'gap-0'}`}>
@@ -998,7 +1068,7 @@ function App() {
 
       {/* Balance Card con design moderno - PRIMA COSA */}
       <div className="max-w-md mx-auto px-6 mt-4 pb-6 animate-fade-in-up">
-        <div className={`floating-card ${balanceCollapsed ? 'p-3' : 'p-6'} transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 animate-bounce-in active:scale-95`}>
+        <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/20 via-yellow-500/20 via-green-500/20 via-blue-500/20 via-purple-500/20 to-pink-500/20 border border-rainbow-500/40 rounded-2xl' : 'floating-card'} ${balanceCollapsed ? 'p-3' : 'p-6'} transform hover:scale-105 transition-all duration-300 ${rainbowMode ? 'hover:shadow-2xl hover:shadow-rainbow-500/30' : 'hover:shadow-2xl hover:shadow-blue-500/20'} animate-bounce-in active:scale-95`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <PiggyBank className="w-6 h-6 text-blue-600" />
@@ -1230,13 +1300,13 @@ function App() {
       {/* Navigation Tabs fluttuante in basso */}
       <div className={`fixed bottom-12 left-0 w-full z-30 py-3 transition-all duration-300 ${showFloatingMenu ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-full pointer-events-none'}`}>
         <div className="max-w-md mx-auto px-6">
-          <div className="glass-card p-2">
+          <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/30 via-yellow-500/30 via-green-500/30 via-blue-500/30 via-purple-500/30 to-pink-500/30 backdrop-blur-md border border-rainbow-500/40 rounded-2xl' : 'glass-card'} p-2`}>
             <div className="grid grid-cols-5 gap-2">
               <button
                 onClick={() => setActiveTab('expenses')}
                 className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                   activeTab === 'expenses'
-                    ? 'tab-active'
+                    ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
                 }`}
               >
@@ -1249,7 +1319,7 @@ function App() {
                 onClick={() => setActiveTab('incomes')}
                 className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                   activeTab === 'incomes'
-                    ? 'tab-active'
+                    ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
                 }`}
               >
@@ -1262,7 +1332,7 @@ function App() {
                 onClick={() => setActiveTab('stats')}
                 className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                   activeTab === 'stats'
-                    ? 'tab-active'
+                    ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
                 }`}
               >
@@ -1275,7 +1345,7 @@ function App() {
                 onClick={() => setActiveTab('categories')}
                 className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                   activeTab === 'categories'
-                    ? 'tab-active'
+                    ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
                 }`}
               >
@@ -1288,7 +1358,7 @@ function App() {
                 onClick={() => setActiveTab('data')}
                 className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                   activeTab === 'data'
-                    ? 'tab-active'
+                    ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
                 }`}
               >
@@ -1535,7 +1605,7 @@ function App() {
       />
 
       {/* Footer con credits */}
-      <footer className="fixed bottom-0 left-0 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 py-2 z-40">
+      <footer className={`fixed bottom-0 left-0 w-full ${rainbowMode ? 'bg-gradient-to-r from-red-500/80 via-yellow-500/80 via-green-500/80 via-blue-500/80 via-purple-500/80 to-pink-500/80 dark:from-red-900/80 dark:via-yellow-900/80 dark:via-green-900/80 dark:via-blue-900/80 dark:via-purple-900/80 dark:to-pink-900/80' : 'bg-white/80 dark:bg-gray-900/80'} backdrop-blur-md border-t ${rainbowMode ? 'border-rainbow-500/40' : 'border-gray-200 dark:border-gray-700'} py-2 z-40`}>
         <div className="max-w-md mx-auto px-6">
           <div className="text-center">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">

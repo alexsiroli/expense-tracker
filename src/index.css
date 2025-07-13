@@ -356,6 +356,29 @@
     border: 1px solid rgba(59, 130, 246, 0.3);
   }
 
+  /* Easter Egg - Tema Arcobaleno */
+  .border-rainbow-500\/40 {
+    border-color: rgba(255, 0, 255, 0.4);
+  }
+
+  .hover\:shadow-rainbow-500\/20:hover {
+    box-shadow: 0 25px 50px -12px rgba(255, 0, 255, 0.2);
+  }
+
+  /* Animazione arcobaleno pulsante */
+  @keyframes rainbow-pulse {
+    0%, 100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  .animate-pulse {
+    animation: rainbow-pulse 2s ease-in-out infinite;
+  }
+
   /* Effetti hover avanzati */
   .floating-card:hover {
     transform: translateY(-5px);

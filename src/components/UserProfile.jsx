@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { User, Calendar, FileText, Trash2, X, LogOut, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useFirestore } from '../hooks/useFirestore';
@@ -13,6 +13,10 @@ const UserProfile = ({ isOpen, onClose }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [showEasterEggs, setShowEasterEggs] = useState(false);
+  const [creditsTapCount, setCreditsTapCount] = useState(0);
+  const [showTapCounter, setShowTapCounter] = useState(false);
+  const lastCreditsTapTime = useRef(0);
 
   if (!isOpen) return null;
 
@@ -20,6 +24,35 @@ const UserProfile = ({ isOpen, onClose }) => {
   const registrationDate = user?.metadata?.creationTime 
     ? format(new Date(user.metadata.creationTime), 'dd MMMM yyyy', { locale: it })
     : 'Data non disponibile';
+
+  // Gestione easter egg - Tap segreto sui crediti
+  const handleCreditsTap = () => {
+    const now = Date.now();
+    const timeDiff = now - lastCreditsTapTime.current;
+    
+    // Reset se è passato troppo tempo (> 3 secondi)
+    if (timeDiff > 3000) {
+      setCreditsTapCount(1);
+    } else {
+      setCreditsTapCount(prev => prev + 1);
+    }
+    
+    lastCreditsTapTime.current = now;
+    
+    // Mostra il contatore se abbiamo fatto almeno 5 tap
+    if (creditsTapCount >= 4) { // 4 perché questo è il 5° tap
+      setShowTapCounter(true);
+      // Nascondi il contatore dopo 2 secondi
+      setTimeout(() => setShowTapCounter(false), 2000);
+    }
+    
+    // Se abbiamo raggiunto 8 tap rapidi
+    if (creditsTapCount >= 7) { // 7 perché questo è l'8° tap
+      setShowEasterEggs(true);
+      setCreditsTapCount(0);
+      setShowTapCounter(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     try {
@@ -142,7 +175,11 @@ const UserProfile = ({ isOpen, onClose }) => {
           </div>
 
           {/* Credits */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+          <div 
+            className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800 cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95"
+            onClick={handleCreditsTap}
+            title="Tap 8 volte rapidamente per un easter egg! 🎉"
+          >
             <div className="text-center">
               <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
                 Sviluppato con ❤️
@@ -275,8 +312,88 @@ const UserProfile = ({ isOpen, onClose }) => {
           </div>
         </div>
       )}
-    </div>
-  );
-};
 
-export default UserProfile; 
+      {/* Modal Easter Eggs */}
+      {showEasterEggs && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-up">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setShowEasterEggs(false)}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  🎉 Easter Eggs
+                </h2>
+                <div className="w-6"></div>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-center mb-6">
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  Scopri tutti gli easter egg nascosti nell'app!
+                </p>
+              </div>
+
+              {/* Lista Easter Eggs */}
+              <div className="space-y-3">
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">1</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                        Tap Segreto
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Tema arcobaleno nascosto
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Placeholder per futuri easter egg */}
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700 opacity-50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-500 dark:text-gray-400 text-sm font-bold">?</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-500 dark:text-gray-400">
+                        Easter Egg Segreto
+                      </h4>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        Ancora da scoprire...
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center pt-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Continua a esplorare l'app per trovare altri easter egg! 🔍
+                </p>
+              </div>
+                          </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mini popup contatore tap */}
+        {showTapCounter && (
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium z-50">
+            Ancora {8 - creditsTapCount}...
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  export default UserProfile; 
