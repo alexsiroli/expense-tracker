@@ -197,7 +197,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
     <div className="modal-overlay">
       <div className="modal-content">
         {/* Header */}
-        <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+        <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <button
               onClick={onClose}

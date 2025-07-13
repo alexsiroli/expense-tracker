@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { formatCurrency } from '../utils/formatters';
 
-function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
+function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDetail }) {
   const formatDate = (dateString) => {
     return format(new Date(dateString), 'dd MMM yyyy', { locale: it });
   };
@@ -83,24 +83,28 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
           {/* Transazioni del giorno */}
           <div className="space-y-3">
             {dateItems.map((item) => (
-              <div key={item.id} className="expense-item p-5">
-                <div className="flex items-start gap-4">
+              <div
+                key={item.id}
+                className="expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => onShowDetail && onShowDetail(item)}
+              >
+                <div className="flex items-start gap-3">
                   {/* Category Icon */}
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-xl bg-gray-200/90 dark:bg-gray-700/90 backdrop-blur-sm flex items-center justify-center text-xl mt-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-200/90 dark:bg-gray-700/90 backdrop-blur-sm flex items-center justify-center text-lg mt-3">
                       {getCategoryIcon(item.category)}
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start justify-between mb-1">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-base">
                           {item.store || 'Senza negozio'}
                         </h3>
                       </div>
-                      <div className={`text-lg font-bold ${
+                      <div className={`text-xl font-bold flex items-center mt-3 ${
                         type === 'expense' ? 'text-red-600' : 'text-green-600'
                       }`}>
                         {type === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
@@ -108,30 +112,13 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [] }) {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-600/10 text-blue-600 border border-blue-600/20">
+                      <div className="flex items-center gap-2 -mt-3">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-600/10 text-blue-600 border border-blue-600/20">
                           {item.category}
                         </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {format(new Date(item.date), 'HH:mm', { locale: it })}
                         </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => onEdit(item)}
-                          className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 transition-colors rounded-lg"
-                          title="Modifica"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => onDelete(item.id)}
-                          className="p-2 text-gray-500 dark:text-gray-400 hover:text-destructive transition-colors rounded-lg"
-                          title="Elimina"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   </div>

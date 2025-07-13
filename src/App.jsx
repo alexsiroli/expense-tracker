@@ -17,6 +17,7 @@ import LoginForm from './components/LoginForm';
 import UserProfile from './components/UserProfile';
 import FilterDialog from './components/FilterDialog';
 import { formatCurrency } from './utils/formatters';
+import TransactionDetailDialog from './components/TransactionDetailDialog';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -151,6 +152,9 @@ function App() {
   const [categoryType, setCategoryType] = useState('expense');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  // Stato per il dialog di dettaglio transazione
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [showTransactionDialog, setShowTransactionDialog] = useState(false);
 
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
   useEffect(() => {
@@ -1206,7 +1210,7 @@ function App() {
       {/* Header espandibile con grafica trasparente */}
       <header className={`fixed top-0 left-0 w-full z-20 py-0 animate-fade-in header-transition header-parallax ${isHeaderExpanded ? 'h-20' : 'h-16'}`}>
         <div className="max-w-md mx-auto px-6 mt-2">
-          <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/50 via-yellow-500/50 via-green-500/50 via-blue-500/50 via-purple-500/50 to-pink-500/50' : 'bg-gradient-to-r from-blue-600/50 to-purple-600/50'} backdrop-blur-md border ${rainbowMode ? 'border-rainbow-500/40' : 'border-blue-500/40'} rounded-xl transform hover:scale-102 header-content-transition hover:shadow-xl ${rainbowMode ? 'hover:shadow-rainbow-500/20' : 'hover:shadow-blue-500/20'} active:scale-98 ${isHeaderExpanded ? 'p-3' : 'p-2.5'}`}>
+          <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/50 via-yellow-500/50 via-green-500/50 via-blue-500/50 via-purple-500/50 to-pink-500/50' : 'bg-gradient-to-r from-blue-600/50 to-purple-600/50'} backdrop-blur-md border ${rainbowMode ? 'border-rainbow-500/40' : 'border-blue-500/40'} rounded-3xl transform hover:scale-102 header-content-transition hover:shadow-xl ${rainbowMode ? 'hover:shadow-rainbow-500/20' : 'hover:shadow-blue-500/20'} active:scale-98 ${isHeaderExpanded ? 'p-3' : 'p-2.5'}`}>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-4 min-w-0 flex-1">
                 <div 
@@ -1273,7 +1277,7 @@ function App() {
 
       {/* Balance Card con design moderno - PRIMA COSA */}
       <div className="max-w-md mx-auto px-6 mt-4 pb-6 animate-fade-in-up">
-        <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/20 via-yellow-500/20 via-green-500/20 via-blue-500/20 via-purple-500/20 to-pink-500/20 border border-rainbow-500/40 rounded-2xl' : 'floating-card'} ${balanceCollapsed ? 'p-3' : 'p-6'} transform hover:scale-105 transition-all duration-300 ${rainbowMode ? 'hover:shadow-2xl hover:shadow-rainbow-500/30' : 'hover:shadow-2xl hover:shadow-blue-500/20'} animate-bounce-in active:scale-95`}>
+        <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/20 via-yellow-500/20 via-green-500/20 via-blue-500/20 via-purple-500/20 to-pink-500/20 border border-rainbow-500/40 rounded-2xl' : 'floating-card'} ${balanceCollapsed ? 'p-3' : 'p-6'} transition-all duration-300 ${rainbowMode ? 'hover:shadow-2xl hover:shadow-rainbow-500/30' : 'hover:shadow-2xl hover:shadow-blue-500/20'} animate-bounce-in`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <PiggyBank className="w-6 h-6 text-blue-600" />
@@ -1307,14 +1311,14 @@ function App() {
                   {formatCurrency((currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)))}
                 </div>
                 <div className="flex justify-center gap-6 text-sm">
-                  <div className="text-green-600 transform hover:scale-105 transition-all duration-200 active:scale-95">
+                  <div className="text-green-600 transition-all duration-200">
                     <div className="flex items-center gap-1 font-semibold">
                       <TrendingUp className="w-4 h-4" />
                       Entrate
                     </div>
                     <div className="text-lg font-bold">{formatCurrency(currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0))}</div>
                   </div>
-                  <div className="text-red-600 transform hover:scale-105 transition-all duration-200 active:scale-95">
+                  <div className="text-red-600 transition-all duration-200">
                     <div className="flex items-center gap-1 font-semibold">
                       <TrendingDown className="w-4 h-4" />
                       Spese
@@ -1386,6 +1390,7 @@ function App() {
               onEdit={handleEdit}
               type="expense"
               categories={categories.expense}
+              onShowDetail={(item) => { setSelectedTransaction(item); setShowTransactionDialog(true); }}
             />
           </div>
         )}
@@ -1425,6 +1430,7 @@ function App() {
               onEdit={handleEdit}
               type="income"
               categories={categories.income}
+              onShowDetail={(item) => { setSelectedTransaction(item); setShowTransactionDialog(true); }}
             />
           </div>
         )}
@@ -1625,7 +1631,7 @@ function App() {
       {showWalletForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
-            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => {
                   setShowWalletForm(false);
@@ -1690,7 +1696,7 @@ function App() {
       {showTransferModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
-            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => {
                   setShowTransferModal(false);
@@ -1769,7 +1775,7 @@ function App() {
       {showColorPicker && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
-            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => setShowColorPicker(false)} className="text-white/80 hover:text-white transition-colors">
                   <X className="w-6 h-6" />
@@ -1810,7 +1816,7 @@ function App() {
       {showCategoryForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
-            <div className="bg-purple-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={handleCategoryCancel} className="text-white/80 hover:text-white transition-colors">
                   <X className="w-6 h-6" />
@@ -1922,7 +1928,7 @@ function App() {
       {showImportModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
-            <div className="bg-green-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => setShowImportModal(false)} className="text-white/80 hover:text-white transition-colors">
                   <X className="w-6 h-6" />
@@ -1985,7 +1991,7 @@ function App() {
       {showResetModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
-            <div className="bg-red-600/90 backdrop-blur-sm text-white p-6 rounded-t-3xl">
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => setShowResetModal(false)} className="text-white/80 hover:text-white transition-colors">
                   <X className="w-6 h-6" />
@@ -2069,6 +2075,16 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {showTransactionDialog && selectedTransaction && (
+        <TransactionDetailDialog
+          transaction={selectedTransaction}
+          onClose={() => setShowTransactionDialog(false)}
+          onEdit={() => { handleEdit(selectedTransaction); setShowTransactionDialog(false); }}
+          onDelete={() => { confirmDelete(selectedTransaction.id); setShowTransactionDialog(false); }}
+          categories={categories}
+        />
+      )}
     </div>
   );
 }
