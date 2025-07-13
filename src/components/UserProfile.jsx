@@ -344,51 +344,48 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
                   Colleziona tutte le medaglie nascoste!
                 </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {easterEggsWithStatus.filter(egg => egg.isCompleted).length} / {easterEggsWithStatus.length} completate
+                </p>
               </div>
 
               {/* Griglia distintivi stile medaglie Pokémon */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-3 max-h-64 overflow-y-auto">
                 {easterEggsWithStatus.map((egg, index) => {
-                  const badgeColors = [
-                    'from-red-500 to-pink-500', // Rosso
-                    'from-blue-500 to-cyan-500', // Blu
-                    'from-green-500 to-emerald-500', // Verde
-                    'from-yellow-500 to-orange-500', // Giallo
-                    'from-purple-500 to-indigo-500', // Viola
-                    'from-teal-500 to-blue-500' // Turchese
-                  ];
-                  
-                  const badgeIcons = ['🌈', '🎉', '🎮', '📺', '👼', '⏰'];
-                  
                   return (
                     <button
                       key={egg.id}
-                                              onClick={() => {
-                          if (egg.isCompleted) {
-                            // Se completato, mostra titolo e descrizione
-                            alert(`${egg.title}\n\n${egg.description}`);
-                          } else {
-                            // Se non completato, mostra solo il titolo
-                            alert(`${egg.title}\n\n???`);
-                          }
-                        }}
+                      onClick={() => {
+                        if (egg.isCompleted) {
+                          // Se completato, mostra titolo e descrizione
+                          alert(`${egg.title}\n\n${egg.description}`);
+                        } else {
+                          // Se non completato, mostra solo il titolo
+                          alert(`${egg.title}\n\n???`);
+                        }
+                      }}
                       className="group relative"
                     >
-                                              <div className={`
-                          w-16 h-16 mx-auto rounded-full 
-                          ${egg.isCompleted 
-                            ? `bg-gradient-to-br ${badgeColors[index]} shadow-lg` 
-                            : 'bg-gray-300 dark:bg-gray-600 shadow-md'
-                          }
-                          border-4 border-white dark:border-gray-700
-                          flex items-center justify-center text-2xl
-                          transform transition-all duration-300
-                          hover:scale-110 hover:shadow-xl
-                          active:scale-95
-                          group-hover:animate-pulse
-                        `}>
-                          {egg.isCompleted ? badgeIcons[index] : '❓'}
-                        </div>
+                      <div className={`
+                        w-14 h-14 mx-auto rounded-full 
+                        ${egg.isCompleted 
+                          ? `bg-gradient-to-br ${egg.bgColor} shadow-lg` 
+                          : 'bg-gray-300 dark:bg-gray-600 shadow-md'
+                        }
+                        border-4 border-white dark:border-gray-700
+                        flex items-center justify-center text-xl
+                        transform transition-all duration-300
+                        hover:scale-110 hover:shadow-xl
+                        active:scale-95
+                        group-hover:animate-pulse
+                      `}>
+                        {egg.isCompleted ? egg.icon : '❓'}
+                      </div>
+                      <div className="text-center mt-1">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                          {egg.isCompleted ? 'Completato' : 'Bloccato'}
+                        </p>
+                      </div>
                     </button>
                   );
                 })}

@@ -4,6 +4,9 @@ import { formatCurrency } from '../utils/formatters';
 function TransactionDetailDialog({ transaction, onClose, onEdit, onDelete, categories }) {
   if (!transaction) return null;
   const cat = (categories.expense || []).concat(categories.income || []).find(c => c.name === transaction.category);
+  // Determina se è spesa o entrata
+  const isExpense = (categories.expense || []).some(c => c.name === transaction.category);
+  const isIncome = (categories.income || []).some(c => c.name === transaction.category);
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
@@ -22,7 +25,7 @@ function TransactionDetailDialog({ transaction, onClose, onEdit, onDelete, categ
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`text-2xl font-bold ${transaction.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>{transaction.amount < 0 ? '-' : '+'}{formatCurrency(Math.abs(transaction.amount))}</span>
+            <span className={`text-2xl font-bold ${isExpense ? 'text-red-600' : 'text-green-600'}`}>{isExpense ? '-' : isIncome ? '+' : ''}{formatCurrency(Math.abs(transaction.amount))}</span>
             <span className="text-xs text-gray-500 dark:text-gray-400">{transaction.date ? new Date(transaction.date).toLocaleString() : ''}</span>
           </div>
           {transaction.note && <div className="text-sm text-gray-700 dark:text-gray-300">{transaction.note}</div>}

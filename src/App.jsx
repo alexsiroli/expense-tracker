@@ -153,6 +153,9 @@ function App() {
   const [flameMode, setFlameMode] = useState(false);
   const [angelicMode, setAngelicMode] = useState(false);
   const [timeTravelMode, setTimeTravelMode] = useState(false);
+  const [fogliaOroMode, setFogliaOroMode] = useState(false);
+  const [nataleMagicoMode, setNataleMagicoMode] = useState(false);
+  const [compleannoSpecialeMode, setCompleannoSpecialeMode] = useState(false);
   
   // Stati per modal dei componenti figli
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -221,7 +224,10 @@ function App() {
             setRetroMode,
             setFlameMode,
             setAngelicMode,
-            setTimeTravelMode
+            setTimeTravelMode,
+            setFogliaOroMode,
+            setNataleMagicoMode,
+            setCompleannoSpecialeMode
           };
           
           activateEasterEgg('tapSegreto', setters);
@@ -434,7 +440,10 @@ function App() {
               setRetroMode,
               setFlameMode,
               setAngelicMode,
-              setTimeTravelMode
+              setTimeTravelMode,
+              setQuadrifoglioFortunatoMode,
+              setNataleMagicoMode,
+              setCompleannoSpecialeMode
             };
             
             activateEasterEgg('tapLungo', setters);
@@ -530,7 +539,10 @@ function App() {
           setRetroMode,
           setFlameMode,
           setAngelicMode,
-          setTimeTravelMode
+          setTimeTravelMode,
+          setFogliaOroMode,
+          setNataleMagicoMode,
+          setCompleannoSpecialeMode
         };
         
         activateEasterEgg('temaSegreto', setters);
@@ -589,14 +601,24 @@ function App() {
     const isTimeTravelDate = transactionDate.getFullYear() === 1999 && 
                             transactionDate.getMonth() === 11 && 
                             transactionDate.getDate() === 31;
+    const isNataleDate = transactionDate.getMonth() === 11 && 
+                        transactionDate.getDate() === 25;
+    const isCompleannoDate = transactionDate.getMonth() === 5 && 
+                            transactionDate.getDate() === 5;
     
     let activatedEgg = null;
     if (isTimeTravelDate) {
       activatedEgg = 'timeTravel';
+    } else if (isNataleDate) {
+      activatedEgg = 'nataleMagico';
+    } else if (isCompleannoDate) {
+      activatedEgg = 'compleannoSpeciale';
     } else if (parseFloat(expense.amount) === 888) {
       activatedEgg = 'entrataAngelica';
     } else if (parseFloat(expense.amount) === 666) {
       activatedEgg = 'uscitaDiabolica';
+    } else if (parseFloat(expense.amount) === 777) {
+      activatedEgg = 'quadrifoglioFortunato';
     }
     
     // Salva il completamento easter egg se attivato
@@ -629,14 +651,24 @@ function App() {
     const isTimeTravelDate = transactionDate.getFullYear() === 1999 && 
                             transactionDate.getMonth() === 11 && 
                             transactionDate.getDate() === 31;
+    const isNataleDate = transactionDate.getMonth() === 11 && 
+                        transactionDate.getDate() === 25;
+    const isCompleannoDate = transactionDate.getMonth() === 5 && 
+                            transactionDate.getDate() === 5;
     
     let activatedEgg = null;
     if (isTimeTravelDate) {
       activatedEgg = 'timeTravel';
+    } else if (isNataleDate) {
+      activatedEgg = 'nataleMagico';
+    } else if (isCompleannoDate) {
+      activatedEgg = 'compleannoSpeciale';
     } else if (parseFloat(income.amount) === 888) {
       activatedEgg = 'entrataAngelica';
     } else if (parseFloat(income.amount) === 666) {
       activatedEgg = 'uscitaDiabolica';
+    } else if (parseFloat(income.amount) === 777) {
+      activatedEgg = 'quadrifoglioFortunato';
     }
     
     // Salva il completamento easter egg se attivato
@@ -1410,7 +1442,7 @@ function App() {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setShowUserProfile(true)}
-                    className={`${isHeaderExpanded ? 'w-8 h-8' : 'w-7 h-7'} bg-white/25 rounded-lg backdrop-blur-sm border border-white/40 flex items-center justify-center hover:bg-white/35 transform hover:scale-105 active:scale-95 cursor-pointer shadow-sm`}
+                    className={`${isHeaderExpanded ? 'w-8 h-8' : 'w-7 h-7'} ${easterEggsWithStatus && easterEggsWithStatus.length > 0 && easterEggsWithStatus.every(egg => egg.isCompleted) ? 'avatar-rainbow-star' : 'bg-white/25'} rounded-lg backdrop-blur-sm border border-white/40 flex items-center justify-center hover:bg-white/35 transform hover:scale-105 active:scale-95 cursor-pointer shadow-sm`}
                   >
                     <span className={`text-white font-semibold ${isHeaderExpanded ? 'text-sm' : 'text-xs'}`}>
                       {(() => {

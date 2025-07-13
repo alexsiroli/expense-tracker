@@ -6,7 +6,9 @@ export const easterEggs = {
     description: 'Tap 5 volte rapidamente sul logo del portafoglio per attivare il tema arcobaleno',
     activationMessage: '🎉 Tema arcobaleno attivato! 🌈 Ora tutto è più colorato e divertente!',
     hasDeactivationMessage: false,
-    priority: 1 // Priorità più bassa
+    priority: 1, // Priorità più bassa
+    icon: '🌈',
+    bgColor: 'from-red-500 to-pink-500'
   },
   tapLungo: {
     id: 'tapLungo',
@@ -14,7 +16,9 @@ export const easterEggs = {
     description: 'Tieni premuto per 3 secondi sul titolo dell\'app per attivare la modalità party',
     activationMessage: '🎊 PARTY MODE ATTIVATA! 🎉 Ora tutto balla e brilla!',
     hasDeactivationMessage: false,
-    priority: 2
+    priority: 2,
+    icon: '🎉',
+    bgColor: 'from-blue-500 to-cyan-500'
   },
   temaSegreto: {
     id: 'temaSegreto',
@@ -22,7 +26,9 @@ export const easterEggs = {
     description: 'Doppio tap sul footer per attivare il tema retro pixel art',
     activationMessage: '🕹️ Tema retro attivato! 🎮 Benvenuto negli anni \'80!',
     hasDeactivationMessage: false,
-    priority: 3
+    priority: 3,
+    icon: '🎮',
+    bgColor: 'from-green-500 to-emerald-500'
   },
   uscitaDiabolica: {
     id: 'uscitaDiabolica',
@@ -30,7 +36,9 @@ export const easterEggs = {
     description: 'Aggiungi una spesa di 666€ per attivare l\'effetto fiamme',
     activationMessage: '🔥 USCITA DIABOLICA ATTIVATA! 🔥 Il tile ora brucia con le fiamme dell\'inferno!',
     hasDeactivationMessage: false,
-    priority: 4
+    priority: 4,
+    icon: '📺',
+    bgColor: 'from-yellow-500 to-orange-500'
   },
   entrataAngelica: {
     id: 'entrataAngelica',
@@ -38,7 +46,9 @@ export const easterEggs = {
     description: 'Aggiungi un\'entrata di 888€ per attivare l\'effetto angelico',
     activationMessage: '👼 Entrata angelica rilevata! ✨ Effetto divino applicato!',
     hasDeactivationMessage: false,
-    priority: 5
+    priority: 5,
+    icon: '👼',
+    bgColor: 'from-purple-500 to-indigo-500'
   },
   timeTravel: {
     id: 'timeTravel',
@@ -46,7 +56,39 @@ export const easterEggs = {
     description: 'Crea una transazione datata 31/12/1999 per attivare l\'effetto glitch',
     activationMessage: '🌌 Time travel rilevato! ⚡ Effetto glitch applicato!',
     hasDeactivationMessage: false,
-    priority: 6 // Priorità più alta - sovrascrive tutti gli altri
+    priority: 6,
+    icon: '⏰',
+    bgColor: 'from-teal-500 to-blue-500'
+  },
+  quadrifoglioFortunato: {
+    id: 'quadrifoglioFortunato',
+    title: 'Quadrifoglio Fortunato',
+    description: 'Aggiungi una transazione di 777€ per attivare l\'effetto quadrifoglio fortunato',
+    activationMessage: '🍀 Quadrifoglio fortunato rilevato! 💰 Effetto fortuna applicato!',
+    hasDeactivationMessage: false,
+    priority: 7,
+    icon: '🍀',
+    bgColor: 'from-green-500 to-emerald-500'
+  },
+  nataleMagico: {
+    id: 'nataleMagico',
+    title: 'Natale Magico',
+    description: 'Crea una transazione il 25 dicembre per attivare l\'effetto natalizio',
+    activationMessage: '🎄 Natale magico rilevato! 🎁 Effetto natalizio applicato!',
+    hasDeactivationMessage: false,
+    priority: 8,
+    icon: '🎄',
+    bgColor: 'from-red-600 to-green-600'
+  },
+  compleannoSpeciale: {
+    id: 'compleannoSpeciale',
+    title: 'Compleanno Speciale',
+    description: 'Crea una transazione il 5 giugno per attivare l\'effetto compleanno',
+    activationMessage: '🎂 Compleanno speciale rilevato! 🎉 Effetto festa applicato!',
+    hasDeactivationMessage: false,
+    priority: 9,
+    icon: '🎂',
+    bgColor: 'from-pink-500 to-purple-500'
   }
 };
 
@@ -73,7 +115,10 @@ export const deactivateAllEasterEggs = (setters) => {
     setRetroMode,
     setFlameMode,
     setAngelicMode,
-    setTimeTravelMode
+    setTimeTravelMode,
+    setQuadrifoglioFortunatoMode,
+    setNataleMagicoMode,
+    setCompleannoSpecialeMode
   } = setters;
   
   setRainbowMode(false);
@@ -82,6 +127,9 @@ export const deactivateAllEasterEggs = (setters) => {
   setFlameMode(false);
   setAngelicMode(false);
   setTimeTravelMode(false);
+  setQuadrifoglioFortunatoMode(false);
+  setNataleMagicoMode(false);
+  setCompleannoSpecialeMode(false);
 };
 
 // Funzione per attivare un easter egg specifico disattivando gli altri
@@ -95,7 +143,10 @@ export const activateEasterEgg = (id, setters) => {
     setRetroMode,
     setFlameMode,
     setAngelicMode,
-    setTimeTravelMode
+    setTimeTravelMode,
+    setFogliaOroMode,
+    setNataleMagicoMode,
+    setCompleannoSpecialeMode
   } = setters;
   
   // Disattiva tutti gli easter egg prima
@@ -121,6 +172,15 @@ export const activateEasterEgg = (id, setters) => {
     case 'timeTravel':
       setTimeTravelMode(true);
       break;
+    case 'quadrifoglioFortunato':
+      setQuadrifoglioFortunatoMode(true);
+      break;
+    case 'nataleMagico':
+      setNataleMagicoMode(true);
+      break;
+    case 'compleannoSpeciale':
+      setCompleannoSpecialeMode(true);
+      break;
   }
   
   return true;
@@ -133,10 +193,28 @@ export const handleTransactionEasterEggs = (amount, date, setters) => {
                           transactionDate.getMonth() === 11 && 
                           transactionDate.getDate() === 31;
   
+  const isNataleDate = transactionDate.getMonth() === 11 && 
+                      transactionDate.getDate() === 25;
+  
+  const isCompleannoDate = transactionDate.getMonth() === 5 && 
+                          transactionDate.getDate() === 5;
+  
   // Se è una data di time travel, attiva solo quello (priorità più alta)
   if (isTimeTravelDate) {
     activateEasterEgg('timeTravel', setters);
     return 'timeTravel';
+  }
+  
+  // Se è Natale, attiva l'effetto natalizio
+  if (isNataleDate) {
+    activateEasterEgg('nataleMagico', setters);
+    return 'nataleMagico';
+  }
+  
+  // Se è compleanno, attiva l'effetto compleanno
+  if (isCompleannoDate) {
+    activateEasterEgg('compleannoSpeciale', setters);
+    return 'compleannoSpeciale';
   }
   
   // Altrimenti controlla gli altri easter egg
@@ -148,6 +226,11 @@ export const handleTransactionEasterEggs = (amount, date, setters) => {
   if (parseFloat(amount) === 666) {
     activateEasterEgg('uscitaDiabolica', setters);
     return 'uscitaDiabolica';
+  }
+  
+  if (parseFloat(amount) === 777) {
+    activateEasterEgg('quadrifoglioFortunato', setters);
+    return 'quadrifoglioFortunato';
   }
   
   return null;
