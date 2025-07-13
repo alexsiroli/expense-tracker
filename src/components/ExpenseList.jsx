@@ -19,9 +19,34 @@ const isTimeTravelTransaction = (item) => {
          transactionDate.getDate() === 31;
 };
 
+const isQuadrifoglioFortunatoTransaction = (item, type) => {
+  return parseFloat(item.amount) === 777;
+};
+
+const isNataleMagicoTransaction = (item) => {
+  const transactionDate = new Date(item.date);
+  return transactionDate.getMonth() === 11 && 
+         transactionDate.getDate() === 25;
+};
+
+const isCompleannoSpecialeTransaction = (item) => {
+  const transactionDate = new Date(item.date);
+  return transactionDate.getMonth() === 5 && 
+         transactionDate.getDate() === 5;
+};
+
 const getTransactionEffect = (item, type) => {
   if (isTimeTravelTransaction(item)) {
     return 'animate-glitch';
+  }
+  if (isNataleMagicoTransaction(item)) {
+    return 'animate-natale-magico';
+  }
+  if (isCompleannoSpecialeTransaction(item)) {
+    return 'animate-compleanno-speciale';
+  }
+  if (isQuadrifoglioFortunatoTransaction(item, type)) {
+    return 'animate-quadrifoglio-fortunato';
   }
   if (isDiabolicTransaction(item, type)) {
     return 'animate-flame';
@@ -114,40 +139,99 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
             {dateItems.map((item) => (
               <div
                 key={item.id}
-                className={`expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${getTransactionEffect(item, type)}`}
+                className={`expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${getTransactionEffect(item, type)} relative`}
                 onClick={() => onShowDetail && onShowDetail(item)}
               >
-                <div className="flex items-start gap-3">
-                  {/* Category Icon */}
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-lg bg-gray-200/90 dark:bg-gray-700/90 backdrop-blur-sm flex items-center justify-center text-lg mt-3">
-                      {getCategoryIcon(item.category)}
-                    </div>
+                {/* Overlay emoji per quadrifoglio fortunato */}
+                {isQuadrifoglioFortunatoTransaction(item, type) && (
+                  <div className="emoji-overlay">
+                    {Array.from({ length: 15 }, (_, i) => (
+                      <span
+                        key={i}
+                        className="emoji-fortuna"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 4}s`,
+                          animationDuration: `${3 + Math.random() * 2}s`
+                        }}
+                      >
+                        {i % 2 === 0 ? '🍀' : '💰'}
+                      </span>
+                    ))}
                   </div>
+                )}
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-base">
-                          {item.store || 'Senza negozio'}
-                        </h3>
-                      </div>
-                      <div className={`text-xl font-bold flex items-center mt-3 ${
-                        type === 'expense' ? 'text-red-600' : 'text-green-600'
-                      }`}>
-                        {type === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
+                {/* Overlay emoji per compleanno speciale */}
+                {isCompleannoSpecialeTransaction(item) && (
+                  <div className="emoji-overlay">
+                    {Array.from({ length: 15 }, (_, i) => (
+                      <span
+                        key={i}
+                        className="emoji-birthday"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 4}s`,
+                          animationDuration: `${3 + Math.random() * 2}s`
+                        }}
+                      >
+                        {i % 2 === 0 ? '🎂' : '🎁'}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Overlay emoji per natale magico */}
+                {isNataleMagicoTransaction(item) && (
+                  <div className="emoji-overlay">
+                    {Array.from({ length: 15 }, (_, i) => (
+                      <span
+                        key={i}
+                        className="emoji-natale"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 4}s`,
+                          animationDuration: `${3 + Math.random() * 2}s`
+                        }}
+                      >
+                        {i % 3 === 0 ? '❄️' : i % 3 === 1 ? '🎄' : '🎁'}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="relative z-10">
+                  <div className="flex items-start gap-3">
+                    {/* Category Icon */}
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-gray-200/90 dark:bg-gray-700/90 backdrop-blur-sm flex items-center justify-center text-lg mt-3">
+                        {getCategoryIcon(item.category)}
                       </div>
                     </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 -mt-3">
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-600/10 text-blue-600 border border-blue-600/20">
-                          {item.category}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {format(new Date(item.date), 'HH:mm', { locale: it })}
-                        </span>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-1">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-base">
+                            {item.store || 'Senza negozio'}
+                          </h3>
+                        </div>
+                        <div className={`text-xl font-bold flex items-center mt-3 ${
+                          type === 'expense' ? 'text-red-600' : 'text-green-600'
+                        }`}>
+                          {type === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 -mt-3">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-600/10 text-blue-600 border border-blue-600/20">
+                            {item.category}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {format(new Date(item.date), 'HH:mm', { locale: it })}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

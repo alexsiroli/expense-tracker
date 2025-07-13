@@ -754,6 +754,160 @@
     background: linear-gradient(45deg, #ff4444, #ff8844, #ffcc44) !important;
     border: 2px solid #ff4444 !important;
     box-shadow: 0 0 20px rgba(255, 68, 68, 0.6), 0 0 40px rgba(255, 136, 68, 0.4) !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .animate-flame .text-gray-500,
+  .animate-flame .text-gray-400 {
+    color: #ffffff !important;
+    text-shadow: 
+      0 0 2px rgba(255, 255, 255, 0.8),
+      0 0 4px rgba(255, 255, 255, 0.6) !important;
+    font-weight: 600 !important;
+  }
+
+  .animate-flame h3 {
+    color: #ffffff !important;
+    text-shadow: 
+      0 0 3px rgba(255, 255, 255, 0.8),
+      0 0 6px rgba(255, 255, 255, 0.6),
+      0 0 9px rgba(255, 255, 255, 0.4) !important;
+    font-weight: 600 !important;
+  }
+
+  .animate-flame::before {
+    content: '🔥';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 12px;
+    animation: diabolic-float 2s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-flame::after {
+    content: '👹';
+    position: absolute;
+    bottom: -3px;
+    left: -3px;
+    font-size: 10px;
+    animation: diabolic-float 2.5s ease-in-out infinite reverse;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @keyframes diabolic-float {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+      opacity: 0.8;
+    }
+    50% {
+      transform: translateY(-10px) rotate(180deg);
+      opacity: 1;
+    }
+  }
+
+  /* Animazione elegante per avatar utente quando tutti gli easter egg sono sbloccati */
+  @keyframes avatar-glow {
+    0% {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 0 20px rgba(102, 126, 234, 0.6), 0 0 40px rgba(118, 75, 162, 0.4);
+    }
+    6.25% {
+      background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.6), 0 0 40px rgba(168, 85, 247, 0.4);
+    }
+    12.5% {
+      background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.6), 0 0 40px rgba(236, 72, 153, 0.4);
+    }
+    18.75% {
+      background: linear-gradient(135deg, #ec4899 0%, #f093fb 100%);
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.6), 0 0 40px rgba(240, 147, 251, 0.4);
+    }
+    25% {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      box-shadow: 0 0 20px rgba(240, 147, 251, 0.6), 0 0 40px rgba(245, 87, 108, 0.4);
+    }
+    31.25% {
+      background: linear-gradient(135deg, #f5576c 0%, #f97316 100%);
+      box-shadow: 0 0 20px rgba(245, 87, 108, 0.6), 0 0 40px rgba(249, 115, 22, 0.4);
+    }
+    37.5% {
+      background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.6), 0 0 40px rgba(251, 191, 36, 0.4);
+    }
+    43.75% {
+      background: linear-gradient(135deg, #fbbf24 0%, #4facfe 100%);
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.6), 0 0 40px rgba(79, 172, 254, 0.4);
+    }
+    50% {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      box-shadow: 0 0 20px rgba(79, 172, 254, 0.6), 0 0 40px rgba(0, 242, 254, 0.4);
+    }
+    56.25% {
+      background: linear-gradient(135deg, #00f2fe 0%, #10b981 100%);
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.6), 0 0 40px rgba(16, 185, 129, 0.4);
+    }
+    62.5% {
+      background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(6, 182, 212, 0.4);
+    }
+    68.75% {
+      background: linear-gradient(135deg, #06b6d4 0%, #43e97b 100%);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.6), 0 0 40px rgba(67, 233, 123, 0.4);
+    }
+    75% {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      box-shadow: 0 0 20px rgba(67, 233, 123, 0.6), 0 0 40px rgba(56, 249, 215, 0.4);
+    }
+    81.25% {
+      background: linear-gradient(135deg, #38f9d7 0%, #8b5cf6 100%);
+      box-shadow: 0 0 20px rgba(56, 249, 215, 0.6), 0 0 40px rgba(139, 92, 246, 0.4);
+    }
+    87.5% {
+      background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.6), 0 0 40px rgba(168, 85, 247, 0.4);
+    }
+    93.75% {
+      background: linear-gradient(135deg, #a855f7 0%, #667eea 100%);
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.6), 0 0 40px rgba(102, 126, 234, 0.4);
+    }
+    100% {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 0 20px rgba(102, 126, 234, 0.6), 0 0 40px rgba(118, 75, 162, 0.4);
+    }
+  }
+
+  .avatar-rainbow-star {
+    animation: avatar-glow 1.4s ease-in-out infinite !important;
+    border: 2px solid rgba(255, 255, 255, 0.9) !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .avatar-rainbow-star::before {
+    content: '✨';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    font-size: 8px;
+    animation: star-twinkle 1s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @keyframes star-twinkle {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
   }
 
   /* Easter Egg - Effetto Angelico per Tile */
@@ -1047,6 +1201,603 @@
     text-shadow: 0 0 8px rgba(0, 255, 0, 0.7) !important;
   }
 
+  /* Easter Egg - Effetto Quadrifoglio Fortunato per 777€ */
+  @keyframes quadrifoglio-float {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+      opacity: 0.8;
+    }
+    50% {
+      transform: translateY(-15px) rotate(180deg);
+      opacity: 1;
+    }
+  }
+
+  .animate-quadrifoglio-fortunato {
+    animation: quadrifoglio-fortunato-glow 2s ease-in-out infinite !important;
+    background: linear-gradient(135deg, #10b981, #059669, #047857) !important;
+    border: 2px solid #065f46 !important;
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.8), 0 0 50px rgba(5, 150, 105, 0.6) !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Pattern di quadrifogli stilizzati come decorazione di bordo */
+  .animate-quadrifoglio-fortunato::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 30%, rgba(255, 215, 0, 0.2) 0%, transparent 50%),
+      radial-gradient(circle at 40% 70%, rgba(255, 215, 0, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+      linear-gradient(45deg, transparent 45%, rgba(255, 215, 0, 0.1) 50%, transparent 55%),
+      linear-gradient(-45deg, transparent 45%, rgba(255, 215, 0, 0.1) 50%, transparent 55%),
+      repeating-linear-gradient(120deg, rgba(16,185,129,0.08) 0 10px, transparent 10px 20px);
+    animation: quadrifoglio-float 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-quadrifoglio-fortunato::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    background: 
+      conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255, 215, 0, 0.1) 90deg, transparent 180deg, rgba(255, 215, 0, 0.1) 270deg, transparent 360deg);
+    animation: quadrifoglio-float 3.5s ease-in-out infinite 1.5s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  .animate-quadrifoglio-fortunato h3 {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 700 !important;
+  }
+
+  .animate-quadrifoglio-fortunato .text-gray-900,
+  .animate-quadrifoglio-fortunato .text-gray-100 {
+    color: #ffffff !important;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6), 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 600 !important;
+  }
+
+  .animate-quadrifoglio-fortunato .text-green-600 {
+    color: #059669 !important;
+    text-shadow: 0 0 10px rgba(5, 150, 105, 0.8) !important;
+  }
+
+  .animate-quadrifoglio-fortunato .text-red-600 {
+    color: #dc2626 !important;
+    text-shadow: 0 0 10px rgba(220, 38, 38, 0.8) !important;
+  }
+
+  .animate-quadrifoglio-fortunato .text-gray-500,
+  .animate-quadrifoglio-fortunato .text-gray-400 {
+    color: #ffffff !important;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.6), 1px 1px 2px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 500 !important;
+  }
+
+  .animate-quadrifoglio-fortunato .bg-blue-600\/10 {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .animate-quadrifoglio-fortunato .text-blue-600 {
+    color: #ffffff !important;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6), 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 600 !important;
+  }
+
+  /* Pattern di quadrifogli stilizzati per la fortuna */
+  .animate-quadrifoglio-fortunato::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 30%, rgba(255, 215, 0, 0.2) 0%, transparent 50%),
+      radial-gradient(circle at 40% 70%, rgba(255, 215, 0, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(255, 215, 0, 0.15) 0%, transparent 50%);
+    animation: quadrifoglio-float 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-quadrifoglio-fortunato::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    background: 
+      conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255, 215, 0, 0.1) 90deg, transparent 180deg, rgba(255, 215, 0, 0.1) 270deg, transparent 360deg);
+    animation: quadrifoglio-float 3.5s ease-in-out infinite 1.5s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  @keyframes quadrifoglio-fortunato-glow {
+    0%, 100% {
+      background: linear-gradient(135deg, #10b981, #059669, #047857);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.8), 0 0 50px rgba(5, 150, 105, 0.6);
+      border: 2px solid #065f46;
+    }
+    50% {
+      background: linear-gradient(135deg, #059669, #047857, #10b981);
+      box-shadow: 0 0 30px rgba(5, 150, 105, 0.9), 0 0 60px rgba(4, 120, 87, 0.7);
+      border: 2px solid #10b981;
+    }
+  }
+
+  /* Easter Egg - Effetto Natale Magico per 25 dicembre */
+  @keyframes neve-fall {
+    0% {
+      transform: translateY(-30px) translateX(0px);
+      opacity: 0;
+    }
+    15% {
+      opacity: 1;
+      transform: translateY(-20px) translateX(2px);
+    }
+    30% {
+      transform: translateY(-10px) translateX(-1px);
+    }
+    45% {
+      transform: translateY(0px) translateX(3px);
+    }
+    60% {
+      transform: translateY(10px) translateX(-2px);
+    }
+    75% {
+      transform: translateY(20px) translateX(1px);
+    }
+    85% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100px) translateX(0px);
+      opacity: 0;
+    }
+  }
+
+  .animate-natale-magico {
+    animation: natale-glow 1.5s ease-in-out infinite !important;
+    background: linear-gradient(135deg, #dc2626, #b91c1c, #991b1b) !important;
+    border: 2px solid #7f1d1d !important;
+    box-shadow: 0 0 25px rgba(220, 38, 38, 0.8), 0 0 50px rgba(185, 28, 28, 0.6) !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Pattern di neve stilizzata per Natale */
+  .animate-natale-magico::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+      radial-gradient(circle at 85% 25%, rgba(255, 255, 255, 0.3) 0%, transparent 35%),
+      radial-gradient(circle at 35% 75%, rgba(255, 255, 255, 0.35) 0%, transparent 45%),
+      radial-gradient(circle at 75% 85%, rgba(255, 255, 255, 0.25) 0%, transparent 30%),
+      linear-gradient(90deg, transparent 40%, rgba(255, 255, 255, 0.12) 50%, transparent 60%),
+      linear-gradient(0deg, transparent 40%, rgba(255, 255, 255, 0.12) 50%, transparent 60%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.08) 0 8px, transparent 8px 16px);
+    animation: neve-fall 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-natale-magico::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    background: 
+      linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.2) 50%, transparent 60%),
+      linear-gradient(-45deg, transparent 40%, rgba(255, 255, 255, 0.15) 50%, transparent 60%);
+    animation: neve-fall 2.5s ease-in-out infinite reverse;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-natale-magico h3 {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 700 !important;
+  }
+
+  .animate-natale-magico .text-gray-900,
+  .animate-natale-magico .text-gray-100 {
+    color: #ffffff !important;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6), 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 600 !important;
+  }
+
+  .animate-natale-magico .text-green-600 {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+  }
+
+  .animate-natale-magico .text-red-600 {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+  }
+
+  .animate-natale-magico .text-gray-500,
+  .animate-natale-magico .text-gray-400 {
+    color: #ffffff !important;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.6), 1px 1px 2px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 500 !important;
+  }
+
+  .animate-natale-magico .bg-blue-600\/10 {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .animate-natale-magico .text-blue-600 {
+    color: #ffffff !important;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6), 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 600 !important;
+  }
+
+  /* Pattern di neve stilizzata per Natale */
+  .animate-natale-magico::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.4) 0%, transparent 40%),
+      radial-gradient(circle at 85% 25%, rgba(255, 255, 255, 0.3) 0%, transparent 35%),
+      radial-gradient(circle at 35% 75%, rgba(255, 255, 255, 0.35) 0%, transparent 45%),
+      radial-gradient(circle at 75% 85%, rgba(255, 255, 255, 0.25) 0%, transparent 30%),
+      linear-gradient(90deg, transparent 40%, rgba(255, 255, 255, 0.12) 50%, transparent 60%),
+      linear-gradient(0deg, transparent 40%, rgba(255, 255, 255, 0.12) 50%, transparent 60%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.08) 0 8px, transparent 8px 16px);
+    animation: neve-fall 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-natale-magico::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    background: 
+      linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.2) 50%, transparent 60%),
+      linear-gradient(-45deg, transparent 40%, rgba(255, 255, 255, 0.15) 50%, transparent 60%);
+    animation: neve-fall 2.5s ease-in-out infinite reverse;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Pattern aggiuntivi per coprire tutto il tile */
+  .animate-natale-magico .expense-item::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    width: 20px;
+    height: 20px;
+    background: 
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+    animation: neve-fall 2.8s ease-in-out infinite 0.5s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  .animate-natale-magico .expense-item::after {
+    content: '';
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    width: 15px;
+    height: 15px;
+    background: 
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, transparent 60%);
+    animation: neve-fall 3.2s ease-in-out infinite 1s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  .animate-natale-magico::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 20%;
+    width: 25px;
+    height: 25px;
+    background: 
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.7) 0%, transparent 80%);
+    animation: neve-fall 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-natale-magico::after {
+    content: '';
+    position: absolute;
+    top: -15px;
+    right: 30%;
+    width: 12px;
+    height: 12px;
+    background: 
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, transparent 60%);
+    animation: neve-fall 2.5s ease-in-out infinite 0.5s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  .animate-natale-magico .expense-item::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 60%;
+    width: 16px;
+    height: 16px;
+    background: 
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, transparent 65%);
+    animation: neve-fall 3.2s ease-in-out infinite 1s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  .animate-natale-magico .expense-item::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: 15%;
+    width: 10px;
+    height: 10px;
+    background: 
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, transparent 55%);
+    animation: neve-fall 2.8s ease-in-out infinite 1.5s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  @keyframes natale-glow {
+    0%, 100% {
+      background: linear-gradient(135deg, #dc2626, #b91c1c, #991b1b);
+      box-shadow: 0 0 25px rgba(220, 38, 38, 0.8), 0 0 50px rgba(185, 28, 28, 0.6);
+      border: 2px solid #7f1d1d;
+    }
+    50% {
+      background: linear-gradient(135deg, #b91c1c, #991b1b, #dc2626);
+      box-shadow: 0 0 30px rgba(185, 28, 28, 0.9), 0 0 60px rgba(153, 27, 27, 0.7);
+      border: 2px solid #dc2626;
+    }
+  }
+
+  /* Easter Egg - Effetto Compleanno Speciale per 5 giugno */
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-30px) translateX(0px);
+      opacity: 0;
+    }
+    15% {
+      opacity: 1;
+      transform: translateY(-20px) translateX(-2px);
+    }
+    30% {
+      transform: translateY(-10px) translateX(3px);
+    }
+    45% {
+      transform: translateY(0px) translateX(-1px);
+    }
+    60% {
+      transform: translateY(10px) translateX(2px);
+    }
+    75% {
+      transform: translateY(20px) translateX(-3px);
+    }
+    85% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100px) translateX(0px);
+      opacity: 0;
+    }
+  }
+
+  .animate-compleanno-speciale {
+    animation: compleanno-glow 1.8s ease-in-out infinite !important;
+    background: linear-gradient(135deg, #0ea5e9, #0284c7, #0369a1) !important;
+    border: 2px solid #075985 !important;
+    box-shadow: 0 0 25px rgba(14, 165, 233, 0.8), 0 0 50px rgba(2, 132, 199, 0.6) !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Pattern di confetti stilizzati per il compleanno */
+  .animate-compleanno-speciale::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 25% 20%, rgba(255, 182, 193, 0.4) 0%, transparent 50%),
+      radial-gradient(circle at 75% 30%, rgba(173, 216, 230, 0.3) 0%, transparent 45%),
+      radial-gradient(circle at 45% 70%, rgba(255, 218, 185, 0.35) 0%, transparent 40%),
+      radial-gradient(circle at 65% 80%, rgba(221, 160, 221, 0.25) 0%, transparent 35%),
+      repeating-conic-gradient(from 0deg, rgba(14,165,233,0.10) 0 10deg, transparent 10deg 20deg),
+      repeating-conic-gradient(from 30deg, rgba(255,182,193,0.10) 0 10deg, transparent 10deg 20deg);
+    animation: confetti-fall 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-compleanno-speciale::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    background: 
+      conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255, 182, 193, 0.2) 60deg, transparent 120deg, rgba(173, 216, 230, 0.2) 180deg, transparent 240deg, rgba(255, 218, 185, 0.2) 300deg, transparent 360deg);
+    animation: confetti-fall 2.5s ease-in-out infinite 0.5s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  .animate-compleanno-speciale h3 {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 700 !important;
+  }
+
+  .animate-compleanno-speciale .text-gray-900,
+  .animate-compleanno-speciale .text-gray-100 {
+    color: #ffffff !important;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6), 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 600 !important;
+  }
+
+  .animate-compleanno-speciale .text-green-600 {
+    color: #059669 !important;
+    text-shadow: 0 0 10px rgba(5, 150, 105, 0.8) !important;
+  }
+
+  .animate-compleanno-speciale .text-red-600 {
+    color: #dc2626 !important;
+    text-shadow: 0 0 10px rgba(220, 38, 38, 0.8) !important;
+  }
+
+  .animate-compleanno-speciale .text-gray-500,
+  .animate-compleanno-speciale .text-gray-400 {
+    color: #ffffff !important;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.6), 1px 1px 2px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 500 !important;
+  }
+
+  .animate-compleanno-speciale .bg-blue-600\/10 {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .animate-compleanno-speciale .text-blue-600 {
+    color: #ffffff !important;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6), 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+    font-weight: 600 !important;
+  }
+
+  /* Pattern di confetti stilizzati per il compleanno */
+  .animate-compleanno-speciale::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 25% 20%, rgba(255, 182, 193, 0.4) 0%, transparent 50%),
+      radial-gradient(circle at 75% 30%, rgba(173, 216, 230, 0.3) 0%, transparent 45%),
+      radial-gradient(circle at 45% 70%, rgba(255, 218, 185, 0.35) 0%, transparent 40%),
+      radial-gradient(circle at 65% 80%, rgba(221, 160, 221, 0.25) 0%, transparent 35%),
+      repeating-conic-gradient(from 0deg, rgba(14,165,233,0.10) 0 10deg, transparent 10deg 20deg),
+      repeating-conic-gradient(from 30deg, rgba(255,182,193,0.10) 0 10deg, transparent 10deg 20deg);
+    animation: confetti-fall 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-compleanno-speciale::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    background: 
+      conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255, 182, 193, 0.2) 60deg, transparent 120deg, rgba(173, 216, 230, 0.2) 180deg, transparent 240deg, rgba(255, 218, 185, 0.2) 300deg, transparent 360deg);
+    animation: confetti-fall 2.5s ease-in-out infinite 0.5s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  .animate-compleanno-speciale .expense-item::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 65%;
+    width: 18px;
+    height: 18px;
+    background: 
+      radial-gradient(circle at center, rgba(255, 182, 193, 0.6) 0%, transparent 70%);
+    animation: confetti-fall 3.2s ease-in-out infinite 1s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  .animate-compleanno-speciale .expense-item::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: 20%;
+    width: 12px;
+    height: 12px;
+    background: 
+      radial-gradient(circle at center, rgba(173, 216, 230, 0.5) 0%, transparent 60%);
+    animation: confetti-fall 2.8s ease-in-out infinite 1.5s;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  @keyframes compleanno-glow {
+    0%, 100% {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7, #0369a1);
+      box-shadow: 0 0 25px rgba(14, 165, 233, 0.8), 0 0 50px rgba(2, 132, 199, 0.6);
+      border: 2px solid #075985;
+    }
+    50% {
+      background: linear-gradient(135deg, #0284c7, #0369a1, #0ea5e9);
+      box-shadow: 0 0 30px rgba(2, 132, 199, 0.9), 0 0 60px rgba(3, 105, 161, 0.7);
+      border: 2px solid #0ea5e9;
+    }
+  }
+
   /* Disabilita le animazioni quando il scroll è bloccato */
   .scroll-locked * {
     animation: none !important;
@@ -1065,6 +1816,9 @@
   .scroll-locked .animate-flame,
   .scroll-locked .animate-angelic,
   .scroll-locked .animate-glitch,
+  .scroll-locked .animate-foglia-oro,
+  .scroll-locked .animate-natale-magico,
+  .scroll-locked .animate-compleanno-speciale,
   .scroll-locked .header-expand-animation,
   .scroll-locked .header-collapse-animation,
   .scroll-locked .header-transition,
@@ -1073,5 +1827,80 @@
     animation: none !important;
     transition: none !important;
     transform: none !important;
+  }
+
+  /* Overlay di emoji quadrifoglio e soldi per fortuna */
+  .animate-quadrifoglio-fortunato .emoji-overlay {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .animate-quadrifoglio-fortunato .emoji-fortuna {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: 0.85;
+    animation: fortuna-emoji-float 4s linear infinite;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 0 4px #fff8) drop-shadow(0 0 8px #ffd70088);
+  }
+  @keyframes fortuna-emoji-float {
+    0% { transform: translateY(120%); opacity: 0; }
+    10% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(-20%); opacity: 0; }
+  }
+
+  /* Overlay di emoji torta e regali per compleanno */
+  .animate-compleanno-speciale .emoji-overlay {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .animate-compleanno-speciale .emoji-birthday {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: 0.85;
+    animation: birthday-emoji-float 4s linear infinite;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 0 4px #fff8) drop-shadow(0 0 8px #0ea5e988);
+  }
+  @keyframes birthday-emoji-float {
+    0% { transform: translateY(120%); opacity: 0; }
+    10% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(-20%); opacity: 0; }
+  }
+
+  /* Overlay di emoji neve e albero per natale */
+  .animate-natale-magico .emoji-overlay {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .animate-natale-magico .emoji-natale {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: 0.85;
+    animation: natale-emoji-float 4s linear infinite;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 0 4px #fff8) drop-shadow(0 0 8px #dc262688);
+  }
+  @keyframes natale-emoji-float {
+    0% { transform: translateY(120%); opacity: 0; }
+    10% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(-20%); opacity: 0; }
   }
 }
