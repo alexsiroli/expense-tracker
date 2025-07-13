@@ -374,6 +374,22 @@ const UserProfile = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">3</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                        Tema Segreto
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Doppio tap sul footer per tema retro
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Placeholder per futuri easter egg */}
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700 opacity-50">
                   <div className="flex items-center gap-3">

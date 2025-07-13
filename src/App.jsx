@@ -137,9 +137,11 @@ function App() {
   const [scrollDirection, setScrollDirection] = useState('down');
   const [rainbowMode, setRainbowMode] = useState(false);
   const [partyMode, setPartyMode] = useState(false);
+  const [retroMode, setRetroMode] = useState(false);
   const [walletTapCount, setWalletTapCount] = useState(0);
   const [lastTapTime, setLastTapTime] = useState(0);
   const [lastPartyTime, setLastPartyTime] = useState(0);
+  const [lastFooterTapTime, setLastFooterTapTime] = useState(0);
   const [longPressProgress, setLongPressProgress] = useState(0);
 
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
@@ -323,6 +325,16 @@ function App() {
     }
   }, [partyMode]);
 
+  // Gestione classe retro-mode sul body
+  useEffect(() => {
+    const body = document.body;
+    if (retroMode) {
+      body.classList.add('retro-mode');
+    } else {
+      body.classList.remove('retro-mode');
+    }
+  }, [retroMode]);
+
   // Aggiorna il colore della Dynamic Island all'avvio dell'app
   useEffect(() => {
     updateThemeColor(rainbowMode, theme);
@@ -421,6 +433,34 @@ function App() {
       }
     };
   }, [partyMode, lastPartyTime]);
+
+  // Gestione easter egg - Doppio tap sul footer per tema retro
+  const handleFooterTap = () => {
+    const now = Date.now();
+    const timeDiff = now - lastFooterTapTime;
+    
+    // Reset se è passato troppo tempo (> 1 secondo)
+    if (timeDiff > 1000) {
+      setLastFooterTapTime(now);
+    } else {
+      // Doppio tap rilevato
+      console.log('Double tap on footer detected!'); // Debug
+      setRetroMode(prev => !prev);
+      setLastFooterTapTime(0); // Reset per evitare attivazioni multiple
+      
+      if (!retroMode) {
+        // Attiva tema retro
+        setTimeout(() => {
+          alert('🎮 TEMA RETRO ATTIVATO! 🕹️\n\nDoppio tap di nuovo sul footer per tornare normale! 👾');
+        }, 100);
+      } else {
+        // Disattiva tema retro
+        setTimeout(() => {
+          alert('🎮 TEMA RETRO DISATTIVATO! 🌙\n\nDoppio tap di nuovo sul footer per riattivare! 👾');
+        }, 100);
+      }
+    }
+  };
 
   // Calcola il saldo di un conto dinamicamente
   const calculateWalletBalance = (walletId) => {
@@ -1138,7 +1178,7 @@ function App() {
                   </h1>
                   {isHeaderExpanded && (
                     <p className="text-white/70 text-xs font-medium animate-fade-in-up tracking-wide">
-                      Gestisci le tue finanze in modo intelligente
+                      {retroMode ? "Gestisci bene le tue finanze" : "Gestisci le tue finanze in modo intelligente"}
                     </p>
                   )}
                 </div>
@@ -1719,7 +1759,11 @@ function App() {
       />
 
       {/* Footer con credits */}
-      <footer className={`fixed bottom-0 left-0 w-full ${rainbowMode ? 'bg-gradient-to-r from-red-500/80 via-yellow-500/80 via-green-500/80 via-blue-500/80 via-purple-500/80 to-pink-500/80 dark:from-red-900/80 dark:via-yellow-900/80 dark:via-green-900/80 dark:via-blue-900/80 dark:via-purple-900/80 dark:to-pink-900/80' : 'bg-white/80 dark:bg-gray-900/80'} backdrop-blur-md border-t ${rainbowMode ? 'border-rainbow-500/40' : 'border-gray-200 dark:border-gray-700'} py-2 z-40`}>
+      <footer 
+        className={`fixed bottom-0 left-0 w-full ${rainbowMode ? 'bg-gradient-to-r from-red-500/80 via-yellow-500/80 via-green-500/80 via-blue-500/80 via-purple-500/80 to-pink-500/80 dark:from-red-900/80 dark:via-yellow-900/80 dark:via-blue-900/80 dark:via-purple-900/80 dark:to-pink-900/80' : 'bg-white/80 dark:bg-gray-900/80'} backdrop-blur-md border-t ${rainbowMode ? 'border-rainbow-500/40' : 'border-gray-200 dark:border-gray-700'} py-2 z-40 cursor-pointer hover:bg-opacity-90 transition-all duration-200`}
+        onClick={handleFooterTap}
+        title="Doppio tap per attivare il tema retro! 🎮"
+      >
         <div className="max-w-md mx-auto px-6">
           <div className="text-center">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
