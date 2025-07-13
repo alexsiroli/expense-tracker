@@ -151,4 +151,43 @@ export const handleTransactionEasterEggs = (amount, date, setters) => {
   }
   
   return null;
+};
+
+// Funzione per salvare un easter egg completato nel database
+export const saveEasterEggCompletion = async (easterEggId, setEasterEggCompleted) => {
+  try {
+    await setEasterEggCompleted(easterEggId);
+    console.log(`Easter egg ${easterEggId} salvato come completato`);
+    return true;
+  } catch (error) {
+    console.error('Errore nel salvataggio easter egg:', error);
+    return false;
+  }
+};
+
+// Funzione per verificare se un easter egg è completato
+export const checkEasterEggCompletion = async (easterEggId, isEasterEggCompleted) => {
+  try {
+    return await isEasterEggCompleted(easterEggId);
+  } catch (error) {
+    console.error('Errore nel controllo easter egg:', error);
+    return false;
+  }
+};
+
+// Funzione per ottenere tutti gli easter egg con stato di completamento
+export const getEasterEggsWithCompletionStatus = async (getCompletedEasterEggs) => {
+  try {
+    const completedEasterEggs = await getCompletedEasterEggs();
+    return getAllEasterEggs().map(egg => ({
+      ...egg,
+      isCompleted: completedEasterEggs.includes(egg.id)
+    }));
+  } catch (error) {
+    console.error('Errore nel recupero stato easter egg:', error);
+    return getAllEasterEggs().map(egg => ({
+      ...egg,
+      isCompleted: false
+    }));
+  }
 }; 

@@ -6,6 +6,7 @@ import {
   updateDoc, 
   deleteDoc, 
   getDocs, 
+  getDoc,
   query, 
   where, 
   orderBy,
@@ -311,24 +312,73 @@ export const useFirestore = () => {
       
       for (const collectionName of collections) {
         const querySnapshot = await getDocs(getUserCollection(collectionName));
+        const batch = writeBatch(db);
         
-        if (querySnapshot.docs.length > 0) {
-          const batch = writeBatch(db);
-          
-          querySnapshot.docs.forEach(doc => {
-            batch.delete(doc.ref);
-          });
-          
-          await batch.commit();
-        }
+        querySnapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        
+        await batch.commit();
       }
-      
-      console.log('Tutti i dati dell\'utente eliminati con successo');
     } catch (error) {
-      setError('Errore durante l\'eliminazione dei dati: ' + error.message);
+      setError('Errore durante l\'eliminazione di tutti i dati: ' + error.message);
       throw error;
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Gestione Easter Eggs completati
+  const getCompletedEasterEggs = async () => {
+    try {
+      const userDoc = doc(db, 'users', user.uid);
+      const userSnapshot = await getDoc(userDoc);
+      
+      if (userSnapshot.exists()) {
+        return userSnapshot.data().completedEasterEggs || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Errore nel recupero easter egg completati:', error);
+      return [];
+    }
+  };
+
+  const setEasterEggCompleted = async (easterEggId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const userDoc = doc(db, 'users', user.uid);
+      const userSnapshot = await getDoc(userDoc);
+      
+      let completedEasterEggs = [];
+      if (userSnapshot.exists()) {
+        completedEasterEggs = userSnapshot.data().completedEasterEggs || [];
+      }
+      
+      if (!completedEasterEggs.includes(easterEggId)) {
+        completedEasterEggs.push(easterEggId);
+        await updateDoc(userDoc, {
+          completedEasterEggs,
+          updatedAt: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      setError('Errore nel salvataggio easter egg: ' + error.message);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isEasterEggCompleted = async (easterEggId) => {
+    try {
+      const completedEasterEggs = await getCompletedEasterEggs();
+      return completedEasterEggs.includes(easterEggId);
+    } catch (error) {
+      console.error('Errore nel controllo easter egg:', error);
+      return false;
     }
   };
 
@@ -343,6 +393,9 @@ export const useFirestore = () => {
     loadAllUserData,
     importUserData,
     deleteAllUserData,
+    getCompletedEasterEggs,
+    setEasterEggCompleted,
+    isEasterEggCompleted,
     clearError: () => setError(null)
   };
 }; 

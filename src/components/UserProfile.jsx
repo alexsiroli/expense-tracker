@@ -1,14 +1,14 @@
-import { useState, useRef } from 'react';
-import { User, Calendar, FileText, Trash2, X, LogOut, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, LogOut, Trash2, FileText, Calendar, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useFirestore } from '../hooks/useFirestore';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { getAllEasterEggs } from '../utils/easterEggs';
+import { getAllEasterEggs, getEasterEggsWithCompletionStatus, saveEasterEggCompletion } from '../utils/easterEggs';
 
-const UserProfile = ({ isOpen, onClose }) => {
+const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
   const { user, logout, deleteAccount } = useAuth();
-  const { deleteAllUserData } = useFirestore();
+  const { deleteAllUserData, getCompletedEasterEggs, setEasterEggCompleted, isEasterEggCompleted } = useFirestore();
   const { data: expenses } = useFirestore().useCollectionData('expenses');
   const { data: incomes } = useFirestore().useCollectionData('incomes');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -17,6 +17,23 @@ const UserProfile = ({ isOpen, onClose }) => {
   const [showEasterEggs, setShowEasterEggs] = useState(false);
   const [creditsTapCount, setCreditsTapCount] = useState(0);
   const [lastCreditsTapTime, setLastCreditsTapTime] = useState(0);
+
+  // Rimuovi:
+  // const loadEasterEggsWithStatus = async () => {
+  //   try {
+  //     const eggsWithStatus = await getEasterEggsWithCompletionStatus(getCompletedEasterEggs);
+  //     setEasterEggsWithStatus(eggsWithStatus);
+  //   } catch (error) {
+  //     setEasterEggsWithStatus(getAllEasterEggs().map(egg => ({ ...egg, isCompleted: false })));
+  //   }
+  // };
+
+  // Rimuovi:
+  // useEffect(() => {
+  //   if (user) loadEasterEggsWithStatus();
+  //   window.loadEasterEggsWithStatus = loadEasterEggsWithStatus;
+  //   return () => { delete window.loadEasterEggsWithStatus; };
+  // }, [user, getCompletedEasterEggs]);
 
   if (!isOpen) return null;
 
@@ -336,7 +353,7 @@ const UserProfile = ({ isOpen, onClose }) => {
 
               {/* Griglia distintivi stile medaglie Pokémon */}
               <div className="grid grid-cols-3 gap-4">
-                {getAllEasterEggs().map((egg, index) => {
+                {easterEggsWithStatus.map((egg, index) => {
                   const badgeColors = [
                     'from-red-500 to-pink-500', // Rosso
                     'from-blue-500 to-cyan-500', // Blu
@@ -351,23 +368,32 @@ const UserProfile = ({ isOpen, onClose }) => {
                   return (
                     <button
                       key={egg.id}
-                      onClick={() => {
-                        // Mostra popup con info easter egg
-                        alert(`${egg.title}\n\n${egg.description}`);
-                      }}
+                                              onClick={() => {
+                          if (egg.isCompleted) {
+                            // Se completato, mostra titolo e descrizione
+                            alert(`${egg.title}\n\n${egg.description}`);
+                          } else {
+                            // Se non completato, mostra solo il titolo
+                            alert(`${egg.title}\n\n???`);
+                          }
+                        }}
                       className="group relative"
                     >
-                      <div className={`
-                        w-16 h-16 mx-auto rounded-full bg-gradient-to-br ${badgeColors[index]} 
-                        shadow-lg border-4 border-white dark:border-gray-700
-                        flex items-center justify-center text-2xl
-                        transform transition-all duration-300
-                        hover:scale-110 hover:shadow-xl
-                        active:scale-95
-                        group-hover:animate-pulse
-                      `}>
-                        {badgeIcons[index]}
-                      </div>
+                                              <div className={`
+                          w-16 h-16 mx-auto rounded-full 
+                          ${egg.isCompleted 
+                            ? `bg-gradient-to-br ${badgeColors[index]} shadow-lg` 
+                            : 'bg-gray-300 dark:bg-gray-600 shadow-md'
+                          }
+                          border-4 border-white dark:border-gray-700
+                          flex items-center justify-center text-2xl
+                          transform transition-all duration-300
+                          hover:scale-110 hover:shadow-xl
+                          active:scale-95
+                          group-hover:animate-pulse
+                        `}>
+                          {egg.isCompleted ? badgeIcons[index] : '❓'}
+                        </div>
                     </button>
                   );
                 })}

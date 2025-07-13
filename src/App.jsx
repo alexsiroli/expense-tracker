@@ -19,7 +19,7 @@ import UserProfile from './components/UserProfile';
 import FilterDialog from './components/FilterDialog';
 import { formatCurrency } from './utils/formatters';
 import TransactionDetailDialog from './components/TransactionDetailDialog';
-import { getEasterEgg, getAllEasterEggs, activateEasterEgg, handleTransactionEasterEggs } from './utils/easterEggs';
+import { getEasterEgg, getAllEasterEggs, activateEasterEgg, handleTransactionEasterEggs, saveEasterEggCompletion, getEasterEggsWithCompletionStatus } from './utils/easterEggs';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -85,8 +85,10 @@ function App() {
     deleteMultipleDocuments,
     loadAllUserData,
     importUserData,
+    setEasterEggCompleted,
     loading: firestoreLoading,
-    error: firestoreError
+    error: firestoreError,
+    getCompletedEasterEggs
   } = useFirestore();
   
   // Stati per il tracking della sincronizzazione
@@ -160,6 +162,8 @@ function App() {
   // Stato per il dialog di dettaglio transazione
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
+  const [loadEasterEggsWithStatusFn, setLoadEasterEggsWithStatusFn] = useState(null);
+  const [easterEggsWithStatus, setEasterEggsWithStatus] = useState([]);
 
   // Determina se almeno un modal è aperto
   const isAnyModalOpen = showForm || showConfirmDelete || showUserProfile || 
@@ -188,7 +192,7 @@ function App() {
   }, [wallets]);
 
       // Gestione easter egg - Tap segreto sul logo del portafoglio
-    const handleWalletTap = () => {
+    const handleWalletTap = async () => {
       const now = Date.now();
       const timeDiff = now - lastTapTime;
       
@@ -219,6 +223,11 @@ function App() {
           };
           
           activateEasterEgg('tapSegreto', setters);
+          
+          // Salva il completamento nel database
+          await saveEasterEggCompletion('tapSegreto', setEasterEggCompleted);
+          await loadEasterEggsWithStatus();
+          
           setWalletTapCount(0);
           
           // Mostra il messaggio dal sistema centralizzato
@@ -408,7 +417,7 @@ function App() {
           });
         }, 100);
 
-        longPressTimer = setTimeout(() => {
+        longPressTimer = setTimeout(async () => {
           console.log('Long press detected!'); // Debug
           
           const now = Date.now();
@@ -429,6 +438,10 @@ function App() {
               };
               
               activateEasterEgg('tapLungo', setters);
+              
+              // Salva il completamento nel database
+              await saveEasterEggCompletion('tapLungo', setEasterEggCompleted);
+              await loadEasterEggsWithStatus();
               
               const easterEgg = getEasterEgg('tapLungo');
               if (easterEgg) {
@@ -492,7 +505,7 @@ function App() {
   }, [partyMode, lastPartyTime]);
 
   // Gestione easter egg - Doppio tap sul footer per tema retro
-  const handleFooterTap = () => {
+  const handleFooterTap = async () => {
     const now = Date.now();
     const timeDiff = now - lastFooterTapTime;
     
@@ -517,6 +530,10 @@ function App() {
         };
         
         activateEasterEgg('temaSegreto', setters);
+        
+        // Salva il completamento nel database
+        await saveEasterEggCompletion('temaSegreto', setEasterEggCompleted);
+        await loadEasterEggsWithStatus();
         
         const easterEgg = getEasterEgg('temaSegreto');
         if (easterEgg) {
@@ -577,6 +594,9 @@ function App() {
     if (activatedEgg) {
       const easterEgg = getEasterEgg(activatedEgg);
       if (easterEgg) {
+        // Salva il completamento nel database
+        await saveEasterEggCompletion(activatedEgg, setEasterEggCompleted);
+        await loadEasterEggsWithStatus();
         setTimeout(() => {
           alert(easterEgg.activationMessage);
         }, 100);
@@ -629,6 +649,9 @@ function App() {
     if (activatedEgg) {
       const easterEgg = getEasterEgg(activatedEgg);
       if (easterEgg) {
+        // Salva il completamento nel database
+        await saveEasterEggCompletion(activatedEgg, setEasterEggCompleted);
+        await loadEasterEggsWithStatus();
         setTimeout(() => {
           alert(easterEgg.activationMessage);
         }, 100);
@@ -1332,6 +1355,14 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isAnyModalOpen]);
 
+  const loadEasterEggsWithStatus = async () => {
+    const eggsWithStatus = await getEasterEggsWithCompletionStatus(getCompletedEasterEggs);
+    setEasterEggsWithStatus(eggsWithStatus);
+  };
+
+  useEffect(() => {
+    if (user) loadEasterEggsWithStatus();
+  }, [user]);
 
   // Mostra loading mentre verifica l'autenticazione
   if (authLoading) {
@@ -1349,6 +1380,13 @@ function App() {
   if (!user) {
     return <LoginForm />;
   }
+
+  // In useEffect, quando UserProfile viene montato, salva la funzione:
+  useEffect(() => {
+    if (showUserProfile && window.loadEasterEggsWithStatus) {
+      setLoadEasterEggsWithStatusFn(() => window.loadEasterEggsWithStatus);
+    }
+  }, [showUserProfile]);
 
   return (
     <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} ${partyMode ? 'party-mode' : ''} ${retroMode ? 'retro-mode' : ''} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
@@ -1776,6 +1814,7 @@ function App() {
       <UserProfile 
         isOpen={showUserProfile}
         onClose={() => setShowUserProfile(false)}
+        easterEggsWithStatus={easterEggsWithStatus}
       />
 
       {/* Wallet Manager Modal */}
