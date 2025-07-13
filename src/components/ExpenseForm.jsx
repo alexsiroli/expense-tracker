@@ -235,7 +235,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                     </option>
                   ))}
                 </select>
-                <div className="absolute right-10 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <div className="absolute right-10 pointer-events-none" style={{ top: '30%', transform: 'translateY(-50%)' }}>
                   <div 
                     className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                     style={{ 

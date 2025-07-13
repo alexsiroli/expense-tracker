@@ -392,18 +392,49 @@ const UserProfile = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
-                {/* Placeholder per futuri easter egg */}
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700 opacity-50">
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-xl p-4 border border-red-200 dark:border-red-800">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-500 dark:text-gray-400 text-sm font-bold">?</span>
+                    <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">4</span>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-500 dark:text-gray-400">
-                        Easter Egg Segreto
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                        Uscita Diabolica
                       </h4>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
-                        Ancora da scoprire...
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Aggiungi spesa €666.00 per fiamme
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">5</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                        Entrata Angelica
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Aggiungi entrata €888.00 per tema celestiale (30s)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">6</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                        Time Travel
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Crea transazione al 31/12/1999 per effetto glitch (30s)
                       </p>
                     </div>
                   </div>

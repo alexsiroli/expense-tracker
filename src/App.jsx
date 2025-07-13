@@ -9,6 +9,7 @@ import DateRangePicker from './components/DateRangePicker';
 import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
 import { useFirestore } from './hooks/useFirestore';
+import { useScrollLock } from './hooks/useScrollLock';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import WalletManager from './components/WalletManager';
@@ -144,6 +145,9 @@ function App() {
   const [lastPartyTime, setLastPartyTime] = useState(0);
   const [lastFooterTapTime, setLastFooterTapTime] = useState(0);
   const [longPressProgress, setLongPressProgress] = useState(0);
+  const [flameMode, setFlameMode] = useState(false);
+  const [angelicMode, setAngelicMode] = useState(false);
+  const [timeTravelMode, setTimeTravelMode] = useState(false);
   
   // Stati per modal dei componenti figli
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -156,6 +160,22 @@ function App() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
 
+  // Determina se almeno un modal è aperto
+  const isAnyModalOpen = showForm || showConfirmDelete || showUserProfile || 
+    showWalletForm || showTransferModal || showColorPicker || showCategoryForm || 
+    showImportModal || showResetModal || showFilterDialog || showTransactionDialog;
+
+  // Blocca lo scroll quando un modal è aperto
+  useScrollLock(isAnyModalOpen);
+
+  // Mantieni l'header espanso quando un modal è aperto
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      setIsHeaderExpanded(true);
+      setShowFloatingMenu(true);
+    }
+  }, [isAnyModalOpen]);
+
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
   useEffect(() => {
     if (wallets.length > 0) {
@@ -166,39 +186,38 @@ function App() {
     }
   }, [wallets]);
 
-  // Gestione easter egg - Tap segreto sul logo del portafoglio
-  const handleWalletTap = () => {
-    const now = Date.now();
-    const timeDiff = now - lastTapTime;
-    
-    // Reset se è passato troppo tempo (> 2 secondi)
-    if (timeDiff > 2000) {
-      setWalletTapCount(1);
-    } else {
-      setWalletTapCount(prev => prev + 1);
-    }
-    
-    setLastTapTime(now);
-    
-    // Se abbiamo raggiunto 5 tap rapidi
-    if (walletTapCount >= 4) { // 4 perché questo è il 5° tap
-      if (rainbowMode) {
-        // Disattiva il tema arcobaleno
-        setRainbowMode(false);
-        setWalletTapCount(0);
-        // Nessun popup per la disattivazione
+      // Gestione easter egg - Tap segreto sul logo del portafoglio
+    const handleWalletTap = () => {
+      const now = Date.now();
+      const timeDiff = now - lastTapTime;
+      
+      // Reset se è passato troppo tempo (> 2 secondi)
+      if (timeDiff > 2000) {
+        setWalletTapCount(1);
       } else {
-        // Attiva il tema arcobaleno
-        setRainbowMode(true);
-        setWalletTapCount(0);
-        
-        // Mostra un messaggio di successo più simpatico
-        setTimeout(() => {
-          alert('🎉 EGG EASTER TROVATO! 🌈\n\nHai scoperto il segreto del portafoglio!\nOra tutta l\'app è arcobaleno! ✨\n\nTap 5 volte di nuovo per tornare normale 😉');
-        }, 100);
+        setWalletTapCount(prev => prev + 1);
       }
-    }
-  };
+      
+      setLastTapTime(now);
+      
+      // Se abbiamo raggiunto 5 tap rapidi
+      if (walletTapCount >= 4) { // 4 perché questo è il 5° tap
+        if (rainbowMode) {
+          // Disattiva il tema arcobaleno silenziosamente
+          setRainbowMode(false);
+          setWalletTapCount(0);
+        } else {
+          // Attiva il tema arcobaleno
+          setRainbowMode(true);
+          setWalletTapCount(0);
+          
+          // Mostra un messaggio di successo più simpatico
+          setTimeout(() => {
+            alert('🎉 EGG EASTER TROVATO! 🌈\n\nHai scoperto il segreto del portafoglio!\nOra tutta l\'app è arcobaleno! ✨\n\nTap 5 volte di nuovo per tornare normale 😉');
+          }, 100);
+        }
+      }
+    };
 
   // Funzione per aggiornare il colore della Dynamic Island e barra di stato
   const updateThemeColor = (isRainbow, currentTheme) => {
@@ -347,6 +366,8 @@ function App() {
     }
   }, [retroMode]);
 
+
+
   // Aggiorna il colore della Dynamic Island all'avvio dell'app
   useEffect(() => {
     updateThemeColor(rainbowMode, theme);
@@ -389,10 +410,7 @@ function App() {
                 alert('🎉 PARTY MODE ATTIVATA! 🎊\n\nTap lungo di 3 secondi di nuovo per disattivare! 💃');
               }, 100);
             } else {
-              // Disattiva modalità party
-              setTimeout(() => {
-                alert('🎉 PARTY MODE DISATTIVATA! 🌙\n\nTap lungo di 3 secondi di nuovo per riattivare! ✨');
-              }, 100);
+              // Disattiva modalità party silenziosamente
             }
           }
           
@@ -466,10 +484,7 @@ function App() {
           alert('🎮 TEMA RETRO ATTIVATO! 🕹️\n\nDoppio tap di nuovo sul footer per tornare normale! 👾');
         }, 100);
       } else {
-        // Disattiva tema retro
-        setTimeout(() => {
-          alert('🎮 TEMA RETRO DISATTIVATO! 🌙\n\nDoppio tap di nuovo sul footer per riattivare! 👾');
-        }, 100);
+        // Disattiva tema retro silenziosamente
       }
     }
   };
@@ -504,6 +519,43 @@ function App() {
       ...expense, 
       date: expense.date ? new Date(expense.date).toISOString() : new Date().toISOString() 
     };
+    
+    // Easter Egg - Uscita Diabolica
+    if (expense.amount === 666) {
+      setFlameMode(true);
+      setTimeout(() => {
+        alert('🔥 USCITA DIABOLICA ATTIVATA! 🔥\n\nIl tile dell\'app ora brucia con le fiamme dell\'inferno! 😈\n\nAggiungi una spesa normale per spegnere le fiamme! 💦');
+      }, 100);
+      
+      // Disattiva le fiamme dopo 30 secondi
+      setTimeout(() => {
+        setFlameMode(false);
+      }, 30000);
+    } else if (flameMode) {
+      // Disattiva le fiamme se si aggiunge una spesa normale silenziosamente
+      setFlameMode(false);
+    }
+
+    // Easter Egg - Time Travel
+    const transactionDate = new Date(expense.date);
+    const targetDate = new Date('1999-12-31');
+    if (transactionDate.getFullYear() === 1999 && 
+        transactionDate.getMonth() === 11 && 
+        transactionDate.getDate() === 31) {
+      setTimeTravelMode(true);
+      setTimeout(() => {
+        alert('⏰ TIME TRAVEL ATTIVATO! ⏰\n\nHai viaggiato nel tempo al 31/12/1999!\nIl tile della transazione ora ha un effetto glitchato! 🌌\n\nIl glitch si disattiverà automaticamente tra 30 secondi! ⚡');
+      }, 100);
+      
+      // Disattiva il glitch dopo 30 secondi
+      setTimeout(() => {
+        setTimeTravelMode(false);
+      }, 30000);
+    } else if (timeTravelMode) {
+      // Disattiva il glitch se si aggiunge una transazione normale silenziosamente
+      setTimeTravelMode(false);
+    }
+    
     await addDocument('expenses', newExpense);
     setShowForm(false);
     setEditingItem(null);
@@ -514,6 +566,43 @@ function App() {
       ...income, 
       date: income.date ? new Date(income.date).toISOString() : new Date().toISOString() 
     };
+    
+    // Easter Egg - Entrata Angelica
+    if (parseFloat(income.amount) === 888) {
+      setAngelicMode(true);
+      setTimeout(() => {
+        alert('🌟 EGG EASTER TROVATO! 👼\n\nHai scoperto l\'entrata angelica!\nOra l\'app ha un tema celestiale! ✨\n\nIl tema si disattiverà automaticamente tra 30 secondi! 😇');
+      }, 100);
+      
+      // Disattiva il tema angelico dopo 30 secondi
+      setTimeout(() => {
+        setAngelicMode(false);
+      }, 30000);
+    } else if (angelicMode) {
+      // Disattiva il tema angelico se si aggiunge un'entrata normale silenziosamente
+      setAngelicMode(false);
+    }
+
+    // Easter Egg - Time Travel
+    const transactionDate = new Date(income.date);
+    const targetDate = new Date('1999-12-31');
+    if (transactionDate.getFullYear() === 1999 && 
+        transactionDate.getMonth() === 11 && 
+        transactionDate.getDate() === 31) {
+      setTimeTravelMode(true);
+      setTimeout(() => {
+        alert('⏰ TIME TRAVEL ATTIVATO! ⏰\n\nHai viaggiato nel tempo al 31/12/1999!\nIl tile della transazione ora ha un effetto glitchato! 🌌\n\nIl glitch si disattiverà automaticamente tra 30 secondi! ⚡');
+      }, 100);
+      
+      // Disattiva il glitch dopo 30 secondi
+      setTimeout(() => {
+        setTimeTravelMode(false);
+      }, 30000);
+    } else if (timeTravelMode) {
+      // Disattiva il glitch se si aggiunge una transazione normale silenziosamente
+      setTimeTravelMode(false);
+    }
+    
     await addDocument('incomes', newIncome);
     setShowForm(false);
     setEditingItem(null);
@@ -1161,6 +1250,11 @@ function App() {
 
   useEffect(() => {
     const handleScroll = () => {
+      // Se un modal è aperto, non gestire lo scroll
+      if (isAnyModalOpen) {
+        return;
+      }
+
       const currentScrollY = window.scrollY;
       const isAtBottom = window.innerHeight + currentScrollY >= document.body.offsetHeight - 20;
       const collapseThreshold = 50; // Soglia per compattare l'header
@@ -1185,7 +1279,7 @@ function App() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isAnyModalOpen]);
 
 
   // Mostra loading mentre verifica l'autenticazione
@@ -1206,7 +1300,7 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
+    <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} ${partyMode ? 'party-mode' : ''} ${retroMode ? 'retro-mode' : ''} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
       {/* Header espandibile con grafica trasparente */}
       <header className={`fixed top-0 left-0 w-full z-20 py-0 animate-fade-in header-transition header-parallax ${isHeaderExpanded ? 'h-20' : 'h-16'}`}>
         <div className="max-w-md mx-auto px-6 mt-2">
@@ -1391,6 +1485,9 @@ function App() {
               type="expense"
               categories={categories.expense}
               onShowDetail={(item) => { setSelectedTransaction(item); setShowTransactionDialog(true); }}
+              flameMode={flameMode}
+              angelicMode={angelicMode}
+              timeTravelMode={timeTravelMode}
             />
           </div>
         )}
@@ -1431,6 +1528,9 @@ function App() {
               type="income"
               categories={categories.income}
               onShowDetail={(item) => { setSelectedTransaction(item); setShowTransactionDialog(true); }}
+              flameMode={flameMode}
+              angelicMode={angelicMode}
+              timeTravelMode={timeTravelMode}
             />
           </div>
         )}

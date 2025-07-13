@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { formatCurrency } from '../utils/formatters';
 
-function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDetail }) {
+function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDetail, flameMode = false, angelicMode = false, timeTravelMode = false }) {
   const formatDate = (dateString) => {
     return format(new Date(dateString), 'dd MMM yyyy', { locale: it });
   };
@@ -85,7 +85,15 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
             {dateItems.map((item) => (
               <div
                 key={item.id}
-                className="expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className={`expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                  flameMode && item.amount === 666 ? 'animate-flame' : ''
+                } ${
+                  angelicMode && type === 'income' && parseFloat(item.amount) === 888 ? 'animate-angelic' : ''
+                } ${
+                  timeTravelMode && new Date(item.date).getFullYear() === 1999 && 
+                  new Date(item.date).getMonth() === 11 && 
+                  new Date(item.date).getDate() === 31 ? 'animate-glitch' : ''
+                }`}
                 onClick={() => onShowDetail && onShowDetail(item)}
               >
                 <div className="flex items-start gap-3">
