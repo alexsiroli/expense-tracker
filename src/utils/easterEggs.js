@@ -116,7 +116,6 @@ export const deactivateAllEasterEggs = (setters) => {
     setFlameMode,
     setAngelicMode,
     setTimeTravelMode,
-    setQuadrifoglioFortunatoMode,
     setNataleMagicoMode,
     setCompleannoSpecialeMode
   } = setters;
@@ -127,7 +126,6 @@ export const deactivateAllEasterEggs = (setters) => {
   setFlameMode(false);
   setAngelicMode(false);
   setTimeTravelMode(false);
-  setQuadrifoglioFortunatoMode(false);
   setNataleMagicoMode(false);
   setCompleannoSpecialeMode(false);
 };
@@ -144,15 +142,11 @@ export const activateEasterEgg = (id, setters) => {
     setFlameMode,
     setAngelicMode,
     setTimeTravelMode,
-    setFogliaOroMode,
     setNataleMagicoMode,
     setCompleannoSpecialeMode
   } = setters;
   
-  // Disattiva tutti gli easter egg prima
-  deactivateAllEasterEggs(setters);
-  
-  // Attiva solo quello specifico
+  // Attiva solo quello specifico, senza disattivare gli altri
   switch (id) {
     case 'tapSegreto':
       setRainbowMode(true);
@@ -171,9 +165,6 @@ export const activateEasterEgg = (id, setters) => {
       break;
     case 'timeTravel':
       setTimeTravelMode(true);
-      break;
-    case 'quadrifoglioFortunato':
-      setQuadrifoglioFortunatoMode(true);
       break;
     case 'nataleMagico':
       setNataleMagicoMode(true);

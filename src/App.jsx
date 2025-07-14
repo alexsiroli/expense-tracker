@@ -198,60 +198,82 @@ function App() {
     }
   }, [wallets]);
 
-      // Gestione easter egg - Tap segreto sul logo del portafoglio
-    const handleWalletTap = async () => {
+  // 1. Tap segreto portafoglio
+  const walletTapTimer = useRef(null);
+  // Blocca doppio trigger rainbow
+  const isRainbowToggling = useRef(false);
+  const handleWalletTap = () => {
+    setWalletTapCount(prev => {
       const now = Date.now();
-      const timeDiff = now - lastTapTime;
-      
-      // Reset se è passato troppo tempo (> 2 secondi)
-      if (timeDiff > 2000) {
-        setWalletTapCount(1);
-      } else {
-        setWalletTapCount(prev => prev + 1);
+      if (now - lastTapTime > 2000) {
+        setLastTapTime(now);
+        return 1;
       }
-      
+      const newCount = prev + 1;
       setLastTapTime(now);
-      
-      // Se abbiamo raggiunto 5 tap rapidi
-      if (walletTapCount >= 4) { // 4 perché questo è il 5° tap
-        if (rainbowMode) {
-          // Disattiva il tema arcobaleno silenziosamente
-          setRainbowMode(false);
-          setWalletTapCount(0);
-        } else {
-          // Attiva il tema arcobaleno usando il nuovo sistema
-          const setters = {
-            setRainbowMode,
-            setPartyMode,
-            setRetroMode,
-            setFlameMode,
-            setAngelicMode,
-            setTimeTravelMode,
-            setFogliaOroMode,
-            setNataleMagicoMode,
-            setCompleannoSpecialeMode
-          };
-          
-          activateEasterEgg('tapSegreto', setters);
-          
-          // Salva il completamento nel database
-          await saveEasterEggCompletion('tapSegreto', setEasterEggCompleted);
-          // Piccolo delay per assicurarsi che il database sia aggiornato
-          await new Promise(resolve => setTimeout(resolve, 100));
-          await loadEasterEggsWithStatus();
-          
-          setWalletTapCount(0);
-          
-          // Mostra il messaggio dal sistema centralizzato
-          const easterEgg = getEasterEgg('tapSegreto');
-          if (easterEgg) {
-            setTimeout(() => {
-              alert(easterEgg.activationMessage);
-            }, 100);
-          }
+      if (newCount >= 5) {
+        if (!isRainbowToggling.current) {
+          isRainbowToggling.current = true;
+          activateExclusiveMode('rainbow');
+          setTimeout(() => { isRainbowToggling.current = false; }, 500);
         }
+        return 0;
       }
-    };
+      return newCount;
+    });
+  };
+
+  // 2. Doppio tap/click footer custom
+  const [footerTapCount, setFooterTapCount] = useState(0);
+  const footerTapTimer = useRef(null);
+  // Blocca doppio trigger retro
+  const isRetroToggling = useRef(false);
+  const handleFooterTap = () => {
+    setFooterTapCount(prev => {
+      if (prev === 0) {
+        if (footerTapTimer.current) clearTimeout(footerTapTimer.current);
+        footerTapTimer.current = setTimeout(() => setFooterTapCount(0), 400);
+        return 1;
+      } else {
+        setFooterTapCount(0);
+        if (!isRetroToggling.current) {
+          isRetroToggling.current = true;
+          activateExclusiveMode('retro');
+          setTimeout(() => { isRetroToggling.current = false; }, 500);
+        }
+        return 0;
+      }
+    });
+  };
+
+  // 3. Long press titolo robusto
+  const [isLongPressing, setIsLongPressing] = useState(false);
+  const handleLongPressStart = (event) => {
+    if (event.target.closest('.app-title')) {
+      setIsLongPressing(true);
+      setLongPressProgress(0);
+      progressTimer.current = setInterval(() => {
+        setLongPressProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressTimer.current);
+            return 100;
+          }
+          return prev + 3.33;
+        });
+      }, 100);
+      longPressTimer.current = setTimeout(() => {
+        activateExclusiveMode('party');
+        setIsLongPressing(false);
+        setLongPressProgress(0);
+      }, 3000);
+    }
+  };
+  const handleLongPressEnd = () => {
+    setIsLongPressing(false);
+    setLongPressProgress(0);
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    if (progressTimer.current) clearInterval(progressTimer.current);
+  };
 
   // Funzione per aggiornare il colore della Dynamic Island e barra di stato
   const updateThemeColor = (isRainbow, currentTheme) => {
@@ -278,64 +300,41 @@ function App() {
 
   // Sincronizza i dati Firebase con gli stati locali
   useEffect(() => {
-    console.log('categoriesData changed:', categoriesData);
-    console.log('categoriesData length:', categoriesData?.length);
-    console.log('categoriesData type:', typeof categoriesData);
-    console.log('categoriesData timestamp:', new Date().toISOString());
-    
     if (categoriesData && categoriesData.length > 0) {
       const categoriesDoc = categoriesData[0];
-      console.log('Setting categories from Firestore data:', categoriesDoc);
-      console.log('categoriesDoc.expense:', categoriesDoc.expense);
-      console.log('categoriesDoc.income:', categoriesDoc.income);
-      
       if (categoriesDoc.expense && categoriesDoc.income) {
-        console.log('Setting categories state with:', categoriesDoc);
         setCategories(categoriesDoc);
         setLastSyncTime(new Date().toISOString());
       } else {
-        console.log('categoriesDoc missing expense or income, using defaults');
         setCategories(defaultCategories);
       }
     } else if (categoriesData && categoriesData.length === 0) {
-      console.log('No categories data, using defaults');
       setCategories(defaultCategories);
     } else {
-      console.log('categoriesData is null/undefined, using defaults');
       setCategories(defaultCategories);
     }
   }, [categoriesData]);
 
   useEffect(() => {
-    console.log('storesData changed:', storesData);
-    console.log('storesData length:', storesData?.length);
     let storesDoc = null;
     if (storesData && storesData.length > 0) {
       // Cerca il documento con id === 'default'
       storesDoc = storesData.find(doc => doc.id === 'default') || storesData[0];
-      console.log('Setting stores from Firestore data:', storesDoc);
       if (storesDoc.stores) {
-        console.log('Setting stores state with:', storesDoc.stores);
         setStores(storesDoc.stores);
         setLastSyncTime(new Date().toISOString());
       } else {
-        console.log('storesDoc missing stores property, using empty array');
         setStores([]);
       }
     } else if (storesData && storesData.length === 0) {
-      console.log('No stores data, using empty array');
       setStores([]);
     } else {
-      console.log('storesData is null/undefined, using empty array');
       setStores([]);
     }
   }, [storesData]);
 
   useEffect(() => {
-    console.log('walletsData changed:', walletsData);
-    console.log('walletsData timestamp:', new Date().toISOString());
     if (walletsData && walletsData.length > 0) {
-      console.log('Setting wallets from Firestore data:', walletsData);
       setWallets(walletsData);
       setLastSyncTime(new Date().toISOString());
       if (walletsData.length > 0 && !activeWalletId) {
@@ -367,8 +366,6 @@ function App() {
       );
       
       if (walletsWithCustomIds.length > 0) {
-        console.log('Trovati conti con ID personalizzati da pulire:', walletsWithCustomIds);
-        // Per ora, logghiamo solo. In futuro potremmo volerli migrare
         walletsWithCustomIds.forEach(wallet => {
           console.log('Conto con ID personalizzato:', wallet.name, wallet.id);
         });
@@ -427,45 +424,39 @@ function App() {
       }, 100);
 
       longPressTimer.current = setTimeout(async () => {
-        console.log('Long press detected!'); // Debug
+        setPartyMode(prev => !prev);
+        setLastPartyTime(Date.now());
         
-        const now = Date.now();
-        if (now - lastPartyTime > 3000) { // 3 secondi tra attivazioni
-          console.log('Party mode toggled!'); // Debug
-          setPartyMode(prev => !prev);
-          setLastPartyTime(now);
+        if (!partyMode) {
+          // Attiva modalità party usando il nuovo sistema
+          const setters = {
+            setRainbowMode,
+            setPartyMode,
+            setRetroMode,
+            setFlameMode,
+            setAngelicMode,
+            setTimeTravelMode,
+            setFogliaOroMode,
+            setNataleMagicoMode,
+            setCompleannoSpecialeMode
+          };
           
-          if (!partyMode) {
-            // Attiva modalità party usando il nuovo sistema
-            const setters = {
-              setRainbowMode,
-              setPartyMode,
-              setRetroMode,
-              setFlameMode,
-              setAngelicMode,
-              setTimeTravelMode,
-              setQuadrifoglioFortunatoMode,
-              setNataleMagicoMode,
-              setCompleannoSpecialeMode
-            };
-            
-            activateEasterEgg('tapLungo', setters);
-            
-            // Salva il completamento nel database
-            await saveEasterEggCompletion('tapLungo', setEasterEggCompleted);
-            // Piccolo delay per assicurarsi che il database sia aggiornato
-            await new Promise(resolve => setTimeout(resolve, 100));
-            await loadEasterEggsWithStatus();
-            
-            const easterEgg = getEasterEgg('tapLungo');
-            if (easterEgg) {
-              setTimeout(() => {
-                alert(easterEgg.activationMessage);
-              }, 100);
-            }
-          } else {
-            // Disattiva modalità party silenziosamente
+          activateEasterEgg('tapLungo', setters);
+          
+          // Salva il completamento nel database
+          await saveEasterEggCompletion('tapLungo', setEasterEggCompleted);
+          // Piccolo delay per assicurarsi che il database sia aggiornato
+          await new Promise(resolve => setTimeout(resolve, 100));
+          await loadEasterEggsWithStatus();
+          
+          const easterEgg = getEasterEgg('tapLungo');
+          if (easterEgg) {
+            setTimeout(() => {
+              alert(easterEgg.activationMessage);
+            }, 100);
           }
+        } else {
+          // Disattiva modalità party silenziosamente
         }
         
         // Reset progress
@@ -500,74 +491,6 @@ function App() {
     setLongPressProgress(0);
   };
 
-  // Gestione easter egg - Tap lungo per modalità party
-  useEffect(() => {
-    // Aggiungi event listeners
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchend', handleTouchEnd);
-    document.addEventListener('touchmove', handleTouchMove);
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
-      document.removeEventListener('touchmove', handleTouchMove);
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-      }
-      if (progressTimer.current) {
-        clearInterval(progressTimer.current);
-      }
-    };
-  }, [partyMode, lastPartyTime]);
-
-  // Gestione easter egg - Doppio tap sul footer per tema retro
-  const handleFooterTap = async () => {
-    const now = Date.now();
-    const timeDiff = now - lastFooterTapTime;
-    
-    // Reset se è passato troppo tempo (> 1 secondo)
-    if (timeDiff > 1000) {
-      setLastFooterTapTime(now);
-    } else {
-      // Doppio tap rilevato
-      console.log('Double tap on footer detected!'); // Debug
-      setRetroMode(prev => !prev);
-      setLastFooterTapTime(0); // Reset per evitare attivazioni multiple
-      
-      if (!retroMode) {
-        // Attiva tema retro usando il nuovo sistema
-        const setters = {
-          setRainbowMode,
-          setPartyMode,
-          setRetroMode,
-          setFlameMode,
-          setAngelicMode,
-          setTimeTravelMode,
-          setFogliaOroMode,
-          setNataleMagicoMode,
-          setCompleannoSpecialeMode
-        };
-        
-        activateEasterEgg('temaSegreto', setters);
-        
-        // Salva il completamento nel database
-        await saveEasterEggCompletion('temaSegreto', setEasterEggCompleted);
-        // Piccolo delay per assicurarsi che il database sia aggiornato
-        await new Promise(resolve => setTimeout(resolve, 100));
-        await loadEasterEggsWithStatus();
-        
-        const easterEgg = getEasterEgg('temaSegreto');
-        if (easterEgg) {
-          setTimeout(() => {
-            alert(easterEgg.activationMessage);
-          }, 100);
-        }
-      } else {
-        // Disattiva tema retro silenziosamente
-      }
-    }
-  };
-
   // Calcola il saldo di un conto dinamicamente
   const calculateWalletBalance = (walletId) => {
     const wallet = wallets.find(w => w.id === walletId);
@@ -583,12 +506,10 @@ function App() {
 
   // Calcola i saldi di tutti i conti dinamicamente
   const getWalletsWithCalculatedBalance = () => {
-    console.log('getWalletsWithCalculatedBalance called with wallets:', wallets);
     const result = wallets.map(wallet => ({
       ...wallet,
       balance: calculateWalletBalance(wallet.id) // Sostituisce il saldo con quello calcolato
     }));
-    console.log('getWalletsWithCalculatedBalance result:', result);
     return result;
   };
 
@@ -628,7 +549,6 @@ function App() {
     if (activatedEgg) {
       const easterEgg = getEasterEgg(activatedEgg);
       if (easterEgg) {
-        console.log('[EASTER EGG] Salvataggio completamento per', activatedEgg);
         await saveEasterEggCompletion(activatedEgg, setEasterEggCompleted);
         await new Promise(resolve => setTimeout(resolve, 100));
         await loadEasterEggsWithStatus();
@@ -680,7 +600,6 @@ function App() {
     if (activatedEgg) {
       const easterEgg = getEasterEgg(activatedEgg);
       if (easterEgg) {
-        console.log('[EASTER EGG] Salvataggio completamento per', activatedEgg);
         await saveEasterEggCompletion(activatedEgg, setEasterEggCompleted);
         await new Promise(resolve => setTimeout(resolve, 100));
         await loadEasterEggsWithStatus();
@@ -720,15 +639,9 @@ function App() {
   };
   // Elimina conto e tutte le transazioni collegate
   const deleteWallet = async (walletId) => {
-    console.log('deleteWallet chiamato con walletId:', walletId);
-    console.log('Tipo di walletId:', typeof walletId);
-    console.log('Wallets disponibili:', wallets);
-    
     const wallet = wallets.find(w => w.id === walletId);
-    console.log('Wallet trovato:', wallet);
     
     if (!wallet) {
-      console.error('Wallet non trovato');
       alert('Wallet non trovato. Riprova.');
       return;
     }
@@ -740,11 +653,9 @@ function App() {
     }
     
     // Ora l'ID del wallet è direttamente l'ID del documento Firestore
-    console.log('Usando wallet ID per eliminazione:', walletId);
     
     try {
       await performWalletDeletion(walletId);
-      console.log('deleteWallet completato con successo');
     } catch (error) {
       console.error('Errore in deleteWallet:', error);
       alert('Errore durante l\'eliminazione del conto: ' + error.message);
@@ -752,54 +663,35 @@ function App() {
   };
 
   const performWalletDeletion = async (walletId) => {
-    console.log('performWalletDeletion chiamato con wallet ID:', walletId);
-    console.log('Tipo di walletId in performWalletDeletion:', typeof walletId);
-    
     try {
       // Trova il wallet per ottenere l'ID del documento Firestore
       const wallet = wallets.find(w => w.id === walletId);
-      console.log('Wallet trovato in performWalletDeletion:', wallet);
       
       if (!wallet) {
-        console.error('Wallet non trovato per eliminazione');
         throw new Error('Wallet non trovato per eliminazione');
       }
       
       // Usa l'ID del documento Firestore per eliminare il wallet
-      console.log('Eliminando wallet dal database con ID:', walletId);
       await deleteDocument('wallets', walletId);
-      console.log('Wallet eliminato con successo');
       
       // Elimina le transazioni collegate usando l'ID del wallet
       const walletExpenses = expenses.filter(e => e.walletId === walletId);
       const walletIncomes = incomes.filter(i => i.walletId === walletId);
       
-      console.log('Spese collegate trovate:', walletExpenses.length);
-      console.log('Entrate collegate trovate:', walletIncomes.length);
-      
       if (walletExpenses.length > 0) {
-        console.log('Eliminando', walletExpenses.length, 'spese collegate...');
         const expenseIds = walletExpenses.map(e => e.id);
-        console.log('IDs spese da eliminare:', expenseIds);
         await deleteMultipleDocuments('expenses', expenseIds);
-        console.log('Spese eliminate con successo');
       }
       
       if (walletIncomes.length > 0) {
-        console.log('Eliminando', walletIncomes.length, 'entrate collegate...');
         const incomeIds = walletIncomes.map(i => i.id);
-        console.log('IDs entrate da eliminare:', incomeIds);
         await deleteMultipleDocuments('incomes', incomeIds);
-        console.log('Entrate eliminate con successo');
       }
       
       if (activeWalletId === walletId) {
         const remainingWallets = wallets.filter(w => w.id !== walletId);
         setActiveWalletId(remainingWallets[0]?.id || null);
-        console.log('Active wallet aggiornato a:', remainingWallets[0]?.id || null);
       }
-      
-      console.log('Eliminazione wallet completata con successo');
     } catch (error) {
       console.error('Errore durante l\'eliminazione del wallet:', error);
       console.error('Codice errore:', error.code);
@@ -819,10 +711,6 @@ function App() {
   };
 
   const addCategory = async (name, icon, type) => {
-    console.log('addCategory chiamato con:', { name, icon, type });
-    console.log('categoriesData length:', categoriesData.length);
-    console.log('Current categories:', categories);
-    
     const newCategory = {
       id: Date.now(),
       name,
@@ -834,14 +722,10 @@ function App() {
       [type]: [...categories[type], newCategory]
     };
     
-    console.log('Updated categories to save:', updatedCategories);
-    
     // Se non ci sono ancora documenti categories, crea il primo documento
     if (categoriesData.length === 0) {
-      console.log('Creating new categories document');
       await addDocument('categories', updatedCategories);
     } else {
-      console.log('Updating existing categories document with ID:', categoriesData[0].id);
       await updateDocument('categories', categoriesData[0].id, updatedCategories);
     }
     
@@ -902,10 +786,6 @@ function App() {
     let filteredExpenses = expenses;
     let filteredIncomes = incomes;
 
-    console.log('Filtri attivi:', activeFilters);
-    console.log('Numero spese iniziali:', expenses.length);
-    console.log('Numero entrate iniziali:', incomes.length);
-
     // Filtro per tempo
     if (activeFilters.timeRange !== 'all') {
       const now = new Date();
@@ -940,7 +820,6 @@ function App() {
       }
 
       if (startDate && endDate) {
-        console.log('Applicando filtro temporale:', { startDate, endDate, timeRange: activeFilters.timeRange });
         filteredExpenses = filteredExpenses.filter(expense => {
           const expenseDate = new Date(expense.date);
           return expenseDate >= startDate && expenseDate < endDate;
@@ -949,8 +828,6 @@ function App() {
           const incomeDate = new Date(income.date);
           return incomeDate >= startDate && incomeDate < endDate;
         });
-        console.log('Spese dopo filtro temporale:', filteredExpenses.length);
-        console.log('Entrate dopo filtro temporale:', filteredIncomes.length);
       }
     }
 
@@ -1008,15 +885,10 @@ function App() {
 
   // Funzioni gestione conti
   const addWallet = async (wallet) => {
-    console.log('addWallet chiamato con:', wallet);
-    console.log('User autenticato:', user);
-    console.log('User UID:', user?.uid);
-    
     try {
       // Controlla se esiste già un wallet con lo stesso nome
       const existingWallet = wallets.find(w => w.name === wallet.name);
       if (existingWallet) {
-        console.log('Wallet con lo stesso nome già esistente:', existingWallet);
         throw new Error('Esiste già un conto con questo nome');
       }
       
@@ -1026,11 +898,8 @@ function App() {
         initialBalance: parseFloat(wallet.balance) || 0,
         balance: parseFloat(wallet.balance) || 0,
       };
-      console.log('Nuovo wallet da creare:', newWallet);
       
       const result = await addDocument('wallets', newWallet);
-      console.log('Wallet creato con successo:', result);
-      console.log('Document ID generato da Firestore:', result.id);
       return result;
     } catch (error) {
       console.error('Errore durante la creazione del wallet:', error);
@@ -1048,10 +917,8 @@ function App() {
         initialBalance: parseFloat(updatedWallet.balance) || 0,
       });
     } catch (error) {
-      console.error('Errore durante la modifica del conto:', error);
       // Se il documento non esiste, prova a crearlo
       if (error.code === 'not-found') {
-        console.log('Documento non trovato, creo nuovo conto...');
         await addWallet(updatedWallet);
       } else {
         throw error;
@@ -1062,39 +929,28 @@ function App() {
   // Wallet form handlers
   const handleWalletSubmit = async (e) => {
     e.preventDefault();
-    console.log('handleWalletSubmit chiamato');
-    console.log('walletFormData:', walletFormData);
-    console.log('editingWallet:', editingWallet);
-    console.log('User:', user);
     
     try {
       if (!user) {
-        console.error('Utente non autenticato');
         alert('Utente non autenticato. Effettua nuovamente l\'accesso.');
         return;
       }
       
       if (!walletFormData.name.trim()) {
-        console.error('Nome wallet vuoto');
         return;
       }
       
       if (editingWallet) {
-        console.log('Modificando wallet esistente');
         await editWallet({ ...editingWallet, ...walletFormData });
         setEditingWallet(null);
       } else {
-        console.log('Creando nuovo wallet');
         await addWallet(walletFormData);
       }
       
-      console.log('Wallet salvato con successo');
       setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
       setShowWalletForm(false);
     } catch (error) {
       console.error('Errore durante il salvataggio del conto:', error);
-      console.error('Codice errore:', error.code);
-      console.error('Messaggio errore:', error.message);
       
       // Mostra messaggio specifico per duplicati
       if (error.message === 'Esiste già un conto con questo nome') {
@@ -1106,28 +962,16 @@ function App() {
   };
 
   const handleEditWallet = (wallet) => {
-    try {
-      console.log('handleEditWallet chiamato con wallet:', wallet);
-      setEditingWallet(wallet);
-      const balanceToShow = wallet.initialBalance !== undefined ? wallet.initialBalance : wallet.balance;
-      setWalletFormData({ name: wallet.name, color: wallet.color, balance: balanceToShow });
-      setShowWalletForm(true);
-      console.log('showWalletForm impostato a true per modifica');
-    } catch (error) {
-      console.error('Errore durante l\'apertura del modal di modifica:', error);
-    }
+    setEditingWallet(wallet);
+    const balanceToShow = wallet.initialBalance !== undefined ? wallet.initialBalance : wallet.balance;
+    setWalletFormData({ name: wallet.name, color: wallet.color, balance: balanceToShow });
+    setShowWalletForm(true);
   };
 
   const handleAddWallet = () => {
-    try {
-      console.log('handleAddWallet chiamato');
-      setEditingWallet(null);
-      setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
-      setShowWalletForm(true);
-      console.log('showWalletForm impostato a true');
-    } catch (error) {
-      console.error('Errore durante l\'apertura del modal di aggiunta:', error);
-    }
+    setEditingWallet(null);
+    setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
+    setShowWalletForm(true);
   };
 
   // Funzione per gestire i trasferimenti tra conti
@@ -1191,33 +1035,24 @@ function App() {
       });
       alert('Dati importati con successo!');
     } catch (error) {
-      console.error('Errore durante l\'importazione:', error);
       alert('Errore durante l\'importazione dei dati.');
     }
   };
 
   // Funzione per aggiungere un nuovo store
   const addStore = async (storeName) => {
-    console.log('addStore chiamato con:', storeName);
-    console.log('Stores attuali:', stores);
-    console.log('storesData:', storesData);
-    
     if (storeName.trim() && !stores.includes(storeName.trim())) {
       const newStores = [...stores, storeName.trim()];
-      console.log('Nuovi stores da salvare:', newStores);
       setStores(newStores);
       
       // Aggiorna Firestore
       if (storesData && storesData.length > 0) {
         const storesDoc = storesData[0];
-        console.log('Aggiornando documento stores esistente con ID:', storesDoc.id);
         await updateDocument('stores', storesDoc.id, { stores: newStores });
       } else {
         // Se non esiste ancora un documento stores, crealo
-        console.log('Creando nuovo documento stores');
         await addDocument('stores', { stores: newStores });
       }
-      console.log('Store aggiunto con successo');
     } else {
       console.log('Store già esistente o nome vuoto, non aggiunto');
     }
@@ -1225,14 +1060,12 @@ function App() {
 
   // Funzione per applicare i filtri
   const applyFilters = (filters) => {
-    console.log('Applicando filtri:', filters);
     setActiveFilters(filters);
   };
 
   // Funzione per resettare tutti i dati
   const resetAllData = async () => {
     try {
-      console.log('Avvio reset completo di tutti i dati...');
       await deleteAllUserData();
       // Reset filtri attivi
       setActiveFilters({
@@ -1243,11 +1076,9 @@ function App() {
         selectedStores: [],
         selectedWallets: []
       });
-      console.log('Reset completo completato con successo');
       alert('Tutti i dati sono stati eliminati con successo. L\'applicazione si ricaricherà automaticamente.');
       window.location.reload();
     } catch (error) {
-      console.error('Errore durante il reset:', error);
       alert('Errore durante l\'eliminazione dei dati: ' + error.message);
     }
   };
@@ -1294,13 +1125,6 @@ function App() {
       setCategoryFormData({ name: '', icon: '📦' });
     }
   };
-  // deleteWallet = (id) => { // This function is now handled by the new updateAllWalletsBalance
-  //   setWallets(wallets.filter(w => w.id !== id));
-  //   // TODO: elimina anche tutte le transazioni collegate a questo portafoglio
-  //   if (activeWalletId === id) {
-  //     setActiveWalletId(wallets[0]?.id || 'wallet-1');
-  //   }
-  // };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1338,7 +1162,6 @@ function App() {
   const loadEasterEggsWithStatus = async () => {
     try {
       const eggsWithStatus = await getEasterEggsWithCompletionStatus(getCompletedEasterEggs);
-      console.log('Easter eggs with status loaded:', eggsWithStatus);
       setEasterEggsWithStatus(eggsWithStatus);
     } catch (error) {
       console.error('Errore nel caricamento easter eggs:', error);
@@ -1376,11 +1199,61 @@ function App() {
 
   // Funzione per mostrare il dettaglio di una transazione
   const handleShowDetail = (item, type) => {
-    console.log('[Dettaglio Transazione] Aperto:', item);
-    console.log('[Dettaglio Transazione] Tipo passato:', type);
     setSelectedTransaction({ ...item, _type: type });
     setShowTransactionDialog(true);
   };
+
+  // Funzione per attivare modalità esclusiva
+  const activateExclusiveMode = (mode) => {
+    if (mode === 'rainbow') {
+      if (rainbowMode) {
+        setRainbowMode(false);
+        setPartyMode(false);
+        setRetroMode(false);
+      } else {
+        setRainbowMode(true);
+        setPartyMode(false);
+        setRetroMode(false);
+        activateEasterEgg('tapSegreto', { setRainbowMode });
+        saveEasterEggCompletion('tapSegreto', setEasterEggCompleted).then(() => loadEasterEggsWithStatus());
+        const easterEgg = getEasterEgg('tapSegreto');
+        if (easterEgg) setTimeout(() => alert(easterEgg.activationMessage), 100);
+      }
+    } else if (mode === 'party') {
+      if (partyMode) {
+        setRainbowMode(false);
+        setPartyMode(false);
+        setRetroMode(false);
+      } else {
+        setRainbowMode(false);
+        setPartyMode(true);
+        setRetroMode(false);
+        activateEasterEgg('tapLungo', { setPartyMode });
+        saveEasterEggCompletion('tapLungo', setEasterEggCompleted).then(() => loadEasterEggsWithStatus());
+        const easterEgg = getEasterEgg('tapLungo');
+        if (easterEgg) setTimeout(() => alert(easterEgg.activationMessage), 100);
+      }
+    } else if (mode === 'retro') {
+      if (retroMode) {
+        setRainbowMode(false);
+        setPartyMode(false);
+        setRetroMode(false);
+      } else {
+        setRainbowMode(false);
+        setPartyMode(false);
+        setRetroMode(true);
+        activateEasterEgg('temaSegreto', { setRetroMode });
+        saveEasterEggCompletion('temaSegreto', setEasterEggCompleted).then(() => loadEasterEggsWithStatus());
+        const easterEgg = getEasterEgg('temaSegreto');
+        if (easterEgg) setTimeout(() => alert(easterEgg.activationMessage), 100);
+      }
+    }
+    setTimeout(() => {
+    }, 200);
+  };
+
+  // Utility per device
+  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
   return (
     <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} ${partyMode ? 'party-mode' : ''} ${retroMode ? 'retro-mode' : ''} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
@@ -1392,7 +1265,7 @@ function App() {
               <div className="flex items-center gap-4 min-w-0 flex-1">
                 <div 
                   className={`${isHeaderExpanded ? 'p-2.5' : 'p-2'} ${rainbowMode ? 'bg-gradient-to-r from-red-400/30 via-yellow-400/30 via-green-400/30 via-blue-400/30 via-purple-400/30 to-pink-400/30' : 'bg-white/25'} rounded-lg backdrop-blur-sm flex-shrink-0 shadow-sm cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95`}
-                  onClick={handleWalletTap}
+                  {...(isTouchDevice ? { onTouchEnd: handleWalletTap } : { onClick: handleWalletTap })}
                   title={rainbowMode ? "Tap 5 volte rapidamente per disattivare il tema arcobaleno! 🌙" : "Tap 5 volte rapidamente per un easter egg! 🎉"}
                 >
                   <Wallet className={`${isHeaderExpanded ? 'w-5 h-5' : 'w-4 h-4'} text-white`} />
@@ -1401,13 +1274,14 @@ function App() {
                   <h1 
                     className={`app-title font-bold animate-fade-in-up flex-shrink-0 ${isHeaderExpanded ? 'text-xl' : 'text-lg'} tracking-tight cursor-pointer transition-all duration-100`}
                     style={{
-                      color: longPressProgress > 0 
-                        ? `hsl(${longPressProgress * 3.6}, 100%, 70%)` // Da bianco a arcobaleno
-                        : 'white'
+                      color: isLongPressing || longPressProgress > 0 ? `hsl(${longPressProgress * 3.6}, 100%, 70%)` : 'white'
                     }}
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
-                    onTouchMove={handleTouchMove}
+                    onTouchStart={handleLongPressStart}
+                    onTouchEnd={handleLongPressEnd}
+                    onTouchMove={handleLongPressEnd}
+                    onMouseDown={handleLongPressStart}
+                    onMouseUp={handleLongPressEnd}
+                    onMouseLeave={handleLongPressEnd}
                   >
                     MoneyTracker
                   </h1>
@@ -1512,7 +1386,6 @@ function App() {
               <div className="mt-8 animate-fade-in-up">
                 {(() => {
                   const walletsWithBalance = getWalletsWithCalculatedBalance();
-                  console.log('Wallets being passed to WalletManager:', walletsWithBalance);
                   return (
                     <WalletManager
                       wallets={walletsWithBalance}
@@ -1697,7 +1570,8 @@ function App() {
       </div>
 
       {/* Navigation Tabs fluttuante in basso */}
-      <div className={`fixed bottom-12 left-0 w-full z-30 py-3 transition-all duration-300 ${showFloatingMenu ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-full pointer-events-none'}`}>
+      <div className={`fixed bottom-12 left-0 w-full z-30 py-3 transition-all duration-300 ${showFloatingMenu ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-full pointer-events-none'}`}
+      >
         <div className="max-w-md mx-auto px-6">
           <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/30 via-yellow-500/30 via-green-500/30 via-blue-500/30 via-purple-500/30 to-pink-500/30 backdrop-blur-md border border-rainbow-500/40 rounded-2xl' : 'glass-card'} p-2`}>
             <div className="grid grid-cols-5 gap-2">
@@ -1774,7 +1648,6 @@ function App() {
       {/* Modal Form */}
       {showForm && (
         (() => {
-          console.log('[App] ExpenseForm montato con stores:', stores);
           return (
             <ExpenseForm
               onSubmit={editingItem ? updateItem : (activeTab === 'expenses' ? addExpense : addIncome)}
@@ -2252,6 +2125,7 @@ function App() {
       <footer 
         className={`fixed bottom-0 left-0 w-full ${rainbowMode ? 'bg-gradient-to-r from-red-500/80 via-yellow-500/80 via-green-500/80 via-blue-500/80 via-purple-500/80 to-pink-500/80 dark:from-red-900/80 dark:via-yellow-900/80 dark:via-blue-900/80 dark:via-purple-900/80 dark:to-pink-900/80' : 'bg-white/80 dark:bg-gray-900/80'} backdrop-blur-md border-t ${rainbowMode ? 'border-rainbow-500/40' : 'border-gray-200 dark:border-gray-700'} py-2 z-40 cursor-pointer hover:bg-opacity-90 transition-all duration-200`}
         onClick={handleFooterTap}
+        onTouchEnd={handleFooterTap}
         title="Doppio tap per attivare il tema retro! 🎮"
       >
         <div className="max-w-md mx-auto px-6">
