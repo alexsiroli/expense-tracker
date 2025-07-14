@@ -20,6 +20,10 @@ import FilterDialog from './components/FilterDialog';
 import { formatCurrency } from './utils/formatters';
 import TransactionDetailDialog from './components/TransactionDetailDialog';
 import { getEasterEgg, getAllEasterEggs, activateEasterEgg, saveEasterEggCompletion, getEasterEggsWithCompletionStatus } from './utils/easterEggs';
+import { addCategory, editCategory, deleteCategory, validateCategory } from './features/categories/categoryLogic';
+import { addWallet as addWalletLogic, editWallet as editWalletLogic, deleteWallet as deleteWalletLogic, validateWallet, calculateWalletBalance } from './features/wallets/walletLogic';
+import { addExpense as addExpenseLogic, editExpense, deleteExpense, validateExpense } from './features/expenses/expenseLogic';
+import { addIncome as addIncomeLogic, editIncome, deleteIncome, validateIncome } from './features/expenses/incomeLogic';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -558,6 +562,9 @@ function App() {
       }
     }
     
+    // Aggiorna stato locale
+    setExpenses(prev => addExpenseLogic(prev, { ...newExpense, amount: parseFloat(newExpense.amount) }));
+    // Sincronizza con Firestore
     await addDocument('expenses', newExpense, (updatedStores) => {
       if (Array.isArray(updatedStores)) setStores(updatedStores);
     });
@@ -609,6 +616,7 @@ function App() {
       }
     }
     
+    setIncomes(prev => addIncomeLogic(prev, { ...newIncome, amount: parseFloat(newIncome.amount) }));
     await addDocument('incomes', newIncome, (updatedStores) => {
       if (Array.isArray(updatedStores)) setStores(updatedStores);
     });
@@ -622,10 +630,13 @@ function App() {
       ...updatedItem,
       date: updatedItem.date ? new Date(updatedItem.date).toISOString() : new Date().toISOString()
     };
-    
     const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
+    if (collectionName === 'expenses') {
+      setExpenses(prev => editExpense(prev, editingItem.id, updatedWithDate));
+    } else {
+      setIncomes(prev => editIncome(prev, editingItem.id, updatedWithDate));
+    }
     await updateDocument(collectionName, editingItem.id, updatedWithDate);
-    
     setShowForm(false);
     setEditingItem(null);
   };
@@ -633,6 +644,11 @@ function App() {
   // Elimina transazione (non wallet)
   const handleDelete = async (id) => {
     const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
+    if (collectionName === 'expenses') {
+      setExpenses(prev => deleteExpense(prev, id));
+    } else {
+      setIncomes(prev => deleteIncome(prev, id));
+    }
     await deleteDocument(collectionName, id);
     setShowConfirmDelete(false);
     setItemToDelete(null);
@@ -710,61 +726,26 @@ function App() {
     setShowForm(true);
   };
 
-  const addCategory = async (name, icon, type) => {
-    const newCategory = {
-      id: Date.now(),
-      name,
-      icon
-    };
-    
-    const updatedCategories = {
-      ...categories,
-      [type]: [...categories[type], newCategory]
-    };
-    
-    // Se non ci sono ancora documenti categories, crea il primo documento
-    if (categoriesData.length === 0) {
-      await addDocument('categories', updatedCategories);
-    } else {
-      await updateDocument('categories', categoriesData[0].id, updatedCategories);
-    }
-    
-    // Non aggiornare lo stato locale - lascia che Firestore gestisca la sincronizzazione
-    console.log('Category added successfully - waiting for Firestore sync');
+  // Gestione categorie (usando funzioni pure)
+  const handleAddCategory = (type, newCategory) => {
+    setCategories(prev => ({
+      ...prev,
+      [type]: addCategory(prev[type], newCategory)
+    }));
   };
 
-  const deleteCategory = async (id) => {
-    const updatedCategories = {
-      expense: categories.expense.filter(cat => cat.id !== id),
-      income: categories.income.filter(cat => cat.id !== id)
-    };
-    
-    // Se non ci sono ancora documenti categories, crea il primo documento
-    if (categoriesData.length === 0) {
-      await addDocument('categories', updatedCategories);
-    } else {
-      await updateDocument('categories', categoriesData[0].id, updatedCategories);
-    }
-    
-    // Non aggiornare lo stato locale - lascia che Firestore gestisca la sincronizzazione
-    console.log('Category deleted successfully - waiting for Firestore sync');
+  const handleEditCategory = (type, id, updatedFields) => {
+    setCategories(prev => ({
+      ...prev,
+      [type]: editCategory(prev[type], id, updatedFields)
+    }));
   };
 
-  const editCategory = async (id, name, icon) => {
-    const updatedCategories = {
-      expense: categories.expense.map(cat => cat.id === id ? { ...cat, name, icon } : cat),
-      income: categories.income.map(cat => cat.id === id ? { ...cat, name, icon } : cat)
-    };
-    
-    // Se non ci sono ancora documenti categories, crea il primo documento
-    if (categoriesData.length === 0) {
-      await addDocument('categories', updatedCategories);
-    } else {
-      await updateDocument('categories', categoriesData[0].id, updatedCategories);
-    }
-    
-    // Non aggiornare lo stato locale - lascia che Firestore gestisca la sincronizzazione
-    console.log('Category edited successfully - waiting for Firestore sync');
+  const handleDeleteCategory = (type, id) => {
+    setCategories(prev => ({
+      ...prev,
+      [type]: deleteCategory(prev[type], id)
+    }));
   };
 
   const totalExpenses = expenses.filter(expense => expense.category !== 'Trasferimento').reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
@@ -886,38 +867,28 @@ function App() {
   // Funzioni gestione conti
   const addWallet = async (wallet) => {
     try {
-      // Controlla se esiste già un wallet con lo stesso nome
-      const existingWallet = wallets.find(w => w.name === wallet.name);
-      if (existingWallet) {
-        throw new Error('Esiste già un conto con questo nome');
-      }
-      
-      const newWallet = {
-        ...wallet,
-        // Non specificare un ID personalizzato, lascia che Firestore lo generi
-        initialBalance: parseFloat(wallet.balance) || 0,
-        balance: parseFloat(wallet.balance) || 0,
-      };
-      
-      const result = await addDocument('wallets', newWallet);
+      // Usa la funzione pura per validare e aggiungere localmente
+      const newWallets = addWalletLogic(wallets, wallet);
+      setWallets(newWallets);
+      // Sincronizza con Firestore
+      const newWallet = newWallets.find(w => !wallets.some(ow => ow.id === w.id));
+      const result = await addDocument('wallets', { ...newWallet, id: undefined }); // Firestore genera l'ID
       return result;
     } catch (error) {
       console.error('Errore durante la creazione del wallet:', error);
-      console.error('Codice errore:', error.code);
-      console.error('Messaggio errore:', error.message);
       throw error;
     }
   };
   
   const editWallet = async (updatedWallet) => {
     try {
-      // Ora l'ID del wallet è direttamente l'ID del documento Firestore
+      const newWallets = editWalletLogic(wallets, updatedWallet.id, updatedWallet);
+      setWallets(newWallets);
       await updateDocument('wallets', updatedWallet.id, {
         ...updatedWallet,
         initialBalance: parseFloat(updatedWallet.balance) || 0,
       });
     } catch (error) {
-      // Se il documento non esiste, prova a crearlo
       if (error.code === 'not-found') {
         await addWallet(updatedWallet);
       } else {
@@ -1535,19 +1506,19 @@ function App() {
             <div className="space-y-8">
               <CategoryManager
               categories={categories.expense}
-              onAddCategory={addCategory}
-              onDeleteCategory={deleteCategory}
-              onEditCategory={editCategory}
+              onAddCategory={(cat) => handleAddCategory('expense', cat)}
+              onEditCategory={(id, fields) => handleEditCategory('expense', id, fields)}
+              onDeleteCategory={(id) => handleDeleteCategory('expense', id)}
               type="expense"
-              onShowForm={handleShowCategoryForm}
+              onShowForm={setShowCategoryForm}
             />
             <CategoryManager
               categories={categories.income}
-              onAddCategory={addCategory}
-              onDeleteCategory={deleteCategory}
-              onEditCategory={editCategory}
+              onAddCategory={(cat) => handleAddCategory('income', cat)}
+              onEditCategory={(id, fields) => handleEditCategory('income', id, fields)}
+              onDeleteCategory={(id) => handleDeleteCategory('income', id)}
               type="income"
-              onShowForm={handleShowCategoryForm}
+              onShowForm={setShowCategoryForm}
             />
             </div>
           </div>

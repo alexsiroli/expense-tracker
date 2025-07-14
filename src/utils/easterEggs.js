@@ -118,23 +118,21 @@ export const deactivateAllEasterEggs = (setters) => {
     setTimeTravelMode,
     setNataleMagicoMode,
     setCompleannoSpecialeMode
-  } = setters;
-  
-  setRainbowMode(false);
-  setPartyMode(false);
-  setRetroMode(false);
-  setFlameMode(false);
-  setAngelicMode(false);
-  setTimeTravelMode(false);
-  setNataleMagicoMode(false);
-  setCompleannoSpecialeMode(false);
+  } = setters || {};
+  if (typeof setRainbowMode === 'function') setRainbowMode(false);
+  if (typeof setPartyMode === 'function') setPartyMode(false);
+  if (typeof setRetroMode === 'function') setRetroMode(false);
+  if (typeof setFlameMode === 'function') setFlameMode(false);
+  if (typeof setAngelicMode === 'function') setAngelicMode(false);
+  if (typeof setTimeTravelMode === 'function') setTimeTravelMode(false);
+  if (typeof setNataleMagicoMode === 'function') setNataleMagicoMode(false);
+  if (typeof setCompleannoSpecialeMode === 'function') setCompleannoSpecialeMode(false);
 };
 
 // Funzione per attivare un easter egg specifico disattivando gli altri
 export const activateEasterEgg = (id, setters) => {
   const easterEgg = getEasterEgg(id);
   if (!easterEgg) return false;
-  
   const {
     setRainbowMode,
     setPartyMode,
@@ -144,36 +142,33 @@ export const activateEasterEgg = (id, setters) => {
     setTimeTravelMode,
     setNataleMagicoMode,
     setCompleannoSpecialeMode
-  } = setters;
-  
-  // Attiva solo quello specifico, senza disattivare gli altri
+  } = setters || {};
   switch (id) {
     case 'tapSegreto':
-      setRainbowMode(true);
+      if (typeof setRainbowMode === 'function') setRainbowMode(true);
       break;
     case 'tapLungo':
-      setPartyMode(true);
+      if (typeof setPartyMode === 'function') setPartyMode(true);
       break;
     case 'temaSegreto':
-      setRetroMode(true);
+      if (typeof setRetroMode === 'function') setRetroMode(true);
       break;
     case 'uscitaDiabolica':
-      setFlameMode(true);
+      if (typeof setFlameMode === 'function') setFlameMode(true);
       break;
     case 'entrataAngelica':
-      setAngelicMode(true);
+      if (typeof setAngelicMode === 'function') setAngelicMode(true);
       break;
     case 'timeTravel':
-      setTimeTravelMode(true);
+      if (typeof setTimeTravelMode === 'function') setTimeTravelMode(true);
       break;
     case 'nataleMagico':
-      setNataleMagicoMode(true);
+      if (typeof setNataleMagicoMode === 'function') setNataleMagicoMode(true);
       break;
     case 'compleannoSpeciale':
-      setCompleannoSpecialeMode(true);
+      if (typeof setCompleannoSpecialeMode === 'function') setCompleannoSpecialeMode(true);
       break;
   }
-  
   return true;
 };
 
@@ -252,16 +247,13 @@ export const checkEasterEggCompletion = async (easterEggId, isEasterEggCompleted
 // Funzione per ottenere tutti gli easter egg con stato di completamento
 export const getEasterEggsWithCompletionStatus = async (getCompletedEasterEggs) => {
   try {
-    const completedEasterEggs = await getCompletedEasterEggs();
+    const completed = await getCompletedEasterEggs();
     return getAllEasterEggs().map(egg => ({
       ...egg,
-      isCompleted: completedEasterEggs.includes(egg.id)
+      completed: completed.includes(egg.id)
     }));
   } catch (error) {
     console.error('Errore nel recupero stato easter egg:', error);
-    return getAllEasterEggs().map(egg => ({
-      ...egg,
-      isCompleted: false
-    }));
+    return [];
   }
 }; 

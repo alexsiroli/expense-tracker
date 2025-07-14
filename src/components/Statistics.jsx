@@ -7,6 +7,7 @@ import { formatCurrency } from '../utils/formatters';
 import { HeatMapGrid } from 'react-grid-heatmap';
 import { add, format, startOfWeek, endOfWeek, isSameWeek, parseISO, subMonths } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { getTotal, getByCategory, getByStore, getMonthlyData, getMonthlyBalance, getDailyAvgHeatmap } from '../features/statistics/statisticsLogic';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B6B', '#6366f1', '#f59e42'];
 
@@ -21,60 +22,21 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
 
   
   
-  // Riepilogo totale (per compatibilità)
-  const totalExpenses = filteredData.expenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0);
-  const totalIncomes = filteredData.incomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0);
-  const balance = totalIncomes - totalExpenses;
-  
+  // Riepilogo totale
+  const { totalExpenses, totalIncomes, balance } = useMemo(() => getTotal(filteredData.expenses, filteredData.incomes), [filteredData]);
 
   // Statistiche temporali (per mese)
-  const monthlyData = useMemo(() => {
-    const months = {};
-    [...filteredData.expenses.filter(e => e.category !== 'Trasferimento'), ...filteredData.incomes.filter(i => i.category !== 'Trasferimento')].forEach(item => {
-      const date = new Date(item.date);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      if (!months[monthKey]) months[monthKey] = { month: monthKey, Spese: 0, Entrate: 0 };
-      if (filteredData.expenses.includes(item)) months[monthKey].Spese += parseFloat(item.amount);
-      else months[monthKey].Entrate += parseFloat(item.amount);
-    });
-    return Object.values(months).sort((a, b) => a.month.localeCompare(b.month));
-  }, [filteredData]);
+  const monthlyData = useMemo(() => getMonthlyData(filteredData.expenses, filteredData.incomes), [filteredData]);
 
   // Statistiche per categoria
-  const expenseByCategory = useMemo(() => {
-    const acc = {};
-    filteredData.expenses.filter(e => e.category !== 'Trasferimento').forEach(e => {
-      acc[e.category] = (acc[e.category] || 0) + parseFloat(e.amount);
-    });
-    return acc;
-  }, [filteredData]);
-  const incomeByCategory = useMemo(() => {
-    const acc = {};
-    filteredData.incomes.filter(i => i.category !== 'Trasferimento').forEach(i => {
-      acc[i.category] = (acc[i.category] || 0) + parseFloat(i.amount);
-    });
-    return acc;
-  }, [filteredData]);
+  const expenseByCategory = useMemo(() => getByCategory(filteredData.expenses), [filteredData]);
+  const incomeByCategory = useMemo(() => getByCategory(filteredData.incomes), [filteredData]);
   const expenseCategoryChart = Object.entries(expenseByCategory).map(([name, value]) => ({ name, value }));
   const incomeCategoryChart = Object.entries(incomeByCategory).map(([name, value]) => ({ name, value }));
 
   // Statistiche per negozio
-  const expenseByStore = useMemo(() => {
-    const acc = {};
-    filteredData.expenses.filter(e => e.category !== 'Trasferimento').forEach(e => {
-      const store = e.store || 'Senza negozio';
-      acc[store] = (acc[store] || 0) + parseFloat(e.amount);
-    });
-    return acc;
-  }, [filteredData]);
-  const incomeByStore = useMemo(() => {
-    const acc = {};
-    filteredData.incomes.filter(i => i.category !== 'Trasferimento').forEach(i => {
-      const store = i.store || 'Senza negozio';
-      acc[store] = (acc[store] || 0) + parseFloat(i.amount);
-    });
-    return acc;
-  }, [filteredData]);
+  const expenseByStore = useMemo(() => getByStore(filteredData.expenses), [filteredData]);
+  const incomeByStore = useMemo(() => getByStore(filteredData.incomes), [filteredData]);
   
   const expenseStoreChart = Object.entries(expenseByStore)
     .sort((a, b) => b[1] - a[1])
@@ -112,39 +74,11 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
     }
     return arr;
   }, []);
-  const monthlyBalance = useMemo(() => {
-    const map = {};
-    filteredData.expenses.forEach(e => {
-      const d = new Date(e.date);
-      const key = format(d, 'yyyy-MM');
-      if (!map[key]) map[key] = { entrate: 0, spese: 0 };
-      map[key].spese += parseFloat(e.amount);
-    });
-    filteredData.incomes.forEach(i => {
-      const d = new Date(i.date);
-      const key = format(d, 'yyyy-MM');
-      if (!map[key]) map[key] = { entrate: 0, spese: 0 };
-      map[key].entrate += parseFloat(i.amount);
-    });
-    return last6Months.map(m => {
-      const b = map[m] || { entrate: 0, spese: 0 };
-      return { mese: m, bilancio: b.entrate - b.spese };
-    });
-  }, [filteredData, last6Months]);
+  const monthlyBalance = useMemo(() => getMonthlyBalance(filteredData.expenses, filteredData.incomes, last6Months), [filteredData, last6Months]);
 
   // --- Heatmap giornaliera media ---
   const weekDays = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
-  const dailyAvgHeatmap = useMemo(() => {
-    const days = Array(7).fill(0);
-    const counts = Array(7).fill(0);
-    filteredData.expenses.forEach(e => {
-      const d = new Date(e.date);
-      const day = (d.getDay() + 6) % 7;
-      days[day] += parseFloat(e.amount);
-      counts[day]++;
-    });
-    return days.map((sum, i) => counts[i] ? sum / counts[i] : 0);
-  }, [filteredData]);
+  const dailyAvgHeatmap = useMemo(() => getDailyAvgHeatmap(filteredData.expenses), [filteredData]);
 
   // --- Tooltip universale leggibile ---
   const ThemedTooltip = ({ active, payload, label, labelPrefix, valueFormatter }) => {
