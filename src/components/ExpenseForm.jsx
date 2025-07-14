@@ -61,7 +61,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
   useEffect(() => {
     // Mostra tutti i negozi disponibili quando l'input è vuoto e ha focus
     if (!formData.store.trim() && storeInputRef.current === document.activeElement) {
-      setStoreSuggestions(stores.slice(0, 5)); // Mostra solo i primi 5
+      setStoreSuggestions(stores); // Mostra tutti i negozi
       setShowStoreSuggestions(stores.length > 0);
     } else if (!formData.store.trim()) {
       // Nascondi suggerimenti quando l'input è vuoto e non ha focus
@@ -107,17 +107,14 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
       const filtered = stores.filter(store => 
         store.toLowerCase().includes(value.toLowerCase())
       );
-      
       // Ordina: prima quelli che iniziano con il testo, poi quelli che lo contengono, tutto in ordine alfabetico
       const sorted = filtered.sort((a, b) => {
         const aStartsWith = a.toLowerCase().startsWith(value.toLowerCase());
         const bStartsWith = b.toLowerCase().startsWith(value.toLowerCase());
-        
         if (aStartsWith && !bStartsWith) return -1;
         if (!aStartsWith && bStartsWith) return 1;
         return a.localeCompare(b, 'it', { sensitivity: 'base' });
       });
-      
       setStoreSuggestions(sorted);
       setShowStoreSuggestions(true);
     } else if (name === 'store' && !value.trim()) {
@@ -279,23 +276,16 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                 name="store"
                 value={formData.store}
                 onChange={handleChange}
-                onFocus={handleStoreInputFocus}
-                onBlur={handleStoreInputBlur}
-                onKeyDown={handleStoreInputKeyDown}
-                placeholder="Nome negozio"
-                className="input form-input-with-icon"
+                onFocus={() => {
+                  if (stores.length > 0 && !formData.store.trim()) {
+                    setStoreSuggestions(stores);
+                    setShowStoreSuggestions(true);
+                  }
+                }}
                 autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
                 spellCheck="false"
-                inputMode="text"
-                data-lpignore="true"
-                data-form-type="other"
-                data-autocomplete="off"
-                role="combobox"
-                aria-autocomplete="list"
-                aria-expanded={showStoreSuggestions}
-                aria-haspopup="listbox"
+                className="input form-input-with-icon pr-10"
+                placeholder="Digita il nome del negozio"
               />
               
               {/* Suggerimenti negozi */}

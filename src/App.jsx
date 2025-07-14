@@ -88,7 +88,9 @@ function App() {
     setEasterEggCompleted,
     loading: firestoreLoading,
     error: firestoreError,
-    getCompletedEasterEggs
+    getCompletedEasterEggs,
+    deleteAllUserData,
+    sanitizeStores,
   } = useFirestore();
   
   // Stati per il tracking della sincronizzazione
@@ -307,9 +309,10 @@ function App() {
   useEffect(() => {
     console.log('storesData changed:', storesData);
     console.log('storesData length:', storesData?.length);
-    
+    let storesDoc = null;
     if (storesData && storesData.length > 0) {
-      const storesDoc = storesData[0];
+      // Cerca il documento con id === 'default'
+      storesDoc = storesData.find(doc => doc.id === 'default') || storesData[0];
       console.log('Setting stores from Firestore data:', storesDoc);
       if (storesDoc.stores) {
         console.log('Setting stores state with:', storesDoc.stores);
@@ -635,7 +638,9 @@ function App() {
       }
     }
     
-    await addDocument('expenses', newExpense);
+    await addDocument('expenses', newExpense, (updatedStores) => {
+      if (Array.isArray(updatedStores)) setStores(updatedStores);
+    });
     setShowForm(false);
     setEditingItem(null);
   };
@@ -685,7 +690,9 @@ function App() {
       }
     }
     
-    await addDocument('incomes', newIncome);
+    await addDocument('incomes', newIncome, (updatedStores) => {
+      if (Array.isArray(updatedStores)) setStores(updatedStores);
+    });
     setShowForm(false);
     setEditingItem(null);
   };
@@ -727,7 +734,7 @@ function App() {
     }
     
     // Verifica se l'ID è un ID personalizzato (vecchio formato)
-    if (walletId.startsWith('wallet-')) {
+    if (typeof walletId === 'string' && walletId.startsWith('wallet-')) {
       console.log('ATTENZIONE: Eliminando conto con ID personalizzato:', walletId);
       console.log('Questo potrebbe causare problemi di sincronizzazione');
     }
@@ -1179,7 +1186,9 @@ function App() {
   // Funzione per importare i dati
   const importData = async (data) => {
     try {
-      await importUserData(data);
+      await importUserData(data, (updatedStores) => {
+        if (Array.isArray(updatedStores)) setStores(updatedStores);
+      });
       alert('Dati importati con successo!');
     } catch (error) {
       console.error('Errore durante l\'importazione:', error);
@@ -1224,40 +1233,7 @@ function App() {
   const resetAllData = async () => {
     try {
       console.log('Avvio reset completo di tutti i dati...');
-      
-      // Elimina tutti i documenti dalle collezioni Firestore
-      if (expenses.length > 0) {
-        const expenseIds = expenses.map(e => String(e.id));
-        await deleteMultipleDocuments('expenses', expenseIds);
-        console.log('Eliminate', expenses.length, 'spese');
-      }
-      
-      if (incomes.length > 0) {
-        const incomeIds = incomes.map(i => String(i.id));
-        await deleteMultipleDocuments('incomes', incomeIds);
-        console.log('Eliminate', incomes.length, 'entrate');
-      }
-      
-      if (wallets.length > 0) {
-        const walletIds = wallets.map(w => String(w.id));
-        await deleteMultipleDocuments('wallets', walletIds);
-        console.log('Eliminati', wallets.length, 'conti');
-      }
-      
-      if (categoriesData.length > 0) {
-        await deleteDocument('categories', categoriesData[0].id);
-        console.log('Eliminate categorie');
-      }
-      
-      if (storesData.length > 0) {
-        console.log('Eliminando stores con ID:', storesData[0].id);
-        console.log('Stores da eliminare:', storesData[0]);
-        await deleteDocument('stores', storesData[0].id);
-        console.log('Eliminati stores con successo');
-      } else {
-        console.log('Nessun documento stores da eliminare');
-      }
-      
+      await deleteAllUserData();
       // Reset filtri attivi
       setActiveFilters({
         timeRange: 'all',
@@ -1267,13 +1243,9 @@ function App() {
         selectedStores: [],
         selectedWallets: []
       });
-      
       console.log('Reset completo completato con successo');
       alert('Tutti i dati sono stati eliminati con successo. L\'applicazione si ricaricherà automaticamente.');
-      
-      // Ricarica la pagina per resettare tutto
       window.location.reload();
-      
     } catch (error) {
       console.error('Errore durante il reset:', error);
       alert('Errore durante l\'eliminazione dei dati: ' + error.message);
@@ -1401,6 +1373,14 @@ function App() {
   if (!user) {
     return <LoginForm />;
   }
+
+  // Funzione per mostrare il dettaglio di una transazione
+  const handleShowDetail = (item, type) => {
+    console.log('[Dettaglio Transazione] Aperto:', item);
+    console.log('[Dettaglio Transazione] Tipo passato:', type);
+    setSelectedTransaction({ ...item, _type: type });
+    setShowTransactionDialog(true);
+  };
 
   return (
     <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} ${partyMode ? 'party-mode' : ''} ${retroMode ? 'retro-mode' : ''} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
@@ -1590,7 +1570,7 @@ function App() {
               onEdit={handleEdit}
               type="expense"
               categories={categories.expense}
-              onShowDetail={(item) => { setSelectedTransaction(item); setShowTransactionDialog(true); }}
+              onShowDetail={handleShowDetail}
             />
           </div>
         )}
@@ -1630,7 +1610,7 @@ function App() {
               onEdit={handleEdit}
               type="income"
               categories={categories.income}
-              onShowDetail={(item) => { setSelectedTransaction(item); setShowTransactionDialog(true); }}
+              onShowDetail={handleShowDetail}
             />
           </div>
         )}
@@ -1710,6 +1690,7 @@ function App() {
               onResetData={resetAllData} 
               onShowImportModal={() => setShowImportModal(true)}
               onShowResetModal={() => setShowResetModal(true)}
+              onSanitizeStores={sanitizeStores}
             />
           </div>
         )}
@@ -1792,20 +1773,25 @@ function App() {
 
       {/* Modal Form */}
       {showForm && (
-        <ExpenseForm
-          onSubmit={editingItem ? updateItem : (activeTab === 'expenses' ? addExpense : addIncome)}
-          onClose={() => {
-            setShowForm(false);
-            setEditingItem(null);
-          }}
-          type={activeTab === 'expenses' ? 'expense' : 'income'}
-          editingItem={editingItem}
-          stores={stores}
-          categories={activeTab === 'expenses' ? categories.expense : categories.income}
-          wallets={wallets}
-          selectedWalletId={activeWalletId}
-          onAddStore={addStore}
-        />
+        (() => {
+          console.log('[App] ExpenseForm montato con stores:', stores);
+          return (
+            <ExpenseForm
+              onSubmit={editingItem ? updateItem : (activeTab === 'expenses' ? addExpense : addIncome)}
+              onClose={() => {
+                setShowForm(false);
+                setEditingItem(null);
+              }}
+              type={activeTab === 'expenses' ? 'expense' : 'income'}
+              editingItem={editingItem}
+              stores={stores}
+              categories={activeTab === 'expenses' ? categories.expense : categories.income}
+              wallets={wallets}
+              selectedWalletId={activeWalletId}
+              onAddStore={addStore}
+            />
+          );
+        })()
       )}
 
       {/* Confirm Delete Dialog */}

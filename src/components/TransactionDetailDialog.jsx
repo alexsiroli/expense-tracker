@@ -5,8 +5,8 @@ function TransactionDetailDialog({ transaction, onClose, onEdit, onDelete, categ
   if (!transaction) return null;
   const cat = (categories.expense || []).concat(categories.income || []).find(c => c.name === transaction.category);
   // Determina se è spesa o entrata
-  const isExpense = (categories.expense || []).some(c => c.name === transaction.category);
-  const isIncome = (categories.income || []).some(c => c.name === transaction.category);
+  const isExpense = transaction._type === 'expense' || (transaction._type == null && (categories.expense || []).some(c => c.name === transaction.category));
+  const isIncome = transaction._type === 'income' || (transaction._type == null && (categories.income || []).some(c => c.name === transaction.category));
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm transform transition-all duration-300 border border-gray-200 dark:border-gray-700">

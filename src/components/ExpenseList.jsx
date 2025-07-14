@@ -140,7 +140,7 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
               <div
                 key={item.id}
                 className={`expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${getTransactionEffect(item, type)} relative`}
-                onClick={() => onShowDetail && onShowDetail(item)}
+                onClick={() => onShowDetail && onShowDetail(item, type)}
               >
                 {/* Overlay emoji per quadrifoglio fortunato */}
                 {isQuadrifoglioFortunatoTransaction(item, type) && (

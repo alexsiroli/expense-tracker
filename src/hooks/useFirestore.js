@@ -85,43 +85,28 @@ export const useFirestore = () => {
   };
 
   // Aggiungi documento
-  const addDocument = async (collectionName, document) => {
-    console.log('addDocument chiamato con:', { collectionName, document });
-    console.log('User:', user);
-    console.log('User UID:', user?.uid);
-    
+  const addDocument = async (collectionName, document, forceUpdateStoresState) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const userCollection = getUserCollection(collectionName);
-      console.log('User collection reference:', userCollection);
-      
-      const docData = {
-        ...document,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      console.log('Document data to save:', docData);
-      
-      const docRef = await addDoc(userCollection, docData);
+      const collectionRef = getUserCollection(collectionName);
+      const docRef = doc(collectionRef);
+      // Log per debug
+      console.log('addDocument chiamato con:', { collectionName, document });
+      console.log('User:', user);
+      console.log('User UID:', user.uid);
+      console.log('User collection reference:', collectionRef);
+      // Salva il documento
+      await setDoc(docRef, { ...document, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      console.log('Document data to save:', { ...document, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
       console.log('Document created successfully:', docRef);
       console.log('Document ID:', docRef.id);
-      
-      return docRef;
-    } catch (error) {
-      console.error('Errore durante il salvataggio:', error);
-      console.error('Codice errore:', error.code);
-      console.error('Messaggio errore:', error.message);
-      console.error('Stack trace:', error.stack);
-      
-      if (error.code === 'permission-denied') {
-        setError('Errore di permessi. Verifica le regole di sicurezza Firestore.');
-      } else if (error.code === 'unavailable') {
-        setError('Servizio non disponibile. Verifica la connessione.');
-      } else {
-        setError('Errore durante il salvataggio: ' + error.message);
+      // Se è una spesa o entrata e contiene un nuovo negozio, aggiorna la lista negozi
+      if ((collectionName === 'expenses' || collectionName === 'incomes') && document.store && document.store.trim()) {
+        await sanitizeStores(forceUpdateStoresState);
       }
+    } catch (error) {
+      setError('Errore durante l\'aggiunta: ' + error.message);
       throw error;
     } finally {
       setLoading(false);
@@ -212,7 +197,7 @@ export const useFirestore = () => {
   };
 
   // Importa dati (per backup/restore)
-  const importUserData = async (data) => {
+  const importUserData = async (data, forceUpdateStoresState) => {
     try {
       setLoading(true);
       setError(null);
@@ -295,6 +280,8 @@ export const useFirestore = () => {
       
       console.log('Importazione completata. Negozi estratti:', Array.from(extractedStores));
       console.log('Lista finale negozi:', finalStores);
+      // Sanifica i negozi dopo l'import
+      await sanitizeStores(forceUpdateStoresState);
     } catch (error) {
       setError('Errore durante l\'importazione: ' + error.message);
       throw error;
@@ -381,6 +368,49 @@ export const useFirestore = () => {
     }
   };
 
+  // Funzione per sanificare la lista dei negozi: assicura che tutti i negozi usati in expenses/incomes siano presenti in stores
+  const sanitizeStores = async (forceUpdateStoresState) => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('[sanitizeStores] Avvio sanificazione negozi...');
+      // Carica tutte le spese e entrate
+      const expensesSnap = await getDocs(getUserCollection('expenses'));
+      const incomesSnap = await getDocs(getUserCollection('incomes'));
+      const storesSet = new Set();
+      console.log('[sanitizeStores] Numero spese trovate:', expensesSnap.docs.length);
+      expensesSnap.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.store && data.store.trim()) {
+          storesSet.add(data.store.trim());
+          console.log('[sanitizeStores] Trovato negozio in expense:', data.store.trim());
+        }
+      });
+      console.log('[sanitizeStores] Numero entrate trovate:', incomesSnap.docs.length);
+      incomesSnap.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.store && data.store.trim()) {
+          storesSet.add(data.store.trim());
+          console.log('[sanitizeStores] Trovato negozio in income:', data.store.trim());
+        }
+      });
+      const finalStores = Array.from(storesSet);
+      console.log('[sanitizeStores] Lista finale negozi da salvare:', finalStores);
+      // Salva la lista finale su Firestore (anche se vuota)
+      const storesRef = doc(getUserCollection('stores'), 'default');
+      await setDoc(storesRef, { stores: finalStores });
+      console.log('[sanitizeStores] Negozi aggiornati su Firestore!', finalStores);
+      if (typeof forceUpdateStoresState === 'function') forceUpdateStoresState(finalStores);
+    } catch (error) {
+      setError('Errore durante la sanificazione negozi: ' + error.message);
+      console.error('[sanitizeStores] Errore:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+      console.log('[sanitizeStores] Fine sanificazione negozi.');
+    }
+  };
+
   return {
     loading,
     error,
@@ -395,6 +425,7 @@ export const useFirestore = () => {
     getCompletedEasterEggs,
     setEasterEggCompleted,
     isEasterEggCompleted,
+    sanitizeStores,
     clearError: () => setError(null)
   };
 }; 
