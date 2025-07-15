@@ -361,7 +361,10 @@ function App() {
     }
     // Crea il conto di default solo se l'utente non ha nessun conto E non ha mai avuto conti prima
     if (user && walletsData.length === 0 && !localStorage.getItem('userHasWallets')) {
-      addDocument('wallets', defaultWallet);
+      // Genera un ID deterministico per il wallet di default
+      const defaultWalletId = `${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
+      const defaultWalletWithId = { ...defaultWallet, id: defaultWalletId };
+      addDocument('wallets', defaultWalletWithId);
       localStorage.setItem('userHasWallets', 'true');
     }
   }, [user, categoriesData.length, storesData.length, walletsData.length]);

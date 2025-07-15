@@ -297,62 +297,73 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
         <div className="card p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2"><Store className="w-5 h-5 text-green-600" /> Entrate per Negozio</h3>
           {incomeStoreChart.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={incomeStoreChart} layout="vertical">
-                <XAxis type="number" hide domain={[0, 'dataMax']} />
-                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" fill="#22c55e">
-                  {incomeStoreChart.map((entry, idx) => (
-                    <Cell key={`cell-store-inc-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={incomeStoreChart} layout="vertical">
+                  <XAxis type="number" hide domain={[0, 'dataMax']} />
+                  <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="value" fill="#22c55e">
+                    {incomeStoreChart.map((entry, idx) => (
+                      <Cell key={`cell-store-inc-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              {/* Tabella dettagliata sotto il grafico */}
+              <div className="overflow-x-auto mt-4">
+                <table className="min-w-full text-sm">
+                  <thead><tr><th className="text-left">Negozio</th><th className="text-right">Totale</th></tr></thead>
+                  <tbody>
+                    {incomeStoreChart.map(store => (
+                      <tr key={store.name}>
+                        <td className="py-1">{store.name}</td>
+                        <td className="text-right">{formatCurrency(store.value)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : <div className="text-center py-8 text-gray-500 dark:text-gray-400">Nessuna entrata registrata</div>}
         </div>
         {/* Spese per Negozio */}
         <div className="card p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2"><Store className="w-5 h-5" /> Spese per Negozio</h3>
           {expenseStoreChart.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={expenseStoreChart} layout="vertical">
-                <XAxis type="number" hide domain={[0, 'dataMax']} />
-                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" fill="#6366f1">
-                  {expenseStoreChart.map((entry, idx) => (
-                    <Cell key={`cell-store-exp-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={expenseStoreChart} layout="vertical">
+                  <XAxis type="number" hide domain={[0, 'dataMax']} />
+                  <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="value" fill="#6366f1">
+                    {expenseStoreChart.map((entry, idx) => (
+                      <Cell key={`cell-store-exp-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              {/* Tabella dettagliata sotto il grafico */}
+              <div className="overflow-x-auto mt-4">
+                <table className="min-w-full text-sm">
+                  <thead><tr><th className="text-left">Negozio</th><th className="text-right">Totale</th></tr></thead>
+                  <tbody>
+                    {expenseStoreChart.map(store => (
+                      <tr key={store.name}>
+                        <td className="py-1">{store.name}</td>
+                        <td className="text-right">{formatCurrency(store.value)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : <div className="text-center py-8 text-gray-500 dark:text-gray-400">Nessuna spesa registrata</div>}
         </div>
       </div>
 
-      {/* Tabelle dettagliate */}
-      <div className="space-y-8">
-        {/* Tabella negozi spese */}
-        <div className="card p-6 overflow-x-auto">
-          <h4 className="font-semibold mb-2 flex items-center gap-2"><Store className="w-4 h-4" /> Dettaglio Spese per Negozio</h4>
-          {expenseStoreChart.length > 0 ? (
-            <table className="min-w-full text-sm">
-              <thead><tr><th className="text-left">Negozio</th><th className="text-right">Totale</th></tr></thead>
-              <tbody>
-                {expenseStoreChart.map(store => (
-                  <tr key={store.name}>
-                    <td className="py-1">{store.name}</td>
-                    <td className="text-right">{formatCurrency(store.value)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">Nessuna spesa registrata</div>
-          )}
-        </div>
-      </div>
+
     </div>
   );
 }
