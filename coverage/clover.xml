@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1752622108713" clover="3.2.0">
-  <project timestamp="1752622108713" name="All files">
-    <metrics statements="160" coveredstatements="156" conditionals="146" coveredconditionals="131" methods="70" coveredmethods="70" elements="376" coveredelements="357" complexity="0" loc="160" ncloc="160" packages="5" files="7" classes="7"/>
+<coverage generated="1752623644252" clover="3.2.0">
+  <project timestamp="1752623644252" name="All files">
+    <metrics statements="161" coveredstatements="157" conditionals="150" coveredconditionals="135" methods="70" coveredmethods="70" elements="381" coveredelements="362" complexity="0" loc="161" ncloc="161" packages="5" files="7" classes="7"/>
     <package name="features.categories">
       <metrics statements="7" coveredstatements="7" conditionals="12" coveredconditionals="12" methods="7" coveredmethods="7"/>
       <file name="categoryLogic.js" path="/Users/alexsiroli/expense-tracker/src/features/categories/categoryLogic.js">
@@ -85,21 +85,22 @@
       </file>
     </package>
     <package name="features.wallets">
-      <metrics statements="12" coveredstatements="12" conditionals="20" coveredconditionals="19" methods="12" coveredmethods="12"/>
+      <metrics statements="13" coveredstatements="13" conditionals="24" coveredconditionals="23" methods="12" coveredmethods="12"/>
       <file name="walletLogic.js" path="/Users/alexsiroli/expense-tracker/src/features/wallets/walletLogic.js">
-        <metrics statements="12" coveredstatements="12" conditionals="20" coveredconditionals="19" methods="12" coveredmethods="12"/>
+        <metrics statements="13" coveredstatements="13" conditionals="24" coveredconditionals="23" methods="12" coveredmethods="12"/>
         <line num="3" count="12" type="cond" truecount="5" falsecount="0"/>
         <line num="4" count="9" type="cond" truecount="2" falsecount="0"/>
-        <line num="5" count="4" type="cond" truecount="4" falsecount="0"/>
-        <line num="10" count="4" type="stmt"/>
-        <line num="11" count="8" type="cond" truecount="2" falsecount="0"/>
-        <line num="17" count="8" type="stmt"/>
-        <line num="22" count="12" type="cond" truecount="3" falsecount="0"/>
-        <line num="27" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="28" count="6" type="stmt"/>
-        <line num="29" count="6" type="stmt"/>
-        <line num="30" count="4" type="cond" truecount="1" falsecount="1"/>
-        <line num="31" count="4" type="stmt"/>
+        <line num="6" count="4" type="stmt"/>
+        <line num="7" count="4" type="cond" truecount="4" falsecount="0"/>
+        <line num="12" count="4" type="stmt"/>
+        <line num="13" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="19" count="8" type="stmt"/>
+        <line num="24" count="12" type="cond" truecount="3" falsecount="0"/>
+        <line num="29" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="31" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="32" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="33" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="34" count="4" type="stmt"/>
       </file>
     </package>
     <package name="utils">

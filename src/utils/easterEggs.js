@@ -250,7 +250,7 @@ export const getEasterEggsWithCompletionStatus = async (getCompletedEasterEggs) 
     const completed = await getCompletedEasterEggs();
     return getAllEasterEggs().map(egg => ({
       ...egg,
-      isCompleted: completed.includes(egg.id)
+      completed: completed.includes(egg.id)
     }));
   } catch (error) {
     console.error('Errore nel recupero stato easter egg:', error);
