@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload, Euro } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -20,6 +20,7 @@ import FilterDialog from './components/FilterDialog';
 import { formatCurrency } from './utils/formatters';
 import TransactionDetailDialog from './components/TransactionDetailDialog';
 import { getEasterEgg, getAllEasterEggs, activateEasterEgg, saveEasterEggCompletion, getEasterEggsWithCompletionStatus } from './utils/easterEggs';
+import CustomSelect from './components/CustomSelect';
 import { addCategory, editCategory, deleteCategory, validateCategory } from './features/categories/categoryLogic';
 import { addWallet as addWalletLogic, editWallet as editWalletLogic, deleteWallet as deleteWalletLogic, validateWallet, calculateWalletBalance } from './features/wallets/walletLogic';
 import { addExpense as addExpenseLogic, editExpense, deleteExpense, validateExpense } from './features/expenses/expenseLogic';
@@ -72,8 +73,8 @@ const WALLET_COLORS = [
 
 // Modello dati conto: { id, name, color, balance, initialBalance }
 const defaultWallet = {
-  name: 'Conto Principale',
-  color: WALLET_COLORS[0],
+  name: 'Portafoglio',
+  color: '#3b82f6', // Blu fisso per il portafoglio di default
   balance: 0,
   initialBalance: 0,
 };
@@ -358,7 +359,12 @@ function App() {
     if (user && storesData.length === 0) {
       addDocument('stores', { stores: [] });
     }
-  }, [user, categoriesData.length, storesData.length]);
+    // Crea il conto di default solo se l'utente non ha nessun conto E non ha mai avuto conti prima
+    if (user && walletsData.length === 0 && !localStorage.getItem('userHasWallets')) {
+      addDocument('wallets', defaultWallet);
+      localStorage.setItem('userHasWallets', 'true');
+    }
+  }, [user, categoriesData.length, storesData.length, walletsData.length]);
 
 
 
@@ -695,6 +701,11 @@ function App() {
         const remainingWallets = wallets.filter(w => w.id !== walletId);
         setActiveWalletId(remainingWallets[0]?.id || null);
       }
+      
+      // Se non ci sono più conti, rimuovi il flag per permettere la ricreazione del conto di default
+      if (wallets.length === 1) {
+        localStorage.removeItem('userHasWallets');
+      }
     } catch (error) {
       console.error('Errore durante l\'eliminazione del wallet:', error);
       console.error('Codice errore:', error.code);
@@ -859,7 +870,8 @@ function App() {
       setWallets(newWallets);
       // Sincronizza con Firestore
       const newWallet = newWallets.find(w => !wallets.some(ow => ow.id === w.id));
-      const result = await addDocument('wallets', { ...newWallet, id: undefined }); // Firestore genera l'ID
+      const { id, ...walletWithoutId } = newWallet; // Rimuovi l'id per lasciare che Firestore lo generi
+      const result = await addDocument('wallets', walletWithoutId);
       return result;
     } catch (error) {
       console.error('Errore durante la creazione del wallet:', error);
@@ -867,22 +879,7 @@ function App() {
     }
   };
   
-  const editWallet = async (updatedWallet) => {
-    try {
-      const newWallets = editWalletLogic(wallets, updatedWallet.id, updatedWallet);
-      setWallets(newWallets);
-      await updateDocument('wallets', updatedWallet.id, {
-        ...updatedWallet,
-        initialBalance: parseFloat(updatedWallet.balance) || 0,
-      });
-    } catch (error) {
-      if (error.code === 'not-found') {
-        await addWallet(updatedWallet);
-      } else {
-        throw error;
-      }
-    }
-  };
+
 
   // Wallet form handlers
   const handleWalletSubmit = async (e) => {
@@ -899,7 +896,19 @@ function App() {
       }
       
       if (editingWallet) {
-        await editWallet({ ...editingWallet, ...walletFormData });
+        // Trova il documento Firestore corrispondente al wallet in editing
+        const firestoreWallet = walletsData.find(w => w.id === editingWallet.id);
+        if (firestoreWallet) {
+          // Usa l'ID del documento Firestore per l'aggiornamento
+          await updateDocument('wallets', firestoreWallet.id, {
+            name: walletFormData.name,
+            color: walletFormData.color,
+            initialBalance: parseFloat(walletFormData.balance) || 0,
+          });
+        } else {
+          // Se non trova il documento, crea un nuovo wallet
+          await addWallet(walletFormData);
+        }
         setEditingWallet(null);
       } else {
         await addWallet(walletFormData);
@@ -921,8 +930,11 @@ function App() {
 
   const handleEditWallet = (wallet) => {
     setEditingWallet(wallet);
-    const balanceToShow = wallet.initialBalance !== undefined ? wallet.initialBalance : wallet.balance;
-    setWalletFormData({ name: wallet.name, color: wallet.color, balance: balanceToShow });
+    setWalletFormData({ 
+      name: wallet.name, 
+      color: wallet.color, 
+      balance: wallet.initialBalance || 0 
+    });
     setShowWalletForm(true);
   };
 
@@ -1034,6 +1046,8 @@ function App() {
         selectedStores: [],
         selectedWallets: []
       });
+      // Rimuovi il flag per permettere la ricreazione del conto di default
+      localStorage.removeItem('userHasWallets');
       alert('Tutti i dati sono stati eliminati con successo. L\'applicazione si ricaricherà automaticamente.');
       window.location.reload();
     } catch (error) {
@@ -1348,7 +1362,6 @@ function App() {
                     <WalletManager
                       wallets={walletsWithBalance}
                       onAdd={addWallet}
-                      onEdit={editWallet}
                       onDelete={deleteWallet}
                       onTransfer={handleTransfer}
                       onShowForm={handleAddWallet}
@@ -1695,7 +1708,18 @@ function App() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Saldo iniziale</label>
-                <input type="number" value={walletFormData.balance} onChange={e => setWalletFormData({ ...walletFormData, balance: parseFloat(e.target.value) || 0 })} className="input" step="0.01" required placeholder="0,00" />
+                <div className="form-input-group">
+                  <Euro className="form-input-icon" />
+                  <input 
+                    type="number" 
+                    value={walletFormData.balance === 0 ? '0.00' : walletFormData.balance} 
+                    onChange={e => setWalletFormData({ ...walletFormData, balance: parseFloat(e.target.value) || 0 })} 
+                    className="input form-input-with-icon" 
+                    step="0.01" 
+                    required 
+                    placeholder="0,00" 
+                  />
+                </div>
               </div>
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={() => {
@@ -1729,53 +1753,66 @@ function App() {
             <form onSubmit={handleTransferSubmit} className="p-6 space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Conto di origine</label>
-                <select
-                  name="fromWalletId"
+                <CustomSelect
                   value={transferFormData.fromWalletId}
-                  onChange={handleTransferChange}
-                  className="input"
+                  onChange={(value) => setTransferFormData(prev => ({ ...prev, fromWalletId: value }))}
+                  options={[
+                    { value: '', label: 'Seleziona conto di origine' },
+                    ...getWalletsWithCalculatedBalance().map(wallet => ({
+                      value: wallet.id,
+                      label: wallet.name,
+                      subtitle: formatCurrency(wallet.balance),
+                      icon: (
+                        <div 
+                          className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: wallet.color }}
+                        />
+                      )
+                    }))
+                  ]}
                   required
-                >
-                  <option value="">Seleziona conto di origine</option>
-                  {getWalletsWithCalculatedBalance().map(wallet => (
-                    <option key={wallet.id} value={wallet.id}>
-                      {wallet.name} ({formatCurrency(wallet.balance)})
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               <div className="flex justify-center">
                 <ArrowRight className="w-6 h-6 text-gray-400" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Conto di destinazione</label>
-                <select
-                  name="toWalletId"
+                <CustomSelect
                   value={transferFormData.toWalletId}
-                  onChange={handleTransferChange}
-                  className="input"
+                  onChange={(value) => setTransferFormData(prev => ({ ...prev, toWalletId: value }))}
+                  options={[
+                    { value: '', label: 'Seleziona conto di destinazione' },
+                    ...getWalletsWithCalculatedBalance().map(wallet => ({
+                      value: wallet.id,
+                      label: wallet.name,
+                      subtitle: formatCurrency(wallet.balance),
+                      icon: (
+                        <div 
+                          className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: wallet.color }}
+                        />
+                      )
+                    }))
+                  ]}
                   required
-                >
-                  <option value="">Seleziona conto di destinazione</option>
-                  {getWalletsWithCalculatedBalance().map(wallet => (
-                    <option key={wallet.id} value={wallet.id}>
-                      {wallet.name} ({formatCurrency(wallet.balance)})
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Importo</label>
-                <input
-                  type="number"
-                  name="amount"
-                  value={transferFormData.amount}
-                  onChange={handleTransferChange}
-                  placeholder="0,00"
-                  step="0.01"
-                  className="input"
-                  required
-                />
+                <div className="form-input-group">
+                  <Euro className="form-input-icon" />
+                  <input
+                    type="number"
+                    name="amount"
+                    value={transferFormData.amount === '' ? '' : (transferFormData.amount === 0 ? '0.00' : transferFormData.amount)}
+                    onChange={handleTransferChange}
+                    placeholder="0,00"
+                    step="0.01"
+                    className="input form-input-with-icon"
+                    required
+                  />
+                </div>
               </div>
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={() => {

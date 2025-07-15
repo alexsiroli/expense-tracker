@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1752534432520" clover="3.2.0">
-  <project timestamp="1752534432520" name="All files">
-    <metrics statements="160" coveredstatements="156" conditionals="146" coveredconditionals="131" methods="67" coveredmethods="67" elements="373" coveredelements="354" complexity="0" loc="160" ncloc="160" packages="5" files="7" classes="7"/>
+<coverage generated="1752622108713" clover="3.2.0">
+  <project timestamp="1752622108713" name="All files">
+    <metrics statements="160" coveredstatements="156" conditionals="146" coveredconditionals="131" methods="70" coveredmethods="70" elements="376" coveredelements="357" complexity="0" loc="160" ncloc="160" packages="5" files="7" classes="7"/>
     <package name="features.categories">
       <metrics statements="7" coveredstatements="7" conditionals="12" coveredconditionals="12" methods="7" coveredmethods="7"/>
       <file name="categoryLogic.js" path="/Users/alexsiroli/expense-tracker/src/features/categories/categoryLogic.js">
@@ -39,9 +39,9 @@
       </file>
     </package>
     <package name="features.statistics">
-      <metrics statements="40" coveredstatements="40" conditionals="25" coveredconditionals="24" methods="23" coveredmethods="23"/>
+      <metrics statements="40" coveredstatements="40" conditionals="25" coveredconditionals="24" methods="26" coveredmethods="26"/>
       <file name="statisticsLogic.js" path="/Users/alexsiroli/expense-tracker/src/features/statistics/statisticsLogic.js">
-        <metrics statements="40" coveredstatements="40" conditionals="25" coveredconditionals="24" methods="23" coveredmethods="23"/>
+        <metrics statements="40" coveredstatements="40" conditionals="25" coveredconditionals="24" methods="26" coveredmethods="26"/>
         <line num="3" count="4" type="stmt"/>
         <line num="4" count="3" type="stmt"/>
         <line num="5" count="2" type="stmt"/>
@@ -61,26 +61,26 @@
         <line num="35" count="4" type="cond" truecount="2" falsecount="0"/>
         <line num="36" count="4" type="stmt"/>
         <line num="42" count="2" type="stmt"/>
-        <line num="43" count="2" type="stmt"/>
-        <line num="44" count="4" type="stmt"/>
-        <line num="45" count="4" type="stmt"/>
-        <line num="46" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="47" count="4" type="stmt"/>
-        <line num="49" count="2" type="stmt"/>
-        <line num="50" count="3" type="stmt"/>
-        <line num="51" count="3" type="stmt"/>
-        <line num="52" count="3" type="cond" truecount="1" falsecount="1"/>
-        <line num="53" count="3" type="stmt"/>
+        <line num="43" count="4" type="stmt"/>
+        <line num="44" count="3" type="stmt"/>
+        <line num="45" count="3" type="stmt"/>
+        <line num="46" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="47" count="3" type="stmt"/>
+        <line num="49" count="3" type="stmt"/>
+        <line num="50" count="2" type="stmt"/>
+        <line num="51" count="2" type="stmt"/>
+        <line num="52" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="53" count="2" type="stmt"/>
         <line num="55" count="2" type="stmt"/>
         <line num="56" count="3" type="cond" truecount="2" falsecount="0"/>
         <line num="57" count="3" type="stmt"/>
         <line num="63" count="2" type="stmt"/>
         <line num="64" count="2" type="stmt"/>
-        <line num="65" count="2" type="stmt"/>
-        <line num="66" count="4" type="stmt"/>
-        <line num="67" count="4" type="stmt"/>
-        <line num="68" count="4" type="stmt"/>
-        <line num="69" count="4" type="stmt"/>
+        <line num="65" count="4" type="stmt"/>
+        <line num="66" count="3" type="stmt"/>
+        <line num="67" count="3" type="stmt"/>
+        <line num="68" count="3" type="stmt"/>
+        <line num="69" count="3" type="stmt"/>
         <line num="71" count="14" type="cond" truecount="2" falsecount="0"/>
       </file>
     </package>

@@ -51,16 +51,18 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
   const weeklyData = useMemo(() => {
     // Raggruppa per settimana ISO
     const weeks = {};
-    filteredData.expenses.concat(filteredData.incomes).forEach(item => {
-      if (!item.date) return;
-      const date = new Date(item.date);
-      // Trova il lunedì della settimana
-      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-      const weekKey = format(weekStart, 'yyyy-ww');
-      if (!weeks[weekKey]) weeks[weekKey] = { week: weekKey, Spese: 0, Entrate: 0, weekStart };
-      if (filteredData.expenses.includes(item)) weeks[weekKey].Spese += parseFloat(item.amount);
-      else weeks[weekKey].Entrate += parseFloat(item.amount);
-    });
+    filteredData.expenses.concat(filteredData.incomes)
+      .filter(item => item.category !== 'Trasferimento')
+      .forEach(item => {
+        if (!item.date) return;
+        const date = new Date(item.date);
+        // Trova il lunedì della settimana
+        const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+        const weekKey = format(weekStart, 'yyyy-ww');
+        if (!weeks[weekKey]) weeks[weekKey] = { week: weekKey, Spese: 0, Entrate: 0, weekStart };
+        if (filteredData.expenses.includes(item)) weeks[weekKey].Spese += parseFloat(item.amount);
+        else weeks[weekKey].Entrate += parseFloat(item.amount);
+      });
     return Object.values(weeks).sort((a, b) => a.weekStart - b.weekStart);
   }, [filteredData]);
 
@@ -222,7 +224,7 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
       </div>
 
       {/* Grafici per categoria */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="space-y-8">
         {/* Spese per Categoria */}
         <div className="card p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2"><Tag className="w-5 h-5" /> Spese per Categoria</h3>
@@ -290,7 +292,7 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
       </div>
 
       {/* Grafici per negozio */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="space-y-8">
         {/* Entrate per Negozio */}
         <div className="card p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2"><Store className="w-5 h-5 text-green-600" /> Entrate per Negozio</h3>
@@ -330,21 +332,25 @@ function Statistics({ expenses, incomes, categories = [], stores = [], activeFil
       </div>
 
       {/* Tabelle dettagliate */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="space-y-8">
         {/* Tabella negozi spese */}
         <div className="card p-6 overflow-x-auto">
           <h4 className="font-semibold mb-2 flex items-center gap-2"><Store className="w-4 h-4" /> Dettaglio Spese per Negozio</h4>
-          <table className="min-w-full text-sm">
-            <thead><tr><th className="text-left">Negozio</th><th className="text-right">Totale</th></tr></thead>
-            <tbody>
-              {expenseStoreChart.map(store => (
-                <tr key={store.name}>
-                  <td className="py-1">{store.name}</td>
-                  <td className="text-right">{formatCurrency(store.value)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {expenseStoreChart.length > 0 ? (
+            <table className="min-w-full text-sm">
+              <thead><tr><th className="text-left">Negozio</th><th className="text-right">Totale</th></tr></thead>
+              <tbody>
+                {expenseStoreChart.map(store => (
+                  <tr key={store.name}>
+                    <td className="py-1">{store.name}</td>
+                    <td className="text-right">{formatCurrency(store.value)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">Nessuna spesa registrata</div>
+          )}
         </div>
       </div>
     </div>

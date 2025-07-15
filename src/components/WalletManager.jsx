@@ -70,10 +70,10 @@ function WalletManager({ wallets, onAdd, onEdit, onDelete, onTransfer, onShowFor
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span className="w-4 h-4 rounded-full" style={{ background: wallet.color, display: 'inline-block' }}></span>
               <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{wallet.name}</span>
-              <span className={`text-xs font-medium ${wallet.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(wallet.balance)}</span>
             </div>
-            <div className="flex-shrink-0">
-              <MoreVertical className="w-4 h-4 text-gray-400" />
+            <div className={`ml-2 flex-shrink-0 px-3 py-1 rounded-xl border font-bold text-base ${wallet.balance >= 0 ? 'text-green-700 border-green-200 bg-green-50 dark:text-green-300 dark:border-green-700 dark:bg-green-900/30' : 'text-red-700 border-red-200 bg-red-50 dark:text-red-300 dark:border-red-700 dark:bg-red-900/30'}`}
+                 style={{ textAlign: 'right' }}>
+              {formatCurrency(wallet.balance)}
             </div>
           </div>
         ))}

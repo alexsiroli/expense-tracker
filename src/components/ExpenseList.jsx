@@ -210,21 +210,22 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-1">
+                      <div className="flex items-start justify-between mb-0.5">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-base">
                             {item.store || 'Senza negozio'}
                           </h3>
                         </div>
-                        <div className={`text-xl font-bold flex items-center mt-3 ${
-                          type === 'expense' ? 'text-red-600' : 'text-green-600'
-                        }`}>
-                          {type === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
+                        <div className={`flex items-end justify-end mt-3`}>
+                          <span className={`px-3 py-1 rounded-xl border font-bold text-base shadow-sm ${type === 'expense' ? 'text-red-700 border-red-200 bg-red-50 dark:text-red-300 dark:border-red-700 dark:bg-red-900/30' : 'text-green-700 border-green-200 bg-green-50 dark:text-green-300 dark:border-green-700 dark:bg-green-900/30'}`}
+                                style={{ textAlign: 'right', minWidth: 'fit-content' }}>
+                            {type === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
+                          </span>
                         </div>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 -mt-3">
+                        <div className="flex items-center gap-2 -mt-4">
                           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-600/10 text-blue-600 border border-blue-600/20">
                             {item.category}
                           </span>

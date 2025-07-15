@@ -40,13 +40,13 @@ export function getByStore(items) {
 // Bilancio mensile ultimi N mesi
 export function getMonthlyBalance(expenses, incomes, monthsArr) {
   const map = {};
-  expenses.forEach(e => {
+  expenses.filter(e => e.category !== 'Trasferimento').forEach(e => {
     const d = new Date(e.date);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     if (!map[key]) map[key] = { entrate: 0, spese: 0 };
     map[key].spese += parseFloat(e.amount);
   });
-  incomes.forEach(i => {
+  incomes.filter(i => i.category !== 'Trasferimento').forEach(i => {
     const d = new Date(i.date);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     if (!map[key]) map[key] = { entrate: 0, spese: 0 };
@@ -62,7 +62,7 @@ export function getMonthlyBalance(expenses, incomes, monthsArr) {
 export function getDailyAvgHeatmap(expenses) {
   const days = Array(7).fill(0);
   const counts = Array(7).fill(0);
-  expenses.forEach(e => {
+  expenses.filter(e => e.category !== 'Trasferimento').forEach(e => {
     const d = new Date(e.date);
     const day = (d.getDay() + 6) % 7;
     days[day] += parseFloat(e.amount);

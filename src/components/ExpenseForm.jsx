@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Euro, Tag, Calendar, Save, ArrowLeft, Store, Search, Wallet } from 'lucide-react';
+import CustomSelect from './CustomSelect';
 
 function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [], categories = [], wallets = [], selectedWalletId, onAddStore }) {
   const [formData, setFormData] = useState({
@@ -217,31 +218,22 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
               <Wallet className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               Conto
             </label>
-            <div>
-              <div className="relative">
-                <select
-                  name="walletId"
-                  value={formData.walletId}
-                  onChange={handleChange}
-                  className="input pr-10"
-                  required
-                >
-                  {wallets.map(wallet => (
-                    <option key={wallet.id} value={wallet.id}>
-                      {wallet.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-10 pointer-events-none" style={{ top: '30%', transform: 'translateY(-50%)' }}>
+            <CustomSelect
+              value={formData.walletId}
+              onChange={(value) => setFormData(prev => ({ ...prev, walletId: value }))}
+              options={wallets.map(wallet => ({
+                value: wallet.id,
+                label: wallet.name,
+                icon: (
                   <div 
                     className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                    style={{ 
-                      backgroundColor: wallets.find(w => w.id === formData.walletId)?.color || '#6366f1'
-                    }}
-                  ></div>
-                </div>
-              </div>
-            </div>
+                    style={{ backgroundColor: wallet.color }}
+                  />
+                )
+              }))}
+              placeholder="Seleziona conto"
+              required
+            />
           </div>
 
           <div>
@@ -253,7 +245,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
               <input
                 type="number"
                 name="amount"
-                value={formData.amount}
+                value={formData.amount === '' ? '' : (formData.amount === 0 ? '0.00' : formData.amount)}
                 onChange={handleChange}
                 onFocus={handleAmountFocus}
                 placeholder="0,00"
@@ -331,20 +323,16 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                 <Tag className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 Categoria
               </label>
-              <div>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="input"
-                >
-                  {categories.map(category => (
-                    <option key={category.id} value={category.name}>
-                      {category.icon} {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CustomSelect
+                value={formData.category}
+                onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                options={categories.map(category => ({
+                  value: category.name,
+                  label: category.name,
+                  icon: category.icon
+                }))}
+                placeholder="Seleziona categoria"
+              />
             </div>
 
             <div>
