@@ -562,8 +562,6 @@ function App() {
       }
     }
     
-    // Aggiorna stato locale
-    setExpenses(prev => addExpenseLogic(prev, { ...newExpense, amount: parseFloat(newExpense.amount) }));
     // Sincronizza con Firestore
     await addDocument('expenses', newExpense, (updatedStores) => {
       if (Array.isArray(updatedStores)) setStores(updatedStores);
@@ -616,7 +614,6 @@ function App() {
       }
     }
     
-    setIncomes(prev => addIncomeLogic(prev, { ...newIncome, amount: parseFloat(newIncome.amount) }));
     await addDocument('incomes', newIncome, (updatedStores) => {
       if (Array.isArray(updatedStores)) setStores(updatedStores);
     });
@@ -631,11 +628,6 @@ function App() {
       date: updatedItem.date ? new Date(updatedItem.date).toISOString() : new Date().toISOString()
     };
     const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
-    if (collectionName === 'expenses') {
-      setExpenses(prev => editExpense(prev, editingItem.id, updatedWithDate));
-    } else {
-      setIncomes(prev => editIncome(prev, editingItem.id, updatedWithDate));
-    }
     await updateDocument(collectionName, editingItem.id, updatedWithDate);
     setShowForm(false);
     setEditingItem(null);
@@ -644,11 +636,6 @@ function App() {
   // Elimina transazione (non wallet)
   const handleDelete = async (id) => {
     const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
-    if (collectionName === 'expenses') {
-      setExpenses(prev => deleteExpense(prev, id));
-    } else {
-      setIncomes(prev => deleteIncome(prev, id));
-    }
     await deleteDocument(collectionName, id);
     setShowConfirmDelete(false);
     setItemToDelete(null);
