@@ -50,7 +50,7 @@ export const useFirestore = () => {
       if (orderByField) {
         q = query(
           getUserCollection(collectionName),
-          orderBy(orderByField, 'desc')
+          orderBy(orderByField, 'asc')
         );
       } else {
         q = query(getUserCollection(collectionName));

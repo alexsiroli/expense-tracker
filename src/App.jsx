@@ -102,7 +102,7 @@ function App() {
   const { data: incomes, loading: incomesLoading } = useCollectionData('incomes');
   const { data: categoriesData, loading: categoriesLoading } = useCollectionData('categories', null);
   const { data: storesData, loading: storesLoading } = useCollectionData('stores', null);
-  const { data: walletsData, loading: walletsLoading } = useCollectionData('wallets', 'name');
+  const { data: walletsData, loading: walletsLoading } = useCollectionData('wallets', 'createdAt');
   
 
   

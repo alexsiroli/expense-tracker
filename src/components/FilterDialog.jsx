@@ -4,22 +4,11 @@ import { X, Calendar, Tag, Store, Search, Filter, Clock, Wallet, ChevronDown, Ch
 function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], activeTab = 'expenses', stores = [], wallets = [] }) {
   // Ottieni le categorie appropriate basandosi sull'activeTab
   const getCategoriesForTab = () => {
-    if (activeTab === 'stats') {
-      return {
-        expense: categories.expense || [],
-        income: categories.income || []
-      };
-    } else if (activeTab === 'expenses') {
-      return {
-        expense: categories.expense || [],
-        income: []
-      };
-    } else {
-      return {
-        expense: [],
-        income: categories.income || []
-      };
-    }
+    // Nei filtri mostriamo sempre tutte le categorie per permettere il filtraggio completo
+    return {
+      expense: categories.expense || [],
+      income: categories.income || []
+    };
   };
 
   const { expense: expenseCategories, income: incomeCategories } = getCategoriesForTab();
