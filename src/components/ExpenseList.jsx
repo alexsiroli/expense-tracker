@@ -1,4 +1,4 @@
-import { Trash2, TrendingUp, TrendingDown, AlertCircle, Edit, Store } from 'lucide-react';
+import { Trash2, TrendingUp, TrendingDown, AlertCircle, Edit, Store, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { formatCurrency } from '../utils/formatters';
@@ -62,9 +62,21 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
     return format(new Date(dateString), 'dd MMM yyyy', { locale: it });
   };
 
-  const getCategoryIcon = (categoryName) => {
-    const category = categories.find(cat => cat.name === categoryName);
+  const getCategoryIcon = (categoryName, itemType) => {
+    // Per il tipo mixed, usa le categorie appropriate in base al tipo di transazione
+    const categoryList = type === 'mixed' 
+      ? (itemType === 'expense' ? categories.expense : categories.income)
+      : categories;
+    const category = categoryList.find(cat => cat.name === categoryName);
     return category?.icon || '📦';
+  };
+
+  // Determina il tipo di transazione per ogni item
+  const getItemType = (item) => {
+    if (type === 'mixed') {
+      return item._type || 'expense';
+    }
+    return type;
   };
 
   if (items.length === 0) {
@@ -72,17 +84,21 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
       <div className="text-center py-12">
         <div className="mb-6">
           <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center mb-4">
-            {type === 'expense' ? (
+            {type === 'mixed' ? (
+              <DollarSign className="w-10 h-10 text-gray-500 dark:text-gray-400" />
+            ) : type === 'expense' ? (
               <TrendingDown className="w-10 h-10 text-gray-500 dark:text-gray-400" />
             ) : (
               <TrendingUp className="w-10 h-10 text-gray-500 dark:text-gray-400" />
             )}
           </div>
           <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-2">
-            Nessuna {type === 'expense' ? 'spesa' : 'entrata'} registrata
+            {type === 'mixed' ? 'Nessuna transazione registrata' : 
+             `Nessuna ${type === 'expense' ? 'spesa' : 'entrata'} registrata`}
           </h3>
           <p className="text-gray-500 dark:text-gray-400 text-sm">
-            Aggiungi la tua prima {type === 'expense' ? 'spesa' : 'entrata'} per iniziare
+            {type === 'mixed' ? 'Aggiungi la tua prima transazione per iniziare' :
+             `Aggiungi la tua prima ${type === 'expense' ? 'spesa' : 'entrata'} per iniziare`}
           </p>
         </div>
       </div>
@@ -128,7 +144,7 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
       {Object.entries(groupedItems).map(([date, dateItems]) => (
         <div key={date} className="space-y-3">
           {/* Header della data */}
-          <div className="sticky top-40 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
+          <div className="sticky top-52 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
             <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
               {formatDateHeader(date)}
             </h3>
@@ -139,11 +155,11 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
             {dateItems.map((item) => (
               <div
                 key={item.id}
-                className={`expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${getTransactionEffect(item, type)} relative`}
-                onClick={() => onShowDetail && onShowDetail(item, type)}
+                className={`expense-item p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${getTransactionEffect(item, getItemType(item))} relative`}
+                onClick={() => onShowDetail && onShowDetail(item, getItemType(item))}
               >
                 {/* Overlay emoji per quadrifoglio fortunato */}
-                {isQuadrifoglioFortunatoTransaction(item, type) && (
+                {isQuadrifoglioFortunatoTransaction(item, getItemType(item)) && (
                   <div className="emoji-overlay">
                     {Array.from({ length: 15 }, (_, i) => (
                       <span
@@ -204,7 +220,7 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
                     {/* Category Icon */}
                     <div className="flex-shrink-0">
                       <div className="w-8 h-8 rounded-lg bg-gray-200/90 dark:bg-gray-700/90 backdrop-blur-sm flex items-center justify-center text-lg mt-3">
-                        {getCategoryIcon(item.category)}
+                        {getCategoryIcon(item.category, getItemType(item))}
                       </div>
                     </div>
 
@@ -217,9 +233,9 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
                           </h3>
                         </div>
                         <div className={`flex items-end justify-end mt-3`}>
-                          <span className={`px-3 py-1 rounded-xl border font-bold text-base shadow-sm ${type === 'expense' ? 'text-red-700 border-red-200 bg-red-50 dark:text-red-300 dark:border-red-700 dark:bg-red-900/30' : 'text-green-700 border-green-200 bg-green-50 dark:text-green-300 dark:border-green-700 dark:bg-green-900/30'}`}
+                          <span className={`px-3 py-1 rounded-xl border font-bold text-base shadow-sm ${getItemType(item) === 'expense' ? 'text-red-700 border-red-200 bg-red-50 dark:text-red-300 dark:border-red-700 dark:bg-red-900/30' : 'text-green-700 border-green-200 bg-green-50 dark:text-green-300 dark:border-green-700 dark:bg-green-900/30'}`}
                                 style={{ textAlign: 'right', minWidth: 'fit-content' }}>
-                            {type === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
+                            {getItemType(item) === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
                           </span>
                         </div>
                       </div>

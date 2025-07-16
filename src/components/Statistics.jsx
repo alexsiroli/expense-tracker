@@ -8,6 +8,7 @@ import { HeatMapGrid } from 'react-grid-heatmap';
 import { add, format, startOfWeek, endOfWeek, isSameWeek, parseISO, subMonths } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { getTotal, getByCategory, getByStore, getMonthlyData, getMonthlyBalance, getDailyAvgHeatmap } from '../features/statistics/statisticsLogic';
+import FilterButton from './FilterButton';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B6B', '#6366f1', '#f59e42'];
 

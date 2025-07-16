@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, RefreshCw, Mail, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Mail, Home, Copy, Check } from 'lucide-react';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -8,7 +8,8 @@ class ErrorBoundary extends React.Component {
       hasError: false, 
       error: null, 
       errorInfo: null,
-      isReloading: false 
+      isReloading: false,
+      copied: false
     };
   }
 
@@ -45,6 +46,33 @@ Timestamp: ${new Date().toISOString()}
     window.open(mailtoLink);
   };
 
+  handleCopyError = async () => {
+    const errorDetails = `
+Errore: ${this.state.error?.message || 'Errore sconosciuto'}
+Stack: ${this.state.error?.stack || 'N/A'}
+Component: ${this.state.errorInfo?.componentStack || 'N/A'}
+URL: ${window.location.href}
+User Agent: ${navigator.userAgent}
+Timestamp: ${new Date().toISOString()}
+    `.trim();
+
+    try {
+      await navigator.clipboard.writeText(errorDetails);
+      this.setState({ copied: true });
+      setTimeout(() => this.setState({ copied: false }), 2000);
+    } catch (err) {
+      // Fallback per browser che non supportano clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = errorDetails;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      this.setState({ copied: true });
+      setTimeout(() => this.setState({ copied: false }), 2000);
+    }
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -65,9 +93,32 @@ Timestamp: ${new Date().toISOString()}
 
             {/* Dettagli Errore */}
             <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-left">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Dettagli dell'errore:
-              </h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                  Dettagli dell'errore:
+                </h3>
+                <button
+                  onClick={this.handleCopyError}
+                  className={`flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm ${
+                    this.state.copied 
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' 
+                      : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
+                  }`}
+                  title="Copia dettagli errore"
+                >
+                  {this.state.copied ? (
+                    <>
+                      <Check className="w-3 h-3" />
+                      Copiato!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      Copia
+                    </>
+                  )}
+                </button>
+              </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 font-mono break-all">
                 {this.state.error?.message || 'Errore sconosciuto'}
               </p>

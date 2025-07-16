@@ -24,6 +24,7 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
 
   const { expense: expenseCategories, income: incomeCategories } = getCategoriesForTab();
   const [filters, setFilters] = useState({
+    transactionType: 'all', // 'all', 'expenses', 'incomes'
     timeRange: 'all', // all, today, week, month, year, custom
     startDate: '',
     endDate: '',
@@ -159,6 +160,7 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
 
   const handleResetFilters = () => {
     setFilters({
+      transactionType: 'all',
       timeRange: 'all',
       startDate: '',
       endDate: '',
@@ -202,6 +204,45 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
           </div>
         </div>
 
+        {/* Toggle tipo transazione */}
+        <div className="mt-4 mb-1 flex items-center justify-center">
+          <div className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-1 flex shadow-lg border border-gray-300 dark:border-gray-700 gap-2">
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, transactionType: 'all' }))}
+              className={`px-5 py-2 rounded-xl text-base font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400/60 focus:z-10
+                ${filters.transactionType === 'all'
+                  ? 'bg-white dark:bg-gray-900 text-blue-700 dark:text-blue-300 shadow-md scale-105 border border-blue-200 dark:border-blue-700'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-white/60 dark:hover:bg-gray-900/40'}
+              `}
+              style={{ marginRight: 2 }}
+            >
+              Tutte
+            </button>
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, transactionType: 'expenses' }))}
+              className={`px-5 py-2 rounded-xl text-base font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-400/60 focus:z-10
+                ${filters.transactionType === 'expenses'
+                  ? 'bg-white dark:bg-gray-900 text-red-700 dark:text-red-300 shadow-md scale-105 border border-red-200 dark:border-red-700'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-red-700 dark:hover:text-red-300 hover:bg-white/60 dark:hover:bg-gray-900/40'}
+              `}
+              style={{ marginRight: 2, marginLeft: 2 }}
+            >
+              Spese
+            </button>
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, transactionType: 'incomes' }))}
+              className={`px-5 py-2 rounded-xl text-base font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-400/60 focus:z-10
+                ${filters.transactionType === 'incomes'
+                  ? 'bg-white dark:bg-gray-900 text-green-700 dark:text-green-300 shadow-md scale-105 border border-green-200 dark:border-green-700'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-300 hover:bg-white/60 dark:hover:bg-gray-900/40'}
+              `}
+              style={{ marginLeft: 2 }}
+            >
+              Entrate
+            </button>
+          </div>
+        </div>
+
         {/* Content */}
         <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(90vh-120px)]">
           {/* Filtro per tempo */}
@@ -210,14 +251,14 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
               onClick={() => toggleSection('time')}
               className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 <span className="font-semibold text-gray-900 dark:text-gray-100">Periodo</span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto truncate text-right">
                   {getTimeRangeLabel(filters.timeRange)}
                 </span>
               </div>
-              {expandedSections.time ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              {expandedSections.time ? <ChevronUp className="w-5 h-5 ml-2 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 ml-2 flex-shrink-0" />}
             </button>
             
             {expandedSections.time && (
@@ -234,10 +275,10 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
                     <button
                       key={range.value}
                       onClick={() => handleTimeRangeChange(range.value)}
-                      className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`p-2 text-sm font-medium transition-all ${
                         filters.timeRange === range.value
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          ? 'bg-blue-600 text-white rounded-xl'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg'
                       }`}
                     >
                       {range.label}
@@ -282,14 +323,14 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
               onClick={() => toggleSection('categories')}
               className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Tag className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 <span className="font-semibold text-gray-900 dark:text-gray-100">Categorie</span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto truncate text-right">
                   {filters.selectedCategories.length > 0 ? `${filters.selectedCategories.length} selezionate` : 'Tutte'}
                 </span>
               </div>
-              {expandedSections.categories ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              {expandedSections.categories ? <ChevronUp className="w-5 h-5 ml-2 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 ml-2 flex-shrink-0" />}
             </button>
             
             {expandedSections.categories && (
@@ -302,10 +343,10 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
                         <button
                           key={category.id}
                           onClick={() => handleCategoryToggle(category.name)}
-                          className={`p-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
+                          className={`p-2 text-sm font-medium transition-all flex items-center gap-1 ${
                             filters.selectedCategories.includes(category.name)
-                              ? 'bg-red-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                              ? 'bg-red-600 text-white rounded-xl'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg'
                           }`}
                         >
                           <span>{category.icon}</span>
@@ -327,10 +368,10 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
                         <button
                           key={category.id}
                           onClick={() => handleCategoryToggle(category.name)}
-                          className={`p-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
+                          className={`p-2 text-sm font-medium transition-all flex items-center gap-1 ${
                             filters.selectedCategories.includes(category.name)
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                              ? 'bg-green-600 text-white rounded-xl'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg'
                           }`}
                         >
                           <span>{category.icon}</span>
@@ -350,14 +391,14 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
               onClick={() => toggleSection('wallets')}
               className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Wallet className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 <span className="font-semibold text-gray-900 dark:text-gray-100">Conti</span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto truncate text-right">
                   {filters.selectedWallets.length > 0 ? `${filters.selectedWallets.length} selezionati` : 'Tutti'}
                 </span>
               </div>
-              {expandedSections.wallets ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              {expandedSections.wallets ? <ChevronUp className="w-5 h-5 ml-2 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 ml-2 flex-shrink-0" />}
             </button>
             
             {expandedSections.wallets && (
@@ -396,14 +437,14 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
               onClick={() => toggleSection('stores')}
               className="w-full p-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Store className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 <span className="font-semibold text-gray-900 dark:text-gray-100">Negozi</span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto truncate text-right">
                   {filters.selectedStores.length > 0 ? `${filters.selectedStores.length} selezionati` : 'Tutti'}
                 </span>
               </div>
-              {expandedSections.stores ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              {expandedSections.stores ? <ChevronUp className="w-5 h-5 ml-2 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 ml-2 flex-shrink-0" />}
             </button>
             
             {expandedSections.stores && (

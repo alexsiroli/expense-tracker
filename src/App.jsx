@@ -1,31 +1,31 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload, Euro, Edit, ArrowDown } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload, Euro, Edit, ArrowDown, Store, ArrowLeft } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
-import Statistics from './components/Statistics';
 import CategoryManager from './components/CategoryManager';
-import ConfirmDialog from './components/ConfirmDialog';
-import DateRangePicker from './components/DateRangePicker';
-import { useTheme } from './hooks/useTheme';
-import { useAuth } from './hooks/useAuth';
-import { useFirestore } from './hooks/useFirestore';
-import { useScrollLock } from './hooks/useScrollLock';
-import { format } from 'date-fns';
-import { it } from 'date-fns/locale';
 import WalletManager from './components/WalletManager';
+import Statistics from './components/Statistics';
 import DataManager from './components/DataManager';
 import LoginForm from './components/LoginForm';
 import UserProfile from './components/UserProfile';
+import ConfirmDialog from './components/ConfirmDialog';
 import FilterDialog from './components/FilterDialog';
-import { formatCurrency } from './utils/formatters';
 import TransactionDetailDialog from './components/TransactionDetailDialog';
+import { useAuth } from './hooks/useAuth';
+import { useFirestore } from './hooks/useFirestore';
+import { useTheme } from './hooks/useTheme';
+import { useScrollLock } from './hooks/useScrollLock';
+import { formatCurrency } from './utils/formatters';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
+import { PopupProvider, usePopup } from './contexts/PopupContext';
 import { getEasterEgg, getAllEasterEggs, activateEasterEgg, saveEasterEggCompletion, getEasterEggsWithCompletionStatus } from './utils/easterEggs';
 import CustomSelect from './components/CustomSelect';
 import { addCategory, editCategory, deleteCategory, validateCategory } from './features/categories/categoryLogic';
 import { addWallet as addWalletLogic, editWallet as editWalletLogic, deleteWallet as deleteWalletLogic, validateWallet, calculateWalletBalance } from './features/wallets/walletLogic';
 import { addExpense as addExpenseLogic, editExpense, deleteExpense, validateExpense } from './features/expenses/expenseLogic';
 import { addIncome as addIncomeLogic, editIncome, deleteIncome, validateIncome } from './features/expenses/incomeLogic';
-import { PopupProvider, usePopup } from './contexts/PopupContext';
+import FilterButton from './components/FilterButton';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -112,7 +112,10 @@ function App() {
   const [wallets, setWallets] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [activeTab, setActiveTab] = useState('expenses');
+  const [transactionType, setTransactionType] = useState('expense'); // 'expense' or 'income'
+  const [activeTab, setActiveTab] = useState('transactions');
+  const [transactionFilter, setTransactionFilter] = useState('all'); // 'all', 'expenses', 'incomes'
+  const [selectedStore, setSelectedStore] = useState(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [dateRange, setDateRange] = useState(null);
@@ -137,7 +140,8 @@ function App() {
     endDate: '',
     selectedCategories: [],
     selectedStores: [],
-    selectedWallets: []
+    selectedWallets: [],
+    transactionType: 'all' // di default 'all' (Tutte)
   });
   const [showFloatingMenu, setShowFloatingMenu] = useState(true);
   const lastScrollY = useRef(window.scrollY);
@@ -638,7 +642,7 @@ function App() {
       ...updatedItem,
       date: updatedItem.date ? new Date(updatedItem.date).toISOString() : new Date().toISOString()
     };
-    const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
+    const collectionName = editingItem._type === 'expense' ? 'expenses' : 'incomes';
     await updateDocument(collectionName, editingItem.id, updatedWithDate);
     setShowForm(false);
     setEditingItem(null);
@@ -646,8 +650,9 @@ function App() {
   
   // Elimina transazione (non wallet)
   const handleDelete = async (id) => {
-    const collectionName = activeTab === 'expenses' ? 'expenses' : 'incomes';
-    await deleteDocument(collectionName, id);
+    // Usa la variabile di stato itemToDelete
+    const collection = itemToDelete && itemToDelete._type === 'expense' ? 'expenses' : 'incomes';
+    await deleteDocument(collection, id);
     setShowConfirmDelete(false);
     setItemToDelete(null);
   };
@@ -723,6 +728,19 @@ function App() {
 
   const handleEdit = (item) => {
     setEditingItem(item);
+    setShowForm(true);
+  };
+
+  // Funzioni per gestire l'apertura del form per spese e entrate
+  const handleAddExpense = () => {
+    setEditingItem(null);
+    setTransactionType('expense');
+    setShowForm(true);
+  };
+
+  const handleAddIncome = () => {
+    setEditingItem(null);
+    setTransactionType('income');
     setShowForm(true);
   };
 
@@ -916,6 +934,35 @@ function App() {
   };
 
   const filteredData = getFilteredData();
+
+  // Funzione per ottenere i dati delle transazioni filtrati
+  const getFilteredTransactions = () => {
+    const allTransactions = [
+      ...filteredData.expenses.map(item => ({ ...item, _type: 'expense' })),
+      ...filteredData.incomes.map(item => ({ ...item, _type: 'income' }))
+    ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    switch (activeFilters.transactionType) {
+      case 'expenses':
+        return allTransactions.filter(item => item._type === 'expense');
+      case 'incomes':
+        return allTransactions.filter(item => item._type === 'income');
+      default:
+        return allTransactions;
+    }
+  };
+
+  const filteredTransactions = getFilteredTransactions();
+
+  // Funzione per ottenere le transazioni di un negozio specifico
+  const getStoreTransactions = (storeName) => {
+    const allTransactions = [
+      ...filteredData.expenses.filter(item => item.store === storeName).map(item => ({ ...item, _type: 'expense' })),
+      ...filteredData.incomes.filter(item => item.store === storeName).map(item => ({ ...item, _type: 'income' }))
+    ].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    return allTransactions;
+  };
 
   // Funzioni gestione conti
   const addWallet = async (wallet) => {
@@ -1208,29 +1255,31 @@ function App() {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Se un modal è aperto, non gestire lo scroll
-      if (isAnyModalOpen) {
+      if (isAnyModalOpen) return;
+      const currentScrollY = window.scrollY;
+      const alwaysShowThreshold = 100; // px
+      // Nascondi il menu se sei in fondo alla pagina
+      const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 2;
+      if (isAtBottom) {
+        setShowFloatingMenu(false);
+        setIsHeaderExpanded(false);
+        setScrollDirection('down');
+        lastScrollY.current = currentScrollY;
         return;
       }
-
-      const currentScrollY = window.scrollY;
-      const isAtBottom = window.innerHeight + currentScrollY >= document.body.offsetHeight - 20;
-      const collapseThreshold = 50; // Soglia per compattare l'header
-
-      // Gestione header espandibile - Grande di default, si compatta quando scorri
-      if (currentScrollY <= collapseThreshold) {
+      // Mostra sempre il menu se sei vicino all'inizio
+      if (currentScrollY <= alwaysShowThreshold) {
+        setShowFloatingMenu(true);
         setIsHeaderExpanded(true);
         setScrollDirection('up');
       } else {
         setIsHeaderExpanded(false);
-        if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
+        if (currentScrollY > lastScrollY.current && currentScrollY > alwaysShowThreshold) {
           setScrollDirection('down');
           setShowFloatingMenu(false); // scroll down, nascondi
-        } else if (currentScrollY < lastScrollY.current && !isAtBottom) {
+        } else if (currentScrollY < lastScrollY.current) {
           setScrollDirection('up');
-          setShowFloatingMenu(true); // scroll up, mostra SOLO se non sei in fondo
-        } else {
-          setScrollDirection('up'); // No scroll, reset direction
+          setShowFloatingMenu(true); // scroll up, mostra
         }
       }
       lastScrollY.current = currentScrollY;
@@ -1382,6 +1431,16 @@ function App() {
     setSelectedCategory(null);
   };
 
+  // Calcola i negozi unici dalle transazioni (expenses + incomes)
+  const getAllStoresFromTransactions = () => {
+    const allStores = [
+      ...expenses.filter(e => e.store && e.store.trim()).map(e => e.store.trim()),
+      ...incomes.filter(i => i.store && i.store.trim()).map(i => i.store.trim())
+    ];
+    // Rimuovi duplicati e ordina alfabeticamente
+    return Array.from(new Set(allStores)).sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
+  };
+
   return (
     <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} ${partyMode ? 'party-mode' : ''} ${retroMode ? 'retro-mode' : ''} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
       {/* Header espandibile con grafica trasparente */}
@@ -1462,12 +1521,12 @@ function App() {
           <div className="flex items-center justify-between" onClick={() => setBalanceCollapsed(!balanceCollapsed)} style={{ cursor: 'pointer' }}>
             <div className="flex items-center gap-3">
               <PiggyBank className="w-6 h-6 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{format(new Date(), 'MMMM yyyy', { locale: it }).replace(/^ /, c => c.toUpperCase())}</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Liquidità</h2>
             </div>
             <div className="flex items-center gap-2">
               {balanceCollapsed && (
-                <span className={`text-lg font-bold ${(currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency((currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)))}
+                <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                  {formatCurrency(getWalletsWithCalculatedBalance().reduce((sum, w) => sum + (w.balance || 0), 0))}
                 </span>
               )}
               {/* Freccia solo visiva, non cliccabile */}
@@ -1486,27 +1545,10 @@ function App() {
           {!balanceCollapsed && (
             <>
               <div className="text-center mt-4 animate-fade-in-up">
-                <div className={`text-4xl font-bold mb-4 ${(currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency((currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)))}
-                </div>
-                <div className="flex justify-center gap-6 text-sm">
-                  <div className="text-green-600 transition-all duration-200">
-                    <div className="flex items-center gap-1 font-semibold">
-                      <TrendingUp className="w-4 h-4" />
-                      Entrate
-                    </div>
-                    <div className="text-lg font-bold">{formatCurrency(currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0))}</div>
-                  </div>
-                  <div className="text-red-600 transition-all duration-200">
-                    <div className="flex items-center gap-1 font-semibold">
-                      <TrendingDown className="w-4 h-4" />
-                      Spese
-                    </div>
-                    <div className="text-lg font-bold">{formatCurrency(currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0))}</div>
-                  </div>
+                <div className="text-4xl font-bold mb-4 text-blue-700 dark:text-blue-300">
+                  {formatCurrency(getWalletsWithCalculatedBalance().reduce((sum, w) => sum + (w.balance || 0), 0))}
                 </div>
               </div>
-
               {/* Sezione gestione conti */}
               <div className="mt-8 animate-fade-in-up">
                 {(() => {
@@ -1560,81 +1602,46 @@ function App() {
       <div className="max-w-md mx-auto px-6 py-4 -mt-6 relative z-10">
 
         {/* Content */}
-                  {activeTab === 'expenses' && (
-            <div className="animate-fade-in-up">
-              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Spese</h2>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowFilterDialog(true)}
-                      className={`flex items-center justify-center w-10 h-10 backdrop-blur-sm text-white rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-2xl active:scale-95 ${
-                        activeFilters.timeRange !== 'all' || 
-                        activeFilters.selectedCategories.length > 0 || 
-                        activeFilters.selectedStores.length > 0
-                          ? 'bg-blue-600/90 hover:bg-blue-700/90 hover:shadow-blue-500/25'
-                          : 'bg-gray-600/90 hover:bg-gray-700/90 hover:shadow-gray-500/25'
-                      }`}
-                      title="Filtri"
-                    >
-                      <Filter className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setShowForm(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span className="font-medium">Nuovo</span>
-                    </button>
-                  </div>
+        {activeTab === 'transactions' && (
+          <div className="animate-fade-in-up">
+            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Transazioni</h2>
+                <div className="flex items-center gap-2">
+                  <FilterButton
+                    onClick={() => setShowFilterDialog(true)}
+                    className="ml-3"
+                  >
+                    Filtri
+                  </FilterButton>
                 </div>
               </div>
-            <ExpenseList
-              items={filteredData.expenses}
-              onDelete={confirmDelete}
-              onEdit={handleEdit}
-              type="expense"
-              categories={categories.expense}
-              onShowDetail={handleShowDetail}
-            />
-          </div>
-        )}
 
-                  {activeTab === 'incomes' && (
-            <div className="animate-fade-in-up">
-              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Entrate</h2>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowFilterDialog(true)}
-                      className={`flex items-center justify-center w-10 h-10 backdrop-blur-sm text-white rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-2xl active:scale-95 ${
-                        activeFilters.timeRange !== 'all' || 
-                        activeFilters.selectedCategories.length > 0 || 
-                        activeFilters.selectedStores.length > 0
-                          ? 'bg-blue-600/90 hover:bg-blue-700/90 hover:shadow-blue-500/25'
-                          : 'bg-gray-600/90 hover:bg-gray-700/90 hover:shadow-gray-500/25'
-                      }`}
-                      title="Filtri"
-                    >
-                      <Filter className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setShowForm(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span className="font-medium">Nuovo</span>
-                    </button>
-                  </div>
-                </div>
+              {/* Bottoni per aggiungere transazioni */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAddExpense}
+                  className="flex-1 flex items-center justify-center gap-2 px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-red-500 to-red-600 backdrop-blur-sm text-white rounded-xl shadow-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95 font-medium"
+                >
+                  <TrendingDown className="w-4 h-4" />
+                  <span>Nuova Spesa</span>
+                </button>
+                <button
+                  onClick={handleAddIncome}
+                  className="flex-1 flex items-center justify-center gap-2 px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 backdrop-blur-sm text-white rounded-xl shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95 font-medium"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  <span>Nuova Entrata</span>
+                </button>
               </div>
+            </div>
+            
             <ExpenseList
-              items={filteredData.incomes}
+              items={filteredTransactions}
               onDelete={confirmDelete}
               onEdit={handleEdit}
-              type="income"
-              categories={categories.income}
+              type="mixed"
+              categories={categories}
               onShowDetail={handleShowDetail}
             />
           </div>
@@ -1667,8 +1674,8 @@ function App() {
             </div>
             <div className="mt-8">
               <Statistics
-                expenses={filteredData.expenses}
-                incomes={filteredData.incomes}
+                expenses={getFilteredTransactions().filter(t => t._type === 'expense')}
+                incomes={getFilteredTransactions().filter(t => t._type === 'income')}
                 currentMonthExpenses={currentMonthExpenses}
                 currentMonthIncomes={currentMonthIncomes}
                 categories={categories}
@@ -1679,32 +1686,32 @@ function App() {
           </div>
         )}
 
-                  {activeTab === 'categories' && (
-            <div className="animate-fade-in-up">
-              <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Categorie</h2>
-              </div>
-            <div className="space-y-8">
-              <CategoryManager
-              categories={categories.expense}
-              onAddCategory={(cat) => handleAddCategory('expense', cat)}
-              onEditCategory={(id, fields) => handleEditCategory('expense', id, fields)}
-              onDeleteCategory={(id) => handleDeleteCategory('expense', id)}
-              type="expense"
-              onShowForm={handleShowCategoryForm}
-              onCategoryClick={handleCategoryClick}
-            />
-            <CategoryManager
-              categories={categories.income}
-              onAddCategory={(cat) => handleAddCategory('income', cat)}
-              onEditCategory={(id, fields) => handleEditCategory('income', id, fields)}
-              onDeleteCategory={(id) => handleDeleteCategory('income', id)}
-              type="income"
-              onShowForm={handleShowCategoryForm}
-              onCategoryClick={handleCategoryClick}
-            />
+        {activeTab === 'categories' && (
+          <div className="animate-fade-in-up">
+            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Categorie</h2>
             </div>
+          <div className="space-y-8">
+            <CategoryManager
+            categories={categories.expense}
+            onAddCategory={(cat) => handleAddCategory('expense', cat)}
+            onEditCategory={(id, fields) => handleEditCategory('expense', id, fields)}
+            onDeleteCategory={(id) => handleDeleteCategory('expense', id)}
+            type="expense"
+            onShowForm={handleShowCategoryForm}
+            onCategoryClick={handleCategoryClick}
+          />
+          <CategoryManager
+            categories={categories.income}
+            onAddCategory={(cat) => handleAddCategory('income', cat)}
+            onEditCategory={(id, fields) => handleEditCategory('income', id, fields)}
+            onDeleteCategory={(id) => handleDeleteCategory('income', id)}
+            type="income"
+            onShowForm={handleShowCategoryForm}
+            onCategoryClick={handleCategoryClick}
+          />
           </div>
+        </div>
         )}
 
         {activeTab === 'data' && (
@@ -1721,6 +1728,80 @@ function App() {
             />
           </div>
         )}
+
+        {activeTab === 'stores' && (
+          <div className="animate-fade-in-up">
+            {/* Titolo sticky e bottone filtro, identico alle altre sezioni */}
+            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">Negozi</h2>
+              <button
+                className="ml-3 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                onClick={() => setShowFilterDialog(true)}
+                aria-label="Filtra negozi"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A2 2 0 0013 14.586V19a1 1 0 01-1.447.894l-2-1A1 1 0 019 18v-3.414a2 2 0 00-.586-1.414L2 6.707A1 1 0 012 6V4z" />
+                </svg>
+              </button>
+            </div>
+            {/* Filtro come nelle altre sezioni */}
+            <div className="max-w-md mx-auto mb-4">
+              <FilterDialog
+                filters={activeFilters}
+                setFilters={setActiveFilters}
+                categories={categories}
+                wallets={wallets}
+                stores={[]}
+                isOpen={showFilterDialog}
+                setIsOpen={setShowFilterDialog}
+                showStoreFilter={false}
+              />
+            </div>
+            {/* Usa transazioni già filtrate per negozi e saldi, compreso il filtro Tutte/Spese/Entrate */}
+            {(() => {
+              // Ottieni le transazioni filtrate secondo il tipo selezionato (all/expenses/incomes)
+              const filteredTransactions = getFilteredTransactions();
+              // Ricava i negozi unici dalle transazioni filtrate, escludendo 'Trasferimento'
+              const filteredStores = Array.from(new Set(
+                filteredTransactions
+                  .filter(t => t.store && t.store.trim() && t.store.trim().toLowerCase() !== 'trasferimento')
+                  .map(t => t.store.trim())
+              )).sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
+              if (filteredStores.length === 0) {
+                return (
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    Nessun negozio trovato nelle transazioni
+                  </div>
+                );
+              }
+              return (
+                <ul className="space-y-3">
+                  {filteredStores.map(store => {
+                    // Calcola saldo solo sulle transazioni filtrate e del tipo selezionato
+                    const storeTransactions = filteredTransactions.filter(t => t.store && t.store.trim() === store);
+                    const totalExpenses = storeTransactions.filter(t => t._type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                    const totalIncomes = storeTransactions.filter(t => t._type === 'income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                    const netTotal = totalIncomes - totalExpenses;
+                    return (
+                      <li key={store} className="card py-2 px-4 w-full max-w-md mx-auto flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl shadow transition-all">
+                        <span className="font-medium text-gray-900 dark:text-gray-100 truncate text-base">{store}</span>
+                        <span className={`inline-block min-w-[90px] text-center px-3 py-1 rounded-lg font-semibold text-sm ml-2 ${
+                          netTotal > 0
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                            : netTotal < 0
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                            : 'bg-gray-100 text-gray-600 dark:bg-gray-800/60 dark:text-gray-300'
+                        }`}>
+                          {netTotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 })}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              );
+            })()}
+          </div>
+        )}
       </div>
 
       {/* Navigation Tabs fluttuante in basso */}
@@ -1730,29 +1811,29 @@ function App() {
           <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/30 via-yellow-500/30 via-green-500/30 via-blue-500/30 via-purple-500/30 to-pink-500/30 backdrop-blur-md border border-rainbow-500/40 rounded-2xl' : 'glass-card'} p-2`}>
             <div className="grid grid-cols-5 gap-2">
               <button
-                onClick={() => setActiveTab('expenses')}
+                onClick={() => setActiveTab('transactions')}
                 className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                  activeTab === 'expenses'
+                  activeTab === 'transactions'
                     ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
                 }`}
               >
                 <div className="flex items-center justify-center gap-1">
-                  <TrendingDown className="w-4 h-4" />
-                  <span className="hidden sm:inline">Spese</span>
+                  <DollarSign className="w-4 h-4" />
+                  <span className="hidden sm:inline">Trans.</span>
                 </div>
               </button>
               <button
-                onClick={() => setActiveTab('incomes')}
+                onClick={() => setActiveTab('stores')}
                 className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                  activeTab === 'incomes'
+                  activeTab === 'stores'
                     ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
                 }`}
               >
                 <div className="flex items-center justify-center gap-1">
-                  <TrendingUp className="w-4 h-4" />
-                  <span className="hidden sm:inline">Entrate</span>
+                  <Store className="w-4 h-4" />
+                  <span className="hidden sm:inline">Negozi</span>
                 </div>
               </button>
               <button
@@ -1804,15 +1885,15 @@ function App() {
         (() => {
           return (
             <ExpenseForm
-              onSubmit={editingItem ? updateItem : (activeTab === 'expenses' ? addExpense : addIncome)}
+              onSubmit={editingItem ? updateItem : (transactionType === 'expense' ? addExpense : addIncome)}
               onClose={() => {
                 setShowForm(false);
                 setEditingItem(null);
               }}
-              type={activeTab === 'expenses' ? 'expense' : 'income'}
+              type={transactionType}
               editingItem={editingItem}
               stores={stores}
-              categories={activeTab === 'expenses' ? categories.expense : categories.income}
+              categories={transactionType === 'expense' ? categories.expense : categories.income}
               wallets={wallets}
               selectedWalletId={activeWalletId}
               onAddStore={addStore}
@@ -2104,7 +2185,7 @@ function App() {
                       // Tecnologia
                       '💻', '🖥️', '⌨️', '🖱️', '📱', '📲', '📟', '📠', '🔋', '💡', '🔌', '🖨️', '📷', '📹', '🎥', '📺', '📻', '🎙️', '🎚️', '🎛️',
                       // Casa e famiglia
-                      '🏠', '🏡', '🏘️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏨', '🏪', '🏫', '🏩', '💒', '⛪', '🕌', '🕍', '🛕', '⛩️', '🕋', '⛲', '⛺', '🌁',
+                      '🏠', '🏡', '��️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏨', '🏪', '🏫', '🏩', '💒', '⛪', '🕌', '🕍', '🛕', '⛩️', '🕋', '⛲', '⛺', '🌁',
                       // Sport e attività
                       '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🎯', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽',
                       // Musica e intrattenimento (senza duplicati)
