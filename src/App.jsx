@@ -1594,7 +1594,7 @@ function App() {
       <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-6rem)] lg:pt-0">
         {/* Zona sinistra - Conti (fissa su tablet/desktop) */}
         <div className="lg:w-96 lg:flex-shrink-0">
-          <div className="max-w-md mx-auto px-6 mt-4 pb-6 lg:max-w-none lg:px-8 lg:mt-2 lg:pb-0 lg:h-full lg:overflow-hidden">
+          <div className="max-w-md mx-auto px-6 mt-4 pb-6 lg:max-w-none lg:px-8 lg:mt-2 lg:pb-0 lg:h-full lg:overflow-y-auto lg:pb-24">
             <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/20 via-yellow-500/20 via-green-500/20 via-blue-500/20 via-purple-500/20 to-pink-500/20 border border-rainbow-500/40 rounded-2xl' : 'floating-card'} ${balanceCollapsed ? 'p-3' : 'p-6'} transition-all duration-300 ${rainbowMode ? 'hover:shadow-2xl hover:shadow-rainbow-500/30' : 'hover:shadow-2xl hover:shadow-blue-500/20'} animate-bounce-in lg:mt-2`}>
               <div className="flex items-center justify-between" onClick={() => setBalanceCollapsed(!balanceCollapsed)} style={{ cursor: 'pointer' }}>
                 <div className="flex items-center gap-3">
