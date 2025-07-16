@@ -79,7 +79,7 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Export */}
-        <div className="card p-4 flex flex-col h-full min-h-[260px]">
+        <div className="card p-4 flex flex-col h-full min-h-[200px] md:min-h-[260px]">
           <div className="flex items-center gap-3 mb-3">
             <Download className="w-5 h-5 text-blue-600" />
             <h4 className="font-semibold text-gray-900 dark:text-gray-100">Esporta Dati</h4>
@@ -90,7 +90,7 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
           <div className="mt-auto">
             <button
               onClick={exportData}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
             >
               <Download className="w-4 h-4" />
               <span className="font-medium">Scarica Backup</span>
@@ -99,7 +99,7 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
         </div>
 
         {/* Import */}
-        <div className="card p-4 flex flex-col h-full min-h-[260px]">
+        <div className="card p-4 flex flex-col h-full min-h-[200px] md:min-h-[260px]">
           <div className="flex items-center gap-3 mb-3">
             <Upload className="w-5 h-5 text-green-600" />
             <h4 className="font-semibold text-gray-900 dark:text-gray-100">Importa Dati</h4>
@@ -110,7 +110,7 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
           <div className="mt-auto">
             <button
               onClick={onShowImportModal}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105"
             >
               <Upload className="w-4 h-4" />
               <span className="font-medium">Importa Dati</span>
@@ -130,7 +130,7 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
         </p>
         <button
           onClick={() => setShowResetConfirm(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-red-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-red-700/90 transition-all duration-200 transform hover:scale-105"
         >
           <Trash2 className="w-4 h-4" />
           <span className="font-medium">Reset Completo</span>
