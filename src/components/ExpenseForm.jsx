@@ -82,7 +82,14 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.amount) return;
+    if (!formData.amount || !formData.store.trim()) {
+      if (!formData.amount) {
+        showError('Inserisci un importo valido.', 'Campo obbligatorio');
+      } else if (!formData.store.trim()) {
+        showError('Inserisci il nome del negozio.', 'Campo obbligatorio');
+      }
+      return;
+    }
     
     // Valida che la data non sia nel futuro
     const selectedDate = new Date(formData.date);
@@ -293,6 +300,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                   autoComplete="off"
                   spellCheck="false"
                   className="input form-input-with-icon pr-10"
+                  required
                   placeholder="Digita il nome del negozio"
                 />
                 {/* Suggerimenti negozi */}
