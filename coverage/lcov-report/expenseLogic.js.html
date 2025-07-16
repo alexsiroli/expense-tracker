@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for features/wallets/walletLogic.js</title>
+    <title>Code coverage report for expenseLogic.js</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../prettify.css" />
-    <link rel="stylesheet" href="../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <link rel="stylesheet" href="prettify.css" />
+    <link rel="stylesheet" href="base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../../sort-arrow-sprite.png);
+            background-image: url(sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,27 +19,27 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">features/wallets</a> walletLogic.js</h1>
+        <h1><a href="index.html">All files</a> expenseLogic.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>22/22</span>
+                <span class='fraction'>16/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.83% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>23/24</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
@@ -97,74 +97,86 @@
 <a name='L32'></a><a href='#L32'>32</a>
 <a name='L33'></a><a href='#L33'>33</a>
 <a name='L34'></a><a href='#L34'>34</a>
-<a name='L35'></a><a href='#L35'>35</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Aggiunge un nuovo wallet
-export function addWallet(wallets, newWallet) {
-  if (!newWallet || !newWallet.name || !newWallet.color) throw new Error('Conto non valido');
-  if (wallets.some(w =&gt; w.name === newWallet.name)) throw new Error('Conto già esistente');
-  // Genera sempre un nuovo id unico deterministico (come per le transazioni)
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Aggiunge una nuova spesa
+export function addExpense(expenses, newExpense) {
+  if (!validateExpense(newExpense)) throw new Error('Spesa non valida');
+  // Genera sempre un nuovo id unico
   const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
-  return [...wallets, { ...newWallet, id: uniqueId, balance: newWallet.balance ?? 0, initialBalance: newWallet.initialBalance ?? 0 }];
+  return [...expenses, { ...newExpense, id: uniqueId }];
 }
 &nbsp;
-// Modifica un wallet esistente per id
-export function editWallet(wallets, id, updatedFields) {
-  return wallets.map(w =&gt;
-    w.id === id ? { ...w, ...updatedFields, id: w.id } : w
+// Modifica una spesa esistente per id
+export function editExpense(expenses, id, updatedFields) {
+  return expenses.map(e =&gt;
+    e.id === id ? { ...e, ...updatedFields } : e
   );
 }
 &nbsp;
-// Elimina un wallet per id
-export function deleteWallet(wallets, id) {
-  return wallets.filter(w =&gt; w.id !== id);
+// Elimina una spesa per id
+export function deleteExpense(expenses, id) {
+  return expenses.filter(e =&gt; e.id !== id);
 }
 &nbsp;
-// Valida un wallet (nome e colore obbligatori)
-export function validateWallet(wallet) {
-  return !!wallet &amp;&amp; !!wallet.name &amp;&amp; !!wallet.color;
+// Valida che la data non sia nel futuro
+export function validateDateNotFuture(date) {
+  if (!date) return false;
+  const transactionDate = new Date(date);
+  const now = new Date();
+  // Confronta solo la data (ignora l'ora) per permettere transazioni di oggi
+  const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return transactionDateOnly &lt;= todayOnly;
 }
 &nbsp;
-// Calcola il saldo di un wallet dato array di transazioni
-export function calculateWalletBalance(wallet, expenses, incomes) {
-  if (!wallet) return 0;
-  // Gestisce sia i vecchi ID numerici che i nuovi ID stringa
-  const totalIn = incomes.filter(i =&gt; i.walletId === wallet.id || i.walletId === wallet.name).reduce((sum, i) =&gt; sum + parseFloat(i.amount), 0);
-  const totalOut = expenses.filter(e =&gt; e.walletId === wallet.id || e.walletId === wallet.name).reduce((sum, e) =&gt; sum + parseFloat(e.amount), 0);
-  const baseBalance = wallet.initialBalance !== undefined ? wallet.initialBalance : <span class="branch-1 cbranch-no" title="branch not covered" >wallet.balance;</span>
-  return baseBalance + totalIn - totalOut;
+// Valida una spesa (importo &gt; 0, categoria e data obbligatorie, data non nel futuro)
+export function validateExpense(expense) {
+  return !!expense &amp;&amp;
+    typeof expense.amount === 'number' &amp;&amp; expense.amount &gt; 0 &amp;&amp;
+    !!expense.category &amp;&amp;
+    !!expense.date &amp;&amp;
+    validateDateNotFuture(expense.date);
 } </pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -172,16 +184,16 @@ export function calculateWalletBalance(wallet, expenses, incomes) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-16T00:38:55.074Z
+                at 2025-07-15T23:58:25.831Z
             </div>
-        <script src="../../prettify.js"></script>
+        <script src="prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="../../sorter.js"></script>
-        <script src="../../block-navigation.js"></script>
+        <script src="sorter.js"></script>
+        <script src="block-navigation.js"></script>
     </body>
 </html>
     

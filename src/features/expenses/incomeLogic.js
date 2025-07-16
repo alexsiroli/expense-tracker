@@ -18,10 +18,22 @@ export function deleteIncome(incomes, id) {
   return incomes.filter(i => i.id !== id);
 }
 
-// Valida una entrata (importo > 0, categoria e data obbligatorie)
+// Valida che la data non sia nel futuro
+export function validateDateNotFuture(date) {
+  if (!date) return false;
+  const transactionDate = new Date(date);
+  const now = new Date();
+  // Confronta solo la data (ignora l'ora) per permettere transazioni di oggi
+  const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return transactionDateOnly <= todayOnly;
+}
+
+// Valida una entrata (importo > 0, categoria e data obbligatorie, data non nel futuro)
 export function validateIncome(income) {
   return !!income &&
     typeof income.amount === 'number' && income.amount > 0 &&
     !!income.category &&
-    !!income.date;
+    !!income.date &&
+    validateDateNotFuture(income.date);
 } 

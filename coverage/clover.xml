@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1752623644252" clover="3.2.0">
-  <project timestamp="1752623644252" name="All files">
-    <metrics statements="161" coveredstatements="157" conditionals="150" coveredconditionals="135" methods="70" coveredmethods="70" elements="381" coveredelements="362" complexity="0" loc="161" ncloc="161" packages="5" files="7" classes="7"/>
+<coverage generated="1752626335086" clover="3.2.0">
+  <project timestamp="1752626335086" name="All files">
+    <metrics statements="173" coveredstatements="169" conditionals="156" coveredconditionals="141" methods="72" coveredmethods="72" elements="401" coveredelements="382" complexity="0" loc="173" ncloc="173" packages="5" files="7" classes="7"/>
     <package name="features.categories">
       <metrics statements="7" coveredstatements="7" conditionals="12" coveredconditionals="12" methods="7" coveredmethods="7"/>
       <file name="categoryLogic.js" path="/Users/alexsiroli/expense-tracker/src/features/categories/categoryLogic.js">
@@ -16,26 +16,38 @@
       </file>
     </package>
     <package name="features.expenses">
-      <metrics statements="14" coveredstatements="14" conditionals="18" coveredconditionals="18" methods="12" coveredmethods="12"/>
+      <metrics statements="26" coveredstatements="26" conditionals="24" coveredconditionals="24" methods="14" coveredmethods="14"/>
       <file name="expenseLogic.js" path="/Users/alexsiroli/expense-tracker/src/features/expenses/expenseLogic.js">
-        <metrics statements="7" coveredstatements="7" conditionals="9" coveredconditionals="9" methods="6" coveredmethods="6"/>
+        <metrics statements="13" coveredstatements="13" conditionals="12" coveredconditionals="12" methods="7" coveredmethods="7"/>
         <line num="3" count="16" type="cond" truecount="2" falsecount="0"/>
         <line num="5" count="10" type="stmt"/>
         <line num="6" count="10" type="stmt"/>
         <line num="11" count="5" type="stmt"/>
         <line num="12" count="8" type="cond" truecount="2" falsecount="0"/>
         <line num="18" count="6" type="stmt"/>
-        <line num="23" count="29" type="cond" truecount="5" falsecount="0"/>
+        <line num="23" count="19" type="cond" truecount="2" falsecount="0"/>
+        <line num="24" count="16" type="stmt"/>
+        <line num="25" count="16" type="stmt"/>
+        <line num="27" count="16" type="stmt"/>
+        <line num="28" count="16" type="stmt"/>
+        <line num="29" count="16" type="stmt"/>
+        <line num="34" count="30" type="cond" truecount="6" falsecount="0"/>
       </file>
       <file name="incomeLogic.js" path="/Users/alexsiroli/expense-tracker/src/features/expenses/incomeLogic.js">
-        <metrics statements="7" coveredstatements="7" conditionals="9" coveredconditionals="9" methods="6" coveredmethods="6"/>
+        <metrics statements="13" coveredstatements="13" conditionals="12" coveredconditionals="12" methods="7" coveredmethods="7"/>
         <line num="3" count="16" type="cond" truecount="2" falsecount="0"/>
         <line num="5" count="10" type="stmt"/>
         <line num="6" count="10" type="stmt"/>
         <line num="11" count="5" type="stmt"/>
         <line num="12" count="8" type="cond" truecount="2" falsecount="0"/>
         <line num="18" count="6" type="stmt"/>
-        <line num="23" count="29" type="cond" truecount="5" falsecount="0"/>
+        <line num="23" count="19" type="cond" truecount="2" falsecount="0"/>
+        <line num="24" count="16" type="stmt"/>
+        <line num="25" count="16" type="stmt"/>
+        <line num="27" count="16" type="stmt"/>
+        <line num="28" count="16" type="stmt"/>
+        <line num="29" count="16" type="stmt"/>
+        <line num="34" count="30" type="cond" truecount="6" falsecount="0"/>
       </file>
     </package>
     <package name="features.statistics">

@@ -135,8 +135,8 @@ describe('easterEggs utils - advanced/edge cases', () => {
     const getCompletedEasterEggs = jest.fn().mockResolvedValue(['tapSegreto', 'nataleMagico']);
     const result = await getEasterEggsWithCompletionStatus(getCompletedEasterEggs);
     expect(Array.isArray(result)).toBe(true);
-    expect(result.find(e => e.id === 'tapSegreto').completed).toBe(true);
-    expect(result.find(e => e.id === 'tapLungo').completed).toBe(false);
+    expect(result.find(e => e.id === 'tapSegreto').isCompleted).toBe(true);
+    expect(result.find(e => e.id === 'tapLungo').isCompleted).toBe(false);
   });
 
   it('getEasterEggsWithCompletionStatus gestisce errori', async () => {

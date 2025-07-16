@@ -5,10 +5,12 @@ import { useFirestore } from '../hooks/useFirestore';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { getAllEasterEggs, getEasterEggsWithCompletionStatus, saveEasterEggCompletion } from '../utils/easterEggs';
+import { usePopup } from '../contexts/PopupContext';
 
 const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
   const { user, logout, deleteAccount } = useAuth();
   const { deleteAllUserData, getCompletedEasterEggs, setEasterEggCompleted, isEasterEggCompleted } = useFirestore();
+  const { showError, showAlert } = usePopup();
   const { data: expenses } = useFirestore().useCollectionData('expenses');
   const { data: incomes } = useFirestore().useCollectionData('incomes');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -95,7 +97,7 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
           onClose();
         }
       } else {
-        alert(`Errore durante l'eliminazione account: ${error.message}`);
+        showError(`Errore durante l'eliminazione account: ${error.message}`, 'Errore');
       }
     } finally {
       setIsDeleting(false);
@@ -113,8 +115,8 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-sm w-full animate-fade-in-up">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-sm w-full animate-fade-in-up" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
@@ -227,8 +229,11 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
 
       {/* Conferma eliminazione aggressiva */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-up">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteConfirmation('');
+                  }}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-up" onClick={e => e.stopPropagation()}>
             {/* Header rosso */}
             <div className="bg-red-600/90 backdrop-blur-sm text-white p-6 rounded-t-2xl">
               <div className="flex items-center justify-between">
@@ -326,8 +331,8 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
 
       {/* Easter Egg Modal (Medagliere) */}
       {showEasterEggs && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-sm w-full animate-fade-in-up">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowEasterEggs(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-sm w-full animate-fade-in-up" onClick={e => e.stopPropagation()}>
             {/* Header con X di chiusura */}
             <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl flex items-center justify-between">
               <h2 className="text-xl font-bold">Easter Egg</h2>
@@ -358,10 +363,10 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
                       onClick={() => {
                         if (egg.isCompleted) {
                           // Se completato, mostra titolo e descrizione
-                          alert(`${egg.title}\n\n${egg.description}`);
+                          showAlert(`${egg.description}`, egg.title);
                         } else {
                           // Se non completato, mostra solo il titolo
-                          alert(`${egg.title}\n\n???`);
+                          showAlert('Questo easter egg è ancora bloccato. Continua a esplorare l\'app per sbloccarlo!', egg.title);
                         }
                       }}
                       className="group relative"

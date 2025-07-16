@@ -1,4 +1,4 @@
-import { addIncome, editIncome, deleteIncome, validateIncome } from './incomeLogic';
+import { addIncome, editIncome, deleteIncome, validateIncome, validateDateNotFuture } from './incomeLogic';
 
 describe('incomeLogic', () => {
   const baseIncomes = [
@@ -40,6 +40,39 @@ describe('incomeLogic', () => {
     expect(validateIncome({ amount: 0, category: '', date: '' })).toBe(false);
     expect(validateIncome({})).toBe(false);
     expect(validateIncome(null)).toBe(false);
+  });
+
+  it('validateDateNotFuture ritorna true per date passate', () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    expect(validateDateNotFuture(yesterday.toISOString())).toBe(true);
+  });
+
+  it('validateDateNotFuture ritorna true per data di oggi', () => {
+    const today = new Date().toISOString().split('T')[0];
+    expect(validateDateNotFuture(today)).toBe(true);
+  });
+
+  it('validateDateNotFuture ritorna false per date future', () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    expect(validateDateNotFuture(tomorrow.toISOString())).toBe(false);
+  });
+
+  it('validateDateNotFuture ritorna false per date non valide', () => {
+    expect(validateDateNotFuture(null)).toBe(false);
+    expect(validateDateNotFuture(undefined)).toBe(false);
+    expect(validateDateNotFuture('')).toBe(false);
+  });
+
+  it('validateIncome ritorna false per date future', () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    expect(validateIncome({ 
+      amount: 10, 
+      category: 'Test', 
+      date: tomorrow.toISOString() 
+    })).toBe(false);
   });
 
   it('addIncome su array vuoto', () => {

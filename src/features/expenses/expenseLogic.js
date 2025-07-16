@@ -18,10 +18,22 @@ export function deleteExpense(expenses, id) {
   return expenses.filter(e => e.id !== id);
 }
 
-// Valida una spesa (importo > 0, categoria e data obbligatorie)
+// Valida che la data non sia nel futuro
+export function validateDateNotFuture(date) {
+  if (!date) return false;
+  const transactionDate = new Date(date);
+  const now = new Date();
+  // Confronta solo la data (ignora l'ora) per permettere transazioni di oggi
+  const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return transactionDateOnly <= todayOnly;
+}
+
+// Valida una spesa (importo > 0, categoria e data obbligatorie, data non nel futuro)
 export function validateExpense(expense) {
   return !!expense &&
     typeof expense.amount === 'number' && expense.amount > 0 &&
     !!expense.category &&
-    !!expense.date;
+    !!expense.date &&
+    validateDateNotFuture(expense.date);
 } 

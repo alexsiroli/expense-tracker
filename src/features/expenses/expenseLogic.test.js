@@ -1,4 +1,4 @@
-import { addExpense, editExpense, deleteExpense, validateExpense } from './expenseLogic';
+import { addExpense, editExpense, deleteExpense, validateExpense, validateDateNotFuture } from './expenseLogic';
 
 describe('expenseLogic', () => {
   const baseExpenses = [
@@ -40,6 +40,39 @@ describe('expenseLogic', () => {
     expect(validateExpense({ amount: 0, category: '', date: '' })).toBe(false);
     expect(validateExpense({})).toBe(false);
     expect(validateExpense(null)).toBe(false);
+  });
+
+  it('validateDateNotFuture ritorna true per date passate', () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    expect(validateDateNotFuture(yesterday.toISOString())).toBe(true);
+  });
+
+  it('validateDateNotFuture ritorna true per data di oggi', () => {
+    const today = new Date().toISOString().split('T')[0];
+    expect(validateDateNotFuture(today)).toBe(true);
+  });
+
+  it('validateDateNotFuture ritorna false per date future', () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    expect(validateDateNotFuture(tomorrow.toISOString())).toBe(false);
+  });
+
+  it('validateDateNotFuture ritorna false per date non valide', () => {
+    expect(validateDateNotFuture(null)).toBe(false);
+    expect(validateDateNotFuture(undefined)).toBe(false);
+    expect(validateDateNotFuture('')).toBe(false);
+  });
+
+  it('validateExpense ritorna false per date future', () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    expect(validateExpense({ 
+      amount: 10, 
+      category: 'Test', 
+      date: tomorrow.toISOString() 
+    })).toBe(false);
   });
 
   it('addExpense su array vuoto', () => {

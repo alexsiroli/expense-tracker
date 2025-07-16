@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Euro, Tag, Calendar, Save, ArrowLeft, Store, Search, Wallet } from 'lucide-react';
 import CustomSelect from './CustomSelect';
+import { usePopup } from '../contexts/PopupContext';
 
 function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [], categories = [], wallets = [], selectedWalletId, onAddStore }) {
+  const { showError } = usePopup();
   const [formData, setFormData] = useState({
     amount: '',
     category: categories.length > 0 ? categories[0].name : '',
@@ -81,6 +83,17 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.amount) return;
+    
+    // Valida che la data non sia nel futuro
+    const selectedDate = new Date(formData.date);
+    const today = new Date();
+    const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    if (selectedDateOnly > todayOnly) {
+      showError('Non è possibile creare transazioni con date future. Seleziona una data di oggi o precedente.', 'Data non valida');
+      return;
+    }
     
     // Aggiunge il negozio alla lista se non esiste
     await addStoreToSuggestions(formData.store);
@@ -346,6 +359,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
+                  max={new Date().toISOString().split('T')[0]}
                   className="input"
                   required
                 />

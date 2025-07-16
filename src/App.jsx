@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload, Euro } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload, Euro, Edit } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import Statistics from './components/Statistics';
@@ -25,6 +25,7 @@ import { addCategory, editCategory, deleteCategory, validateCategory } from './f
 import { addWallet as addWalletLogic, editWallet as editWalletLogic, deleteWallet as deleteWalletLogic, validateWallet, calculateWalletBalance } from './features/wallets/walletLogic';
 import { addExpense as addExpenseLogic, editExpense, deleteExpense, validateExpense } from './features/expenses/expenseLogic';
 import { addIncome as addIncomeLogic, editIncome, deleteIncome, validateIncome } from './features/expenses/incomeLogic';
+import { PopupProvider, usePopup } from './contexts/PopupContext';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -71,17 +72,12 @@ const WALLET_COLORS = [
   'rainbow', // colore personalizzato
 ];
 
-// Modello dati conto: { id, name, color, balance, initialBalance }
-const defaultWallet = {
-  name: 'Portafoglio',
-  color: '#3b82f6', // Blu fisso per il portafoglio di default
-  balance: 0,
-  initialBalance: 0,
-};
+
 
 function App() {
   const { theme, toggleTheme } = useTheme();
   const { user, loading: authLoading, logout } = useAuth();
+  const { showAlert, showSuccess, showError, showEasterEgg, showConfirm } = usePopup();
   const { 
     useCollectionData, 
     addDocument, 
@@ -176,11 +172,18 @@ function App() {
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
   const [loadEasterEggsWithStatusFn, setLoadEasterEggsWithStatusFn] = useState(null);
   const [easterEggsWithStatus, setEasterEggsWithStatus] = useState([]);
+  
+  // Stati per i dialog dei wallet
+  const [showWalletActions, setShowWalletActions] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState(null);
+  const [showWalletConfirmDelete, setShowWalletConfirmDelete] = useState(false);
+  const [deletingWallet, setDeletingWallet] = useState(false);
 
   // Determina se almeno un modal è aperto
   const isAnyModalOpen = showForm || showConfirmDelete || showUserProfile || 
     showWalletForm || showTransferModal || showColorPicker || showCategoryForm || 
-    showImportModal || showResetModal || showFilterDialog || showTransactionDialog;
+    showImportModal || showResetModal || showFilterDialog || showTransactionDialog ||
+    showWalletActions || showWalletConfirmDelete;
 
   // Blocca lo scroll quando un modal è aperto
   useScrollLock(isAnyModalOpen);
@@ -359,15 +362,7 @@ function App() {
     if (user && storesData.length === 0) {
       addDocument('stores', { stores: [] });
     }
-    // Crea il conto di default solo se l'utente non ha nessun conto E non ha mai avuto conti prima
-    if (user && walletsData.length === 0 && !localStorage.getItem('userHasWallets')) {
-      // Genera un ID deterministico per il wallet di default
-      const defaultWalletId = `${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
-      const defaultWalletWithId = { ...defaultWallet, id: defaultWalletId };
-      addDocument('wallets', defaultWalletWithId);
-      localStorage.setItem('userHasWallets', 'true');
-    }
-  }, [user, categoriesData.length, storesData.length, walletsData.length]);
+  }, [user, categoriesData.length, storesData.length]);
 
 
 
@@ -465,7 +460,7 @@ function App() {
           const easterEgg = getEasterEgg('tapLungo');
           if (easterEgg) {
             setTimeout(() => {
-              alert(easterEgg.activationMessage);
+              showEasterEgg(easterEgg);
             }, 100);
           }
         } else {
@@ -566,7 +561,7 @@ function App() {
         await new Promise(resolve => setTimeout(resolve, 100));
         await loadEasterEggsWithStatus();
         setTimeout(() => {
-          alert(easterEgg.activationMessage);
+          showEasterEgg(easterEgg);
         }, 100);
       }
     }
@@ -618,7 +613,7 @@ function App() {
         await new Promise(resolve => setTimeout(resolve, 100));
         await loadEasterEggsWithStatus();
         setTimeout(() => {
-          alert(easterEgg.activationMessage);
+          showEasterEgg(easterEgg);
         }, 100);
       }
     }
@@ -654,7 +649,7 @@ function App() {
     const wallet = wallets.find(w => w.id === walletId);
     
     if (!wallet) {
-      alert('Wallet non trovato. Riprova.');
+              showError('Wallet non trovato. Riprova.');
       return;
     }
     
@@ -670,7 +665,7 @@ function App() {
       await performWalletDeletion(walletId);
     } catch (error) {
       console.error('Errore in deleteWallet:', error);
-      alert('Errore durante l\'eliminazione del conto: ' + error.message);
+              showError('Errore durante l\'eliminazione del conto: ' + error.message);
     }
   };
 
@@ -705,10 +700,7 @@ function App() {
         setActiveWalletId(remainingWallets[0]?.id || null);
       }
       
-      // Se non ci sono più conti, rimuovi il flag per permettere la ricreazione del conto di default
-      if (wallets.length === 1) {
-        localStorage.removeItem('userHasWallets');
-      }
+
     } catch (error) {
       console.error('Errore durante l\'eliminazione del wallet:', error);
       console.error('Codice errore:', error.code);
@@ -890,7 +882,7 @@ function App() {
     
     try {
       if (!user) {
-        alert('Utente non autenticato. Effettua nuovamente l\'accesso.');
+        showError('Utente non autenticato. Effettua nuovamente l\'accesso.');
         return;
       }
       
@@ -924,9 +916,9 @@ function App() {
       
       // Mostra messaggio specifico per duplicati
       if (error.message === 'Esiste già un conto con questo nome') {
-        alert('Esiste già un conto con questo nome. Scegli un nome diverso.');
+        showError('Esiste già un conto con questo nome. Scegli un nome diverso.');
       } else {
-        alert('Errore durante il salvataggio del conto. Riprova.');
+                  showError('Errore durante il salvataggio del conto. Riprova.');
       }
     }
   };
@@ -945,6 +937,49 @@ function App() {
     setEditingWallet(null);
     setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
     setShowWalletForm(true);
+  };
+
+  // Funzioni per i dialog dei wallet
+  const handleWalletClick = (wallet) => {
+    setSelectedWallet(wallet);
+    setShowWalletActions(true);
+  };
+
+  const handleEditWalletFromDialog = () => {
+    if (selectedWallet) {
+      handleEditWallet(selectedWallet);
+      setShowWalletActions(false);
+      setSelectedWallet(null);
+    }
+  };
+
+  const handleDeleteWalletFromDialog = () => {
+    setShowWalletActions(false);
+    setShowWalletConfirmDelete(true);
+  };
+
+  const confirmDeleteWalletFromDialog = async () => {
+    if (selectedWallet) {
+      setDeletingWallet(true);
+      try {
+        await deleteWallet(selectedWallet.id);
+      } catch (e) {
+        console.error('Errore durante l\'eliminazione del wallet:', e);
+      }
+      setDeletingWallet(false);
+      setShowWalletConfirmDelete(false);
+      setSelectedWallet(null);
+    }
+  };
+
+  const closeWalletActions = () => {
+    setShowWalletActions(false);
+    setSelectedWallet(null);
+  };
+
+  const closeWalletConfirmDelete = () => {
+    setShowWalletConfirmDelete(false);
+    setSelectedWallet(null);
   };
 
   // Funzione per gestire i trasferimenti tra conti
@@ -1006,9 +1041,9 @@ function App() {
       await importUserData(data, (updatedStores) => {
         if (Array.isArray(updatedStores)) setStores(updatedStores);
       });
-      alert('Dati importati con successo!');
+              showSuccess('Dati importati con successo!');
     } catch (error) {
-      alert('Errore durante l\'importazione dei dati.');
+              showError('Errore durante l\'importazione dei dati.');
     }
   };
 
@@ -1049,12 +1084,11 @@ function App() {
         selectedStores: [],
         selectedWallets: []
       });
-      // Rimuovi il flag per permettere la ricreazione del conto di default
-      localStorage.removeItem('userHasWallets');
-      alert('Tutti i dati sono stati eliminati con successo. L\'applicazione si ricaricherà automaticamente.');
+
+              showSuccess('Tutti i dati sono stati eliminati con successo. L\'applicazione si ricaricherà automaticamente.');
       window.location.reload();
     } catch (error) {
-      alert('Errore durante l\'eliminazione dei dati: ' + error.message);
+              showError('Errore durante l\'eliminazione dei dati: ' + error.message);
     }
   };
 
@@ -1192,7 +1226,7 @@ function App() {
         activateEasterEgg('tapSegreto', { setRainbowMode });
         saveEasterEggCompletion('tapSegreto', setEasterEggCompleted).then(() => loadEasterEggsWithStatus());
         const easterEgg = getEasterEgg('tapSegreto');
-        if (easterEgg) setTimeout(() => alert(easterEgg.activationMessage), 100);
+        if (easterEgg) setTimeout(() => showEasterEgg(easterEgg), 100);
       }
     } else if (mode === 'party') {
       if (partyMode) {
@@ -1206,7 +1240,7 @@ function App() {
         activateEasterEgg('tapLungo', { setPartyMode });
         saveEasterEggCompletion('tapLungo', setEasterEggCompleted).then(() => loadEasterEggsWithStatus());
         const easterEgg = getEasterEgg('tapLungo');
-        if (easterEgg) setTimeout(() => alert(easterEgg.activationMessage), 100);
+        if (easterEgg) setTimeout(() => showEasterEgg(easterEgg), 100);
       }
     } else if (mode === 'retro') {
       if (retroMode) {
@@ -1220,7 +1254,7 @@ function App() {
         activateEasterEgg('temaSegreto', { setRetroMode });
         saveEasterEggCompletion('temaSegreto', setEasterEggCompleted).then(() => loadEasterEggsWithStatus());
         const easterEgg = getEasterEgg('temaSegreto');
-        if (easterEgg) setTimeout(() => alert(easterEgg.activationMessage), 100);
+        if (easterEgg) setTimeout(() => showEasterEgg(easterEgg), 100);
       }
     }
     setTimeout(() => {
@@ -1313,9 +1347,11 @@ function App() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{format(new Date(), 'MMMM yyyy', { locale: it }).replace(/^ /, c => c.toUpperCase())}</h2>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-lg font-bold ${(currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency((currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)))}
-              </span>
+              {balanceCollapsed && (
+                <span className={`text-lg font-bold ${(currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency((currentMonthIncomes.filter(i => i.category !== 'Trasferimento').reduce((sum, i) => sum + parseFloat(i.amount), 0) - currentMonthExpenses.filter(e => e.category !== 'Trasferimento').reduce((sum, e) => sum + parseFloat(e.amount), 0)))}
+                </span>
+              )}
               <button
                 onClick={() => setBalanceCollapsed(!balanceCollapsed)}
                 className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200 transform hover:scale-110 active:scale-95"
@@ -1361,6 +1397,33 @@ function App() {
               <div className="mt-8 animate-fade-in-up">
                 {(() => {
                   const walletsWithBalance = getWalletsWithCalculatedBalance();
+                  if (walletsWithBalance.length === 0) {
+                    return (
+                      <div className="text-center py-4">
+                        <div className="flex justify-between items-center mb-3 max-w-xs mx-auto">
+                          <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">Gestione Conti</div>
+                          <button
+                            onClick={addWallet ? handleAddWallet : undefined}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
+                          >
+                            <Wallet className="w-4 h-4" />
+                            <span className="font-medium">Nuovo</span>
+                          </button>
+                        </div>
+                        <div className="mb-3">
+                          <div className="w-14 h-14 mx-auto bg-muted rounded-full flex items-center justify-center mb-2">
+                            <Wallet className="w-7 h-7 text-gray-500 dark:text-gray-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                            Nessun conto salvato
+                          </h3>
+                          <p className="text-gray-500 dark:text-gray-400 text-sm">
+                            Aggiungi un conto per iniziare a tracciare le tue finanze
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
                     <WalletManager
                       wallets={walletsWithBalance}
@@ -1370,6 +1433,7 @@ function App() {
                       onShowForm={handleAddWallet}
                       onEditWallet={handleEditWallet}
                       onShowTransferModal={handleShowTransferModal}
+                      onWalletClick={handleWalletClick}
                     />
                   );
                 })()}
@@ -1663,8 +1727,12 @@ function App() {
 
       {/* Wallet Manager Modal */}
       {showWalletForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" onClick={() => {
+                  setShowWalletForm(false);
+                  setEditingWallet(null);
+                  setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
+                }}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
             <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => {
@@ -1739,8 +1807,11 @@ function App() {
 
       {/* Transfer Modal */}
       {showTransferModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" onClick={() => {
+                  setShowTransferModal(false);
+                  setTransferFormData({ fromWalletId: '', toWalletId: '', amount: '' });
+                }}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
             <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => {
@@ -1831,8 +1902,8 @@ function App() {
 
       {/* Color Picker Modal */}
       {showColorPicker && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" onClick={() => setShowColorPicker(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm transform transition-all duration-300 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
             <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => setShowColorPicker(false)} className="text-white/80 hover:text-white transition-colors">
@@ -1872,8 +1943,8 @@ function App() {
 
       {/* Category Form Modal */}
       {showCategoryForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" onClick={handleCategoryCancel}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
             <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={handleCategoryCancel} className="text-white/80 hover:text-white transition-colors">
@@ -1984,8 +2055,8 @@ function App() {
 
       {/* Import Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" onClick={() => setShowImportModal(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
             <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => setShowImportModal(false)} className="text-white/80 hover:text-white transition-colors">
@@ -2014,7 +2085,7 @@ function App() {
                           importData(data);
                           setShowImportModal(false);
                         } catch (error) {
-                          alert('Errore durante l\'importazione: ' + error.message);
+                          showError('Errore durante l\'importazione: ' + error.message);
                         }
                       };
                       reader.readAsText(file);
@@ -2047,8 +2118,8 @@ function App() {
 
       {/* Reset Modal */}
       {showResetModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" onClick={() => setShowResetModal(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all duration-300 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
             <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <button onClick={() => setShowResetModal(false)} className="text-white/80 hover:text-white transition-colors">
@@ -2142,10 +2213,79 @@ function App() {
           onEdit={() => { handleEdit(selectedTransaction); setShowTransactionDialog(false); }}
           onDelete={() => { confirmDelete(selectedTransaction.id); setShowTransactionDialog(false); }}
           categories={categories}
+          wallets={getWalletsWithCalculatedBalance()}
         />
+      )}
+
+      {/* Modal Azioni Wallet */}
+      {showWalletActions && selectedWallet && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999]">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xs p-6 border border-gray-200 dark:border-gray-700 relative">
+            <button onClick={closeWalletActions} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col items-center gap-2 mb-6">
+              <span className="w-10 h-10 rounded-full" style={{ background: selectedWallet.color, display: 'inline-block' }}></span>
+              <div className="font-bold text-lg text-gray-900 dark:text-gray-100">{selectedWallet.name}</div>
+              <div className={`text-sm font-medium ${selectedWallet.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(selectedWallet.balance)}</div>
+            </div>
+            <button
+              onClick={handleEditWalletFromDialog}
+              className="w-full flex items-center gap-2 justify-center py-3 mb-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold"
+            >
+              <Edit className="w-5 h-5" /> Modifica
+            </button>
+            <button
+              onClick={handleDeleteWalletFromDialog}
+              className="w-full flex items-center gap-2 justify-center py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold"
+            >
+              <Trash2 className="w-5 h-5" /> Elimina
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Conferma Eliminazione Wallet */}
+      {showWalletConfirmDelete && selectedWallet && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999]">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xs p-6 border border-gray-200 dark:border-gray-700 relative">
+            <button onClick={closeWalletConfirmDelete} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="mb-6 text-center">
+              <div className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">Conferma eliminazione</div>
+              <div className="text-gray-600 dark:text-gray-300">Sei sicuro di voler eliminare il conto <span className='font-semibold'>{selectedWallet.name}</span>? Questa azione non può essere annullata.</div>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={closeWalletConfirmDelete}
+                className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-semibold"
+                disabled={deletingWallet}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={confirmDeleteWalletFromDialog}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold"
+                disabled={deletingWallet}
+              >
+                {deletingWallet ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> : 'Elimina'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-export default App;
+// Wrapper component con PopupProvider
+const AppWithPopup = () => {
+  return (
+    <PopupProvider>
+      <App />
+    </PopupProvider>
+  );
+};
+
+export default AppWithPopup;
