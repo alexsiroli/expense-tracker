@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { Plus, X, Tag, Edit, Trash2 } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 
-function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCategory, type, onShowForm }) {
-
-  const handleEdit = (category) => {
-    onShowForm(type, category);
-  };
+function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCategory, type, onShowForm, onCategoryClick }) {
 
   return (
     <div className="space-y-4">
@@ -29,7 +25,7 @@ function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCa
           <button
             key={category.id}
             type="button"
-            onClick={() => handleEdit(category)}
+            onClick={() => onCategoryClick(category, type)}
             className="card p-4 flex items-center gap-3 min-w-0 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700/40 transition-colors"
             aria-label={`Modifica categoria ${category.name}`}
           >

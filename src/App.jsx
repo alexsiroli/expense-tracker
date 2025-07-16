@@ -165,6 +165,7 @@ function App() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryFormData, setCategoryFormData] = useState({ name: '', icon: '📦' });
   const [categoryType, setCategoryType] = useState('expense');
+  const [showCategoryFormFromDialog, setShowCategoryFormFromDialog] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   // Stato per il dialog di dettaglio transazione
@@ -178,12 +179,18 @@ function App() {
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [showWalletConfirmDelete, setShowWalletConfirmDelete] = useState(false);
   const [deletingWallet, setDeletingWallet] = useState(false);
+  
+  // Stati per i dialog delle categorie
+  const [showCategoryActions, setShowCategoryActions] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showCategoryConfirmDelete, setShowCategoryConfirmDelete] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState(false);
 
   // Determina se almeno un modal è aperto
   const isAnyModalOpen = showForm || showConfirmDelete || showUserProfile || 
     showWalletForm || showTransferModal || showColorPicker || showCategoryForm || 
     showImportModal || showResetModal || showFilterDialog || showTransactionDialog ||
-    showWalletActions || showWalletConfirmDelete;
+    showWalletActions || showWalletConfirmDelete || showCategoryActions || showCategoryConfirmDelete;
 
   // Blocca lo scroll quando un modal è aperto
   useScrollLock(isAnyModalOpen);
@@ -720,25 +727,78 @@ function App() {
   };
 
   // Gestione categorie (usando funzioni pure)
-  const handleAddCategory = (type, newCategory) => {
-    setCategories(prev => ({
-      ...prev,
-      [type]: addCategory(prev[type], newCategory)
-    }));
+  const handleAddCategory = async (type, newCategory) => {
+    try {
+      // Aggiorna lo stato locale
+      const updatedCategories = {
+        ...categories,
+        [type]: addCategory(categories[type], newCategory)
+      };
+      setCategories(updatedCategories);
+      
+      // Sincronizza con Firestore
+      if (categoriesData && categoriesData.length > 0) {
+        const categoriesDoc = categoriesData[0];
+        await updateDocument('categories', categoriesDoc.id, updatedCategories);
+      } else {
+        await addDocument('categories', updatedCategories);
+      }
+      
+      showSuccess('Categoria aggiunta con successo!');
+    } catch (error) {
+      console.error('Errore durante l\'aggiunta della categoria:', error);
+      showError(error.message || 'Errore durante l\'aggiunta della categoria.');
+      // Ripristina lo stato precedente in caso di errore
+      setCategories(categories);
+    }
   };
 
-  const handleEditCategory = (type, id, updatedFields) => {
-    setCategories(prev => ({
-      ...prev,
-      [type]: editCategory(prev[type], id, updatedFields)
-    }));
+  const handleEditCategory = async (type, id, updatedFields) => {
+    try {
+      // Aggiorna lo stato locale
+      const updatedCategories = {
+        ...categories,
+        [type]: editCategory(categories[type], id, updatedFields)
+      };
+      setCategories(updatedCategories);
+      
+      // Sincronizza con Firestore
+      if (categoriesData && categoriesData.length > 0) {
+        const categoriesDoc = categoriesData[0];
+        await updateDocument('categories', categoriesDoc.id, updatedCategories);
+      }
+      
+      showSuccess('Categoria modificata con successo!');
+    } catch (error) {
+      console.error('Errore durante la modifica della categoria:', error);
+      showError(error.message || 'Errore durante la modifica della categoria.');
+      // Ripristina lo stato precedente in caso di errore
+      setCategories(categories);
+    }
   };
 
-  const handleDeleteCategory = (type, id) => {
-    setCategories(prev => ({
-      ...prev,
-      [type]: deleteCategory(prev[type], id)
-    }));
+  const handleDeleteCategory = async (type, id) => {
+    try {
+      // Aggiorna lo stato locale
+      const updatedCategories = {
+        ...categories,
+        [type]: deleteCategory(categories[type], id)
+      };
+      setCategories(updatedCategories);
+      
+      // Sincronizza con Firestore
+      if (categoriesData && categoriesData.length > 0) {
+        const categoriesDoc = categoriesData[0];
+        await updateDocument('categories', categoriesDoc.id, updatedCategories);
+      }
+      
+      showSuccess('Categoria eliminata con successo!');
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione della categoria:', error);
+      showError(error.message || 'Errore durante l\'eliminazione della categoria.');
+      // Ripristina lo stato precedente in caso di errore
+      setCategories(categories);
+    }
   };
 
   const totalExpenses = expenses.filter(expense => expense.category !== 'Trasferimento').reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
@@ -1103,35 +1163,46 @@ function App() {
       setCategoryFormData({ name: '', icon: '📦' });
     }
     setShowCategoryForm(true);
+    setShowCategoryFormFromDialog(false);
   };
 
   const handleCategorySubmit = async (e) => {
     e.preventDefault();
     if (!categoryFormData.name.trim()) return;
 
-    if (editingCategory) {
-      await editCategory(editingCategory.id, categoryFormData.name, categoryFormData.icon);
-    } else {
-      await addCategory(categoryFormData.name, categoryFormData.icon, categoryType);
+    try {
+      if (editingCategory) {
+        await handleEditCategory(categoryType, editingCategory.id, categoryFormData);
+      } else {
+        await handleAddCategory(categoryType, categoryFormData);
+      }
+      setCategoryFormData({ name: '', icon: '📦' });
+      setShowCategoryForm(false);
+      setEditingCategory(null);
+      setShowCategoryFormFromDialog(false);
+    } catch (error) {
+      showError(error.message || 'Errore durante la creazione della categoria.');
     }
-    
-    setCategoryFormData({ name: '', icon: '📦' });
-    setShowCategoryForm(false);
-    setEditingCategory(null);
   };
 
   const handleCategoryCancel = () => {
     setShowCategoryForm(false);
     setEditingCategory(null);
     setCategoryFormData({ name: '', icon: '📦' });
+    setShowCategoryFormFromDialog(false);
   };
 
   const handleCategoryDelete = async () => {
     if (editingCategory) {
-      await deleteCategory(editingCategory.id);
-      setShowCategoryForm(false);
-      setEditingCategory(null);
-      setCategoryFormData({ name: '', icon: '📦' });
+      try {
+        await handleDeleteCategory(categoryType, editingCategory.id);
+        setShowCategoryForm(false);
+        setEditingCategory(null);
+        setCategoryFormData({ name: '', icon: '📦' });
+        setShowCategoryFormFromDialog(false);
+      } catch (error) {
+        showError(error.message || 'Errore durante l\'eliminazione della categoria.');
+      }
     }
   };
 
@@ -1263,6 +1334,53 @@ function App() {
 
   // Utility per device
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+  // Funzioni per gestire il dialog delle categorie
+  const handleCategoryClick = (category, type) => {
+    setSelectedCategory({ ...category, type });
+    setShowCategoryActions(true);
+  };
+
+  const handleEditCategoryFromDialog = () => {
+    if (selectedCategory) {
+      setCategoryType(selectedCategory.type);
+      setEditingCategory(selectedCategory);
+      setCategoryFormData({ name: selectedCategory.name, icon: selectedCategory.icon });
+      setShowCategoryForm(true);
+      setShowCategoryFormFromDialog(true);
+      setShowCategoryActions(false);
+      setSelectedCategory(null);
+    }
+  };
+
+  const handleDeleteCategoryFromDialog = () => {
+    setShowCategoryActions(false);
+    setShowCategoryConfirmDelete(true);
+  };
+
+  const confirmDeleteCategoryFromDialog = async () => {
+    if (selectedCategory) {
+      setDeletingCategory(true);
+      try {
+        await handleDeleteCategory(selectedCategory.type, selectedCategory.id);
+      } catch (e) {
+        console.error('Errore durante l\'eliminazione della categoria:', e);
+      }
+      setDeletingCategory(false);
+      setShowCategoryConfirmDelete(false);
+      setSelectedCategory(null);
+    }
+  };
+
+  const closeCategoryActions = () => {
+    setShowCategoryActions(false);
+    setSelectedCategory(null);
+  };
+
+  const closeCategoryConfirmDelete = () => {
+    setShowCategoryConfirmDelete(false);
+    setSelectedCategory(null);
+  };
 
   return (
     <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} ${partyMode ? 'party-mode' : ''} ${retroMode ? 'retro-mode' : ''} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
@@ -1573,7 +1691,8 @@ function App() {
               onEditCategory={(id, fields) => handleEditCategory('expense', id, fields)}
               onDeleteCategory={(id) => handleDeleteCategory('expense', id)}
               type="expense"
-              onShowForm={setShowCategoryForm}
+              onShowForm={handleShowCategoryForm}
+              onCategoryClick={handleCategoryClick}
             />
             <CategoryManager
               categories={categories.income}
@@ -1581,7 +1700,8 @@ function App() {
               onEditCategory={(id, fields) => handleEditCategory('income', id, fields)}
               onDeleteCategory={(id) => handleDeleteCategory('income', id)}
               type="income"
-              onShowForm={setShowCategoryForm}
+              onShowForm={handleShowCategoryForm}
+              onCategoryClick={handleCategoryClick}
             />
             </div>
           </div>
@@ -1977,32 +2097,32 @@ function App() {
                     {[
                       // Cibo e bevande
                       '🍽️', '🍔', '🍕', '🍣', '🍦', '🍰', '🍩', '🍪', '🍫', '🍬', '🍭', '🍮', '🍯', '🍼', '🥛', '☕', '🍵', '🍶', '🍷', '🍸', '🍹', '🍺', '🍻', '🥂', '🥃',
-                      // Trasporti
+                      // Trasporti (senza duplicati)
                       '🚗', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🚚', '🚛', '🚜', '🛴', '🚲', '🛵', '🏍️', '🚨', '🚔', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🚃',
                       // Shopping e acquisti
-                      '🛍️', '🛒', '🛍️', '💄', '👗', '👠', '👡', '👢', '👕', '👖', '🧥', '🧦', '🧤', '🧣', '👒', '🎩', '👑', '💍', '💎', '💐', '🌹', '🌷', '🌼', '🌻', '🌺',
+                      '🛍️', '🛒', '💄', '👗', '👠', '👡', '👢', '👕', '👖', '🧥', '🧦', '🧤', '🧣', '👒', '🎩', '👑', '💍', '💎', '💐', '🌹', '🌷', '🌼', '🌻', '🌺',
                       // Tecnologia
-                      '💻', '🖥️', '⌨️', '🖱️', '📱', '📲', '📟', '📠', '🔋', '💡', '🔌', '🔌', '💻', '🖨️', '📷', '📹', '🎥', '📺', '📻', '🎙️', '🎚️', '🎛️', '📻', '📱', '📲',
+                      '💻', '🖥️', '⌨️', '🖱️', '📱', '📲', '📟', '📠', '🔋', '💡', '🔌', '🖨️', '📷', '📹', '🎥', '📺', '📻', '🎙️', '🎚️', '🎛️',
                       // Casa e famiglia
                       '🏠', '🏡', '🏘️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏨', '🏪', '🏫', '🏩', '💒', '⛪', '🕌', '🕍', '🛕', '⛩️', '🕋', '⛲', '⛺', '🌁',
                       // Sport e attività
                       '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🎯', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽',
-                      // Musica e intrattenimento
+                      // Musica e intrattenimento (senza duplicati)
                       '🎸', '🎤', '🎧', '🎼', '🎹', '🥁', '🪘', '🎷', '🎺', '🎻', '🪕', '🎬', '🎭', '🎨', '🎪', '🎟️', '🎫', '🎗️', '🎖️', '🏆', '🏅', '🥇', '🥈', '🥉', '⚱️',
                       // Animali e natura
                       '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🐣', '🦆', '🦅', '🦉', '🦇', '🐺',
-                      // Viaggi e luoghi
-                      '✈️', '🛩️', '🛫', '🛬', '🛰️', '🚀', '🛸', '🚁', '🚂', '🚃', '🚄', '🚅', '🚆', '🚇', '🚈', '🚉', '🚊', '🚝', '🚞', '🚋', '🚌', '🚍', '🚎', '🚐', '🚑',
-                      // Salute e benessere
-                      '🏥', '💊', '💉', '🩺', '🩹', '🩻', '🩼', '🩽', '🩾', '🩿', '🪑', '🪒', '🧴', '🧼', '🛁', '🚿', '🪣', '🧽', '🪞', '🪟', '🪠', '🪡', '🪢', '🪣', '🪤',
-                      // Lavoro e ufficio
+                      // Viaggi e luoghi (senza duplicati)
+                      '✈️', '🛩️', '🛫', '🛬', '🛰️', '🚀', '🛸', '🚁', '🚂', '🚄', '🚅', '🚆', '🚇', '🚈', '🚉', '🚊', '🚝', '🚞', '🚋',
+                      // Salute e benessere (senza duplicati)
+                      '💊', '💉', '🩺', '🩹', '🩻', '🩼', '🩽', '🩾', '🩿', '🪑', '🪒', '🧴', '🧼', '🛁', '🚿', '🪣', '🧽', '🪞', '🪟', '🪠', '🪡', '🪢', '🪤',
+                      // Lavoro e ufficio (senza duplicati)
                       '💼', '📁', '📂', '📄', '📃', '📑', '📋', '📝', '✏️', '🖊️', '🖋️', '✒️', '🖌️', '🖍️', '📏', '📐', '✂️', '🗃️', '🗄️', '🗑️', '🔒', '🔓', '🔏', '🔐', '🔑',
-                      // Finanza e denaro
-                      '💰', '🪙', '💴', '💵', '💶', '💷', '🪙', '💳', '🧾', '💸', '🪙', '💎', '💍', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎', '💎',
-                      // Educazione e studio
-                      '📚', '📖', '📕', '📗', '📘', '📙', '📓', '📔', '📒', '📃', '📄', '📑', '🔖', '🏷️', '📎', '🖇️', '📐', '📏', '✂️', '🖊️', '🖋️', '✒️', '🖌️', '🖍️', '📝',
+                      // Finanza e denaro (senza duplicati)
+                      '💰', '🪙', '💴', '💵', '💶', '💷', '💳', '🧾', '💸',
+                      // Educazione e studio (senza duplicati)
+                      '📚', '📖', '📕', '📗', '📘', '📙', '📓', '📔', '📒', '🔖', '🏷️', '📎', '🖇️',
                       // Tempo libero e hobby
-                      '🎮', '🕹️', '🎲', '🧩', '🎭', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🎷', '🎺', '🎻', '🪕', '🎸', '🎤', '🎧', '🎼', '🎹', '🥁', '🎷', '🎺', '🎻'
+                      '🎮', '🕹️', '🎲', '🧩'
                     ].map((icon) => (
                       <button
                         key={icon}
@@ -2031,8 +2151,8 @@ function App() {
                 </button>
               </div>
 
-              {/* Pulsante elimina solo in modifica */}
-              {editingCategory && (
+              {/* Pulsante elimina solo in modifica e non dal dialog */}
+              {editingCategory && !showCategoryFormFromDialog && (
                 <div className="pt-2">
                   <button
                     type="button"
@@ -2266,6 +2386,67 @@ function App() {
                 disabled={deletingWallet}
               >
                 {deletingWallet ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> : 'Elimina'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Azioni Categorie */}
+      {showCategoryActions && selectedCategory && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999]" onClick={closeCategoryActions}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xs p-6 border border-gray-200 dark:border-gray-700 relative" onClick={e => e.stopPropagation()}>
+            <button onClick={closeCategoryActions} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col items-center gap-2 mb-6">
+              <span className="text-4xl">{selectedCategory.icon}</span>
+              <div className="font-bold text-lg text-gray-900 dark:text-gray-100">{selectedCategory.name}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Categoria {selectedCategory.type === 'expense' ? 'Spese' : 'Entrate'}
+              </div>
+            </div>
+            <button
+              onClick={handleEditCategoryFromDialog}
+              className="w-full flex items-center gap-2 justify-center py-3 mb-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold"
+            >
+              <Edit className="w-5 h-5" /> Modifica
+            </button>
+            <button
+              onClick={handleDeleteCategoryFromDialog}
+              className="w-full flex items-center gap-2 justify-center py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold"
+            >
+              <Trash2 className="w-5 h-5" /> Elimina
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Conferma Eliminazione Categoria */}
+      {showCategoryConfirmDelete && selectedCategory && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999]" onClick={closeCategoryConfirmDelete}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xs p-6 border border-gray-200 dark:border-gray-700 relative" onClick={e => e.stopPropagation()}>
+            <button onClick={closeCategoryConfirmDelete} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="mb-6 text-center">
+              <div className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">Conferma eliminazione</div>
+              <div className="text-gray-600 dark:text-gray-300">Sei sicuro di voler eliminare la categoria <span className='font-semibold'>{selectedCategory.name}</span>? Questa azione non può essere annullata.</div>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={closeCategoryConfirmDelete}
+                className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-semibold"
+                disabled={deletingCategory}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={confirmDeleteCategoryFromDialog}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold"
+                disabled={deletingCategory}
+              >
+                {deletingCategory ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> : 'Elimina'}
               </button>
             </div>
           </div>
