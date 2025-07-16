@@ -183,8 +183,8 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden transform transition-all duration-300 border border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden transform transition-all duration-300 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
           <div className="flex items-center justify-between">

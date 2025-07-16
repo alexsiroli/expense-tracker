@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Euro, Tag, Calendar, Save, ArrowLeft, Store, Search, Wallet } from 'lucide-react';
+import { X, Euro, Tag, Calendar, Save, Store, Search, Wallet } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 import { usePopup } from '../contexts/PopupContext';
 
@@ -205,8 +205,8 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
@@ -214,7 +214,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
               onClick={onClose}
               className="text-white/80 hover:text-white transition-colors"
             >
-              <ArrowLeft className="w-6 h-6" />
+              <X className="w-6 h-6" />
             </button>
             <h2 className="text-xl font-bold">
               {editingItem ? 'Modifica' : 'Nuovo'} {type === 'expense' ? 'Spesa' : 'Entrata'}
@@ -249,6 +249,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             />
           </div>
 
+          {/* Campo Importo */}
           <div>
             <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
               Importo (Euro)
@@ -269,68 +270,67 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              Negozio
-            </label>
-            <div className="form-input-group relative">
-              <Store className="form-input-icon" />
-              <input
-                ref={storeInputRef}
-                type="text"
-                name="store"
-                value={formData.store}
-                onChange={handleChange}
-                onFocus={() => {
-                  if (stores.length > 0 && !formData.store.trim()) {
-                    setStoreSuggestions(stores);
-                    setShowStoreSuggestions(true);
-                  }
-                }}
-                autoComplete="off"
-                spellCheck="false"
-                className="input form-input-with-icon pr-10"
-                placeholder="Digita il nome del negozio"
-              />
-              
-              {/* Suggerimenti negozi */}
-              {showStoreSuggestions && (
-                <div 
-                  ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto autocomplete-suggestions"
-                >
-                  {storeSuggestions.length > 0 ? (
-                    storeSuggestions.map((store, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleStoreSelect(store);
-                        }}
-                        onTouchStart={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        className="autocomplete-item w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors flex items-center gap-2"
-                      >
-                        <Search className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{store}</span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                      <Search className="w-4 h-4" />
-                      <span>Nessun negozio trovato</span>
-                    </div>
-                  )}
-                </div>
-              )}
+          {/* Riga con Negozio e Categoria */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                Negozio
+              </label>
+              <div className="form-input-group relative">
+                <Store className="form-input-icon" />
+                <input
+                  ref={storeInputRef}
+                  type="text"
+                  name="store"
+                  value={formData.store}
+                  onChange={handleChange}
+                  onFocus={() => {
+                    if (stores.length > 0 && !formData.store.trim()) {
+                      setStoreSuggestions(stores);
+                      setShowStoreSuggestions(true);
+                    }
+                  }}
+                  autoComplete="off"
+                  spellCheck="false"
+                  className="input form-input-with-icon pr-10"
+                  placeholder="Digita il nome del negozio"
+                />
+                {/* Suggerimenti negozi */}
+                {showStoreSuggestions && (
+                  <div 
+                    ref={suggestionsRef}
+                    className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto autocomplete-suggestions"
+                  >
+                    {storeSuggestions.length > 0 ? (
+                      storeSuggestions.map((store, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleStoreSelect(store);
+                          }}
+                          onTouchStart={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="autocomplete-item w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors flex items-center gap-2"
+                        >
+                          <Search className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                          <span className="truncate">{store}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                        <Search className="w-4 h-4" />
+                        <span>Nessun negozio trovato</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
                 <Tag className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -345,9 +345,13 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                   icon: category.icon
                 }))}
                 placeholder="Seleziona categoria"
+                className="h-12"
               />
             </div>
+          </div>
 
+          {/* Riga con Data e Ora */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -365,7 +369,6 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                 />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />

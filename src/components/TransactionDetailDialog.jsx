@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatCurrency } from '../utils/formatters';
-import { Wallet, Calendar, Clock, Store, Tag, Euro, MapPin } from 'lucide-react';
+import { Wallet, Calendar, Clock, Store, Tag, Euro, MapPin, X } from 'lucide-react';
 
 function TransactionDetailDialog({ transaction, onClose, onEdit, onDelete, categories, wallets = [] }) {
   if (!transaction) return null;
@@ -32,9 +32,7 @@ function TransactionDetailDialog({ transaction, onClose, onEdit, onDelete, categ
         <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-6 h-6" />
             </button>
             <h2 className="text-xl font-bold">Dettagli Transazione</h2>
             <div className="w-6"></div>
@@ -115,10 +113,7 @@ function TransactionDetailDialog({ transaction, onClose, onEdit, onDelete, categ
             </div>
           )}
 
-          {/* ID transazione per debug */}
-          <div className="text-xs text-gray-400 dark:text-gray-500 text-center">
-            ID: {transaction.id}
-          </div>
+
         </div>
 
         {/* Action Buttons */}

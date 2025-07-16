@@ -79,39 +79,43 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Export */}
-        <div className="card p-4">
+        <div className="card p-4 flex flex-col h-full min-h-[260px]">
           <div className="flex items-center gap-3 mb-3">
             <Download className="w-5 h-5 text-blue-600" />
             <h4 className="font-semibold text-gray-900 dark:text-gray-100">Esporta Dati</h4>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-1">
             Scarica tutti i tuoi dati in un file JSON. Puoi usare questo file per fare backup o trasferire i dati su un altro dispositivo.
           </p>
-          <button
-            onClick={exportData}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
-          >
-            <Download className="w-4 h-4" />
-            <span className="font-medium">Scarica Backup</span>
-          </button>
+          <div className="mt-auto">
+            <button
+              onClick={exportData}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
+            >
+              <Download className="w-4 h-4" />
+              <span className="font-medium">Scarica Backup</span>
+            </button>
+          </div>
         </div>
 
         {/* Import */}
-        <div className="card p-4">
+        <div className="card p-4 flex flex-col h-full min-h-[260px]">
           <div className="flex items-center gap-3 mb-3">
             <Upload className="w-5 h-5 text-green-600" />
             <h4 className="font-semibold text-gray-900 dark:text-gray-100">Importa Dati</h4>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-1">
             Carica un file di backup per ripristinare tutti i tuoi dati. I dati esistenti verranno sostituiti.
           </p>
-                  <button
-          onClick={onShowImportModal}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105"
-        >
-          <Upload className="w-4 h-4" />
-          <span className="font-medium">Importa Dati</span>
-        </button>
+          <div className="mt-auto">
+            <button
+              onClick={onShowImportModal}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-green-700/90 transition-all duration-200 transform hover:scale-105"
+            >
+              <Upload className="w-4 h-4" />
+              <span className="font-medium">Importa Dati</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -135,8 +139,11 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
 
       {/* Modale conferma reset completo */}
       {showResetConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-up">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => {
+                  setShowResetConfirm(false);
+                  setResetConfirmation('');
+                }}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-up" onClick={e => e.stopPropagation()}>
             <div className="bg-red-600/90 backdrop-blur-sm text-white p-6 rounded-t-2xl flex items-center justify-between">
               <button
                 onClick={() => {

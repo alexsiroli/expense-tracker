@@ -42,13 +42,13 @@ function CustomSelect({
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`w-full px-4 py-3 text-left bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+        className={`w-full px-4 py-3 text-left bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 flex items-center ${className.includes('h-12') ? 'h-12' : ''} ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         } ${required && !selectedOption ? 'border-red-300 dark:border-red-600' : ''}`}
         disabled={disabled}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-2 h-full">
             {selectedOption ? (
               <>
                 {selectedOption.icon && <span className="text-lg">{selectedOption.icon}</span>}
