@@ -656,10 +656,10 @@ function App() {
   };
   
   // Elimina transazione (non wallet)
-  const handleDelete = async (id) => {
-    // Usa la variabile di stato itemToDelete
-    const collection = itemToDelete && itemToDelete._type === 'expense' ? 'expenses' : 'incomes';
-    await deleteDocument(collection, id);
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+    const collection = itemToDelete._type === 'expense' ? 'expenses' : 'incomes';
+    await deleteDocument(collection, itemToDelete.id);
     setShowConfirmDelete(false);
     setItemToDelete(null);
   };
@@ -728,8 +728,8 @@ function App() {
     }
   };
 
-  const confirmDelete = (id) => {
-    setItemToDelete(id);
+  const confirmDelete = (item) => {
+    setItemToDelete(item);
     setShowConfirmDelete(true);
   };
 
@@ -1913,7 +1913,7 @@ function App() {
       <ConfirmDialog
         isOpen={showConfirmDelete}
         onClose={() => setShowConfirmDelete(false)}
-        onConfirm={() => handleDelete(itemToDelete?.id || itemToDelete)}
+        onConfirm={handleDelete}
         title={itemToDelete?.type === 'wallet' ? "Conferma eliminazione conto" : "Conferma eliminazione"}
         message={
           itemToDelete?.type === 'wallet' 
@@ -2415,7 +2415,7 @@ function App() {
           transaction={selectedTransaction}
           onClose={() => setShowTransactionDialog(false)}
           onEdit={() => { handleEdit(selectedTransaction); setShowTransactionDialog(false); }}
-          onDelete={() => { confirmDelete(selectedTransaction.id); setShowTransactionDialog(false); }}
+          onDelete={() => { confirmDelete(selectedTransaction); setShowTransactionDialog(false); }}
           categories={categories}
           wallets={getWalletsWithCalculatedBalance()}
         />
