@@ -79,12 +79,12 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Export */}
-        <div className="card p-4 flex flex-col h-full min-h-[200px] md:min-h-[260px]">
-          <div className="flex items-center gap-3 mb-3">
+        <div className="card p-4 flex flex-col h-full min-h-[160px] md:min-h-[260px]">
+          <div className="flex items-center gap-3 mb-2 md:mb-3">
             <Download className="w-5 h-5 text-blue-600" />
             <h4 className="font-semibold text-gray-900 dark:text-gray-100">Esporta Dati</h4>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 md:mb-4 flex-1">
             Scarica tutti i tuoi dati in un file JSON. Puoi usare questo file per fare backup o trasferire i dati su un altro dispositivo.
           </p>
           <div className="mt-auto">
@@ -99,12 +99,12 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
         </div>
 
         {/* Import */}
-        <div className="card p-4 flex flex-col h-full min-h-[200px] md:min-h-[260px]">
-          <div className="flex items-center gap-3 mb-3">
+        <div className="card p-4 flex flex-col h-full min-h-[160px] md:min-h-[260px]">
+          <div className="flex items-center gap-3 mb-2 md:mb-3">
             <Upload className="w-5 h-5 text-green-600" />
             <h4 className="font-semibold text-gray-900 dark:text-gray-100">Importa Dati</h4>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 md:mb-4 flex-1">
             Carica un file di backup per ripristinare tutti i tuoi dati. I dati esistenti verranno sostituiti.
           </p>
           <div className="mt-auto">
@@ -121,11 +121,11 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
 
       {/* Reset Section */}
       <div className="card p-4">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3 mb-2 md:mb-3">
           <Trash2 className="w-5 h-5 text-red-600" />
           <h4 className="font-semibold text-gray-900 dark:text-gray-100">Reset Completo</h4>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 md:mb-4">
           <strong className="text-red-600">ATTENZIONE:</strong> Questa azione eliminerà definitivamente tutti i tuoi dati (spese, entrate, categorie, negozi, conti). Questa azione non può essere annullata.
         </p>
         <button
