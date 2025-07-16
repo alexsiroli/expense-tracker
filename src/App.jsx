@@ -199,13 +199,20 @@ function App() {
   // Blocca lo scroll quando un modal è aperto
   useScrollLock(isAnyModalOpen);
 
-  // Mantieni l'header espanso quando un modal è aperto
+  // Utility: controlla se la pagina è scrollabile verticalmente
+  const checkIfScrollable = () => {
+    // true se la pagina è più lunga della viewport
+    return document.body.scrollHeight > window.innerHeight + 2;
+  };
+
+  // Effetto: forza header espanso e menu visibile se la pagina non è scrollabile
   useEffect(() => {
-    if (isAnyModalOpen) {
+    if (!checkIfScrollable() && !isAnyModalOpen) {
       setIsHeaderExpanded(true);
       setShowFloatingMenu(true);
     }
-  }, [isAnyModalOpen]);
+    // Se invece la pagina diventa scrollabile, lascia che la logica di scroll faccia il suo lavoro
+  }, [expenses, incomes, activeTab, activeFilters, isAnyModalOpen]);
 
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
   useEffect(() => {
@@ -1258,17 +1265,17 @@ function App() {
       if (isAnyModalOpen) return;
       const currentScrollY = window.scrollY;
       const alwaysShowThreshold = 100; // px
-      // Nascondi il menu se sei in fondo alla pagina
+      const isScrollable = checkIfScrollable();
       const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 2;
-      if (isAtBottom) {
+      if (isScrollable && isAtBottom) {
         setShowFloatingMenu(false);
         setIsHeaderExpanded(false);
         setScrollDirection('down');
         lastScrollY.current = currentScrollY;
         return;
       }
-      // Mostra sempre il menu se sei vicino all'inizio
-      if (currentScrollY <= alwaysShowThreshold) {
+      // Mostra sempre il menu se sei vicino all'inizio o la pagina non è scrollabile
+      if (currentScrollY <= alwaysShowThreshold || !isScrollable) {
         setShowFloatingMenu(true);
         setIsHeaderExpanded(true);
         setScrollDirection('up');
