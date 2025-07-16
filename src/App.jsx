@@ -258,7 +258,7 @@ function App() {
         if (!isRainbowToggling.current) {
           isRainbowToggling.current = true;
           activateExclusiveMode('rainbow');
-          setTimeout(() => { isRainbowToggling.current = false; }, 500);
+          setTimeout(() => { isRainbowToggling.current = false; }, 1000); // Aumentato da 500ms a 1000ms
         }
         return 0;
       }
@@ -282,7 +282,7 @@ function App() {
         if (!isRetroToggling.current) {
           isRetroToggling.current = true;
           activateExclusiveMode('retro');
-          setTimeout(() => { isRetroToggling.current = false; }, 500);
+          setTimeout(() => { isRetroToggling.current = false; }, 1000); // Aumentato da 500ms a 1000ms
         }
         return 0;
       }
@@ -295,6 +295,10 @@ function App() {
     if (event.target.closest('.app-title')) {
       setIsLongPressing(true);
       setLongPressProgress(0);
+      // Pulisci timer esistenti
+      if (progressTimer.current) clearInterval(progressTimer.current);
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      
       progressTimer.current = setInterval(() => {
         setLongPressProgress(prev => {
           if (prev >= 100) {
@@ -308,14 +312,21 @@ function App() {
         activateExclusiveMode('party');
         setIsLongPressing(false);
         setLongPressProgress(0);
+        if (progressTimer.current) clearInterval(progressTimer.current);
       }, 3000);
     }
   };
   const handleLongPressEnd = () => {
     setIsLongPressing(false);
     setLongPressProgress(0);
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-    if (progressTimer.current) clearInterval(progressTimer.current);
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (progressTimer.current) {
+      clearInterval(progressTimer.current);
+      progressTimer.current = null;
+    }
   };
 
   // Funzione per aggiornare il colore della Dynamic Island e barra di stato
@@ -436,6 +447,16 @@ function App() {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Cleanup dei timer quando il componente si smonta
+  useEffect(() => {
+    return () => {
+      if (walletTapTimer.current) clearTimeout(walletTapTimer.current);
+      if (footerTapTimer.current) clearTimeout(footerTapTimer.current);
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      if (progressTimer.current) clearInterval(progressTimer.current);
+    };
   }, []);
 
   // Gestione classe party-mode sul body
@@ -1409,15 +1430,24 @@ function App() {
 
   // Funzione per attivare modalità esclusiva
   const activateExclusiveMode = (mode) => {
+    // Prima disattiva tutti gli easter eggs per evitare conflitti
+    const resetAllModes = () => {
+      setRainbowMode(false);
+      setPartyMode(false);
+      setRetroMode(false);
+      setFlameMode(false);
+      setAngelicMode(false);
+      setTimeTravelMode(false);
+      setNataleMagicoMode(false);
+      setCompleannoSpecialeMode(false);
+    };
+
     if (mode === 'rainbow') {
       if (rainbowMode) {
-        setRainbowMode(false);
-        setPartyMode(false);
-        setRetroMode(false);
+        resetAllModes();
       } else {
+        resetAllModes();
         setRainbowMode(true);
-        setPartyMode(false);
-        setRetroMode(false);
         activateEasterEgg('tapSegreto', { setRainbowMode });
         saveEasterEggCompletion('tapSegreto', setEasterEggCompleted).then(() => loadEasterEggsWithStatus());
         const easterEgg = getEasterEgg('tapSegreto');
@@ -1425,13 +1455,10 @@ function App() {
       }
     } else if (mode === 'party') {
       if (partyMode) {
-        setRainbowMode(false);
-        setPartyMode(false);
-        setRetroMode(false);
+        resetAllModes();
       } else {
-        setRainbowMode(false);
+        resetAllModes();
         setPartyMode(true);
-        setRetroMode(false);
         activateEasterEgg('tapLungo', { setPartyMode });
         saveEasterEggCompletion('tapLungo', setEasterEggCompleted).then(() => loadEasterEggsWithStatus());
         const easterEgg = getEasterEgg('tapLungo');
@@ -1439,12 +1466,9 @@ function App() {
       }
     } else if (mode === 'retro') {
       if (retroMode) {
-        setRainbowMode(false);
-        setPartyMode(false);
-        setRetroMode(false);
+        resetAllModes();
       } else {
-        setRainbowMode(false);
-        setPartyMode(false);
+        resetAllModes();
         setRetroMode(true);
         activateEasterEgg('temaSegreto', { setRetroMode });
         saveEasterEggCompletion('temaSegreto', setEasterEggCompleted).then(() => loadEasterEggsWithStatus());
@@ -1452,12 +1476,32 @@ function App() {
         if (easterEgg) setTimeout(() => showEasterEgg(easterEgg), 100);
       }
     }
-    setTimeout(() => {
-    }, 200);
   };
 
   // Utility per device
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+  // Funzione per resettare tutti gli easter eggs
+  const resetAllEasterEggs = () => {
+    setRainbowMode(false);
+    setPartyMode(false);
+    setRetroMode(false);
+    setFlameMode(false);
+    setAngelicMode(false);
+    setTimeTravelMode(false);
+    setNataleMagicoMode(false);
+    setCompleannoSpecialeMode(false);
+    setIsLongPressing(false);
+    setLongPressProgress(0);
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (progressTimer.current) {
+      clearInterval(progressTimer.current);
+      progressTimer.current = null;
+    }
+  };
 
   // Funzioni per gestire il dialog delle categorie
   const handleCategoryClick = (category, type) => {
@@ -2003,6 +2047,7 @@ function App() {
         isOpen={showUserProfile}
         onClose={() => setShowUserProfile(false)}
         easterEggsWithStatus={easterEggsWithStatus}
+        resetAllEasterEggs={resetAllEasterEggs}
       />
 
       {/* Wallet Manager Modal */}

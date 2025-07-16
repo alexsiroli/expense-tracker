@@ -7,7 +7,7 @@ import { it } from 'date-fns/locale';
 import { getAllEasterEggs, getEasterEggsWithCompletionStatus, saveEasterEggCompletion } from '../utils/easterEggs';
 import { usePopup } from '../contexts/PopupContext';
 
-const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
+const UserProfile = ({ isOpen, onClose, easterEggsWithStatus, resetAllEasterEggs }) => {
   const { user, logout, deleteAccount } = useAuth();
   const { deleteAllUserData, getCompletedEasterEggs, setEasterEggCompleted, isEasterEggCompleted } = useFirestore();
   const { showError, showAlert } = usePopup();
@@ -214,6 +214,19 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
             >
               <LogOut className="w-4 h-4" />
               <span>Logout</span>
+            </button>
+            
+            <button
+              onClick={() => {
+                if (resetAllEasterEggs) {
+                  resetAllEasterEggs();
+                  showAlert('Tutti gli easter eggs sono stati resettati! 🎉', 'Reset Completato');
+                }
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20 rounded-xl transition-colors duration-200"
+            >
+              <AlertCircle className="w-4 h-4" />
+              <span>Reset Easter Eggs</span>
             </button>
             
             <button
