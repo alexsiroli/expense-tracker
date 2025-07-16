@@ -1016,11 +1016,11 @@ function App() {
           });
         } else {
           // Se non trova il documento, crea un nuovo wallet
-          await addWallet(walletFormData);
+          await addWallet({ ...walletFormData, initialBalance: walletFormData.balance });
         }
         setEditingWallet(null);
       } else {
-        await addWallet(walletFormData);
+        await addWallet({ ...walletFormData, initialBalance: walletFormData.balance });
       }
       
       setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
@@ -1987,12 +1987,12 @@ function App() {
                   <Euro className="form-input-icon" />
                   <input 
                     type="number" 
-                    value={walletFormData.balance === 0 ? '0.00' : walletFormData.balance} 
-                    onChange={e => setWalletFormData({ ...walletFormData, balance: parseFloat(e.target.value) || 0 })} 
+                    value={walletFormData.balance === '' ? '' : walletFormData.balance} 
+                    onChange={e => setWalletFormData({ ...walletFormData, balance: e.target.value })} 
                     className="input form-input-with-icon" 
                     step="0.01" 
                     required 
-                    placeholder="0,00" 
+                    placeholder={editingWallet ? (editingWallet.initialBalance ?? '0,00') : '0,00'} 
                   />
                 </div>
               </div>
@@ -2192,7 +2192,7 @@ function App() {
                       // Tecnologia
                       '💻', '🖥️', '⌨️', '🖱️', '📱', '📲', '📟', '📠', '🔋', '💡', '🔌', '🖨️', '📷', '📹', '🎥', '📺', '📻', '🎙️', '🎚️', '🎛️',
                       // Casa e famiglia
-                      '🏠', '🏡', '��️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏨', '🏪', '🏫', '🏩', '💒', '⛪', '🕌', '🕍', '🛕', '⛩️', '🕋', '⛲', '⛺', '🌁',
+                      '🏠', '🏡', '��️', '🏚️', '��️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏨', '🏪', '🏫', '🏩', '💒', '⛪', '🕌', '🕍', '🛕', '⛩️', '🕋', '⛲', '⛺', '🌁',
                       // Sport e attività
                       '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🎯', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽',
                       // Musica e intrattenimento (senza duplicati)

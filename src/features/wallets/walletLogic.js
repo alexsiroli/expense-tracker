@@ -1,7 +1,7 @@
 // Aggiunge un nuovo wallet
 export function addWallet(wallets, newWallet) {
   if (!newWallet || !newWallet.name || !newWallet.color) throw new Error('Conto non valido');
-  if (wallets.some(w => w.name === newWallet.name)) throw new Error('Conto già esistente');
+  if (wallets.some(w => w.name === newWallet.name)) throw new Error('Esiste già un conto con questo nome');
   // Genera sempre un nuovo id unico deterministico (come per le transazioni)
   const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
   return [...wallets, { ...newWallet, id: uniqueId, balance: newWallet.balance ?? 0, initialBalance: newWallet.initialBalance ?? 0 }];
