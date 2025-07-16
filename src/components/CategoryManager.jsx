@@ -5,7 +5,7 @@ import ConfirmDialog from './ConfirmDialog';
 function CategoryManager({ categories, onAddCategory, onDeleteCategory, onEditCategory, type, onShowForm, onCategoryClick }) {
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-8">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Categorie {type === 'expense' ? 'Spese' : 'Entrate'}

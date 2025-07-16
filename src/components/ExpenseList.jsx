@@ -144,7 +144,7 @@ function ExpenseList({ items, onDelete, onEdit, type, categories = [], onShowDet
       {Object.entries(groupedItems).map(([date, dateItems]) => (
         <div key={date} className="space-y-3">
           {/* Header della data */}
-          <div className="sticky top-52 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
+          <div className="sticky top-36 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
             <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
               {formatDateHeader(date)}
             </h3>

@@ -120,7 +120,10 @@ function App() {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [dateRange, setDateRange] = useState(null);
   const [activeWalletId, setActiveWalletId] = useState(null);
-  const [balanceCollapsed, setBalanceCollapsed] = useState(true);
+  const [balanceCollapsed, setBalanceCollapsed] = useState(() => {
+    // Su mobile (layout verticale) è chiusa, su tablet/desktop (layout orizzontale) è aperta
+    return window.innerWidth < 1024; // lg breakpoint
+  });
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showWalletForm, setShowWalletForm] = useState(false);
   const [editingWallet, setEditingWallet] = useState(null);
@@ -201,17 +204,31 @@ function App() {
 
   // Utility: controlla se la pagina è scrollabile verticalmente
   const checkIfScrollable = () => {
-    // true se la pagina è più lunga della viewport
+    // Su desktop/tablet con layout orizzontale, controlla solo la zona destra
+    if (window.innerWidth >= 1024) { // lg breakpoint
+      const rightPanel = document.querySelector('.lg\\:flex-1');
+      if (rightPanel) {
+        return rightPanel.scrollHeight > rightPanel.clientHeight + 2;
+      }
+    }
+    // Su mobile, controlla l'intera pagina
     return document.body.scrollHeight > window.innerHeight + 2;
   };
 
-  // Effetto: forza header espanso e menu visibile se la pagina non è scrollabile
+  // Effetto: gestione header e menu per mobile
   useEffect(() => {
-    if (!checkIfScrollable() && !isAnyModalOpen) {
-      setIsHeaderExpanded(true);
+    // Su tablet/desktop (layout orizzontale), mantieni sempre header compatto e menu visibile
+    if (window.innerWidth >= 1024) {
+      setIsHeaderExpanded(false);
       setShowFloatingMenu(true);
+    } else {
+      // Su mobile, usa la logica originale
+      if (!checkIfScrollable() && !isAnyModalOpen) {
+        setIsHeaderExpanded(true);
+        setShowFloatingMenu(true);
+      }
+      // Se invece la pagina diventa scrollabile, lascia che la logica di scroll faccia il suo lavoro
     }
-    // Se invece la pagina diventa scrollabile, lascia che la logica di scroll faccia il suo lavoro
   }, [expenses, incomes, activeTab, activeFilters, isAnyModalOpen]);
 
   // Inizializza i filtri con tutti i wallets selezionati quando i wallets cambiano
@@ -403,6 +420,23 @@ function App() {
   useEffect(() => {
     updateThemeColor(rainbowMode, theme);
   }, [rainbowMode, theme]);
+
+  // Aggiorna lo stato della sezione liquidità quando cambia la dimensione dello schermo
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 1024; // lg breakpoint
+      setBalanceCollapsed(isMobile);
+      
+      // Aggiorna anche header e menu fluttuante
+      if (window.innerWidth >= 1024) {
+        setIsHeaderExpanded(false);
+        setShowFloatingMenu(true);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Gestione classe party-mode sul body
   useEffect(() => {
@@ -1263,10 +1297,20 @@ function App() {
   useEffect(() => {
     const handleScroll = () => {
       if (isAnyModalOpen) return;
+      
+      // Su tablet/desktop (layout orizzontale), mantieni sempre header compatto e menu visibile
+      if (window.innerWidth >= 1024) {
+        setIsHeaderExpanded(false);
+        setShowFloatingMenu(true);
+        return;
+      }
+      
+      // Su mobile, gestisci lo scroll della pagina intera
       const currentScrollY = window.scrollY;
       const alwaysShowThreshold = 100; // px
       const isScrollable = checkIfScrollable();
       const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 2;
+      
       if (isScrollable && isAtBottom) {
         setShowFloatingMenu(false);
         setIsHeaderExpanded(false);
@@ -1291,6 +1335,8 @@ function App() {
       }
       lastScrollY.current = currentScrollY;
     };
+    
+    // Su mobile, usa il listener della window
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isAnyModalOpen]);
@@ -1315,6 +1361,28 @@ function App() {
       setLoadEasterEggsWithStatusFn(() => window.loadEasterEggsWithStatus);
     }
   }, [showUserProfile]);
+
+  // Hook per gestire il cambio di layout quando cambia la dimensione della finestra
+  useEffect(() => {
+    const handleResize = () => {
+      // Su tablet/desktop, mantieni sempre header compatto e menu visibile
+      if (window.innerWidth >= 1024) {
+        setIsHeaderExpanded(false);
+        setShowFloatingMenu(true);
+      } else {
+        // Su mobile, forza un re-check della scrollabilità quando cambia la dimensione
+        setTimeout(() => {
+          if (!checkIfScrollable() && !isAnyModalOpen) {
+            setIsHeaderExpanded(true);
+            setShowFloatingMenu(true);
+          }
+        }, 100);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isAnyModalOpen]);
 
   // Mostra loading mentre verifica l'autenticazione
   if (authLoading) {
@@ -1449,10 +1517,10 @@ function App() {
   };
 
   return (
-    <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} ${partyMode ? 'party-mode' : ''} ${retroMode ? 'retro-mode' : ''} transition-colors duration-200 pb-10 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
+    <div className={`min-h-screen ${rainbowMode ? 'bg-gradient-to-br from-red-100 via-yellow-100 via-green-100 via-blue-100 via-purple-100 to-pink-100 dark:from-red-900/20 dark:via-yellow-900/20 dark:via-green-900/20 dark:via-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20' : 'bg-white dark:bg-gray-900'} ${partyMode ? 'party-mode' : ''} ${retroMode ? 'retro-mode' : ''} transition-colors duration-200 pb-10 lg:pb-0 ${isHeaderExpanded ? 'pt-24' : 'pt-20'}`}>
       {/* Header espandibile con grafica trasparente */}
       <header className={`fixed top-0 left-0 w-full z-20 py-0 animate-fade-in header-transition header-parallax ${isHeaderExpanded ? 'h-20' : 'h-16'}`}>
-        <div className="max-w-md mx-auto px-6 mt-2">
+        <div className="max-w-lg mx-auto px-6 mt-2">
           <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/50 via-yellow-500/50 via-green-500/50 via-blue-500/50 via-purple-500/50 to-pink-500/50' : 'bg-gradient-to-r from-blue-600/50 to-purple-600/50'} backdrop-blur-md border ${rainbowMode ? 'border-rainbow-500/40' : 'border-blue-500/40'} rounded-3xl transform hover:scale-102 header-content-transition hover:shadow-xl ${rainbowMode ? 'hover:shadow-rainbow-500/20' : 'hover:shadow-blue-500/20'} active:scale-98 ${isHeaderExpanded ? 'p-3' : 'p-2.5'}`}>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -1522,304 +1590,312 @@ function App() {
         </div>
       </header>
 
-      {/* Balance Card con design moderno - PRIMA COSA */}
-      <div className="max-w-md mx-auto px-6 mt-4 pb-6 animate-fade-in-up">
-        <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/20 via-yellow-500/20 via-green-500/20 via-blue-500/20 via-purple-500/20 to-pink-500/20 border border-rainbow-500/40 rounded-2xl' : 'floating-card'} ${balanceCollapsed ? 'p-3' : 'p-6'} transition-all duration-300 ${rainbowMode ? 'hover:shadow-2xl hover:shadow-rainbow-500/30' : 'hover:shadow-2xl hover:shadow-blue-500/20'} animate-bounce-in`}>
-          <div className="flex items-center justify-between" onClick={() => setBalanceCollapsed(!balanceCollapsed)} style={{ cursor: 'pointer' }}>
-            <div className="flex items-center gap-3">
-              <PiggyBank className="w-6 h-6 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Liquidità</h2>
-            </div>
-            <div className="flex items-center gap-2">
-              {balanceCollapsed && (
-                <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                  {formatCurrency(getWalletsWithCalculatedBalance().reduce((sum, w) => sum + (w.balance || 0), 0))}
-                </span>
-              )}
-              {/* Freccia solo visiva, non cliccabile */}
-              {balanceCollapsed ? (
-                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                </svg>
+      {/* Layout principale - Responsive */}
+      <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-6rem)] lg:pt-0">
+        {/* Zona sinistra - Conti (fissa su tablet/desktop) */}
+        <div className="lg:w-96 lg:flex-shrink-0">
+          <div className="max-w-md mx-auto px-6 mt-4 pb-6 lg:max-w-none lg:px-8 lg:mt-2 lg:pb-0 lg:h-full lg:overflow-hidden">
+            <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/20 via-yellow-500/20 via-green-500/20 via-blue-500/20 via-purple-500/20 to-pink-500/20 border border-rainbow-500/40 rounded-2xl' : 'floating-card'} ${balanceCollapsed ? 'p-3' : 'p-6'} transition-all duration-300 ${rainbowMode ? 'hover:shadow-2xl hover:shadow-rainbow-500/30' : 'hover:shadow-2xl hover:shadow-blue-500/20'} animate-bounce-in lg:mt-2`}>
+              <div className="flex items-center justify-between" onClick={() => setBalanceCollapsed(!balanceCollapsed)} style={{ cursor: 'pointer' }}>
+                <div className="flex items-center gap-3">
+                  <PiggyBank className="w-6 h-6 text-blue-600" />
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Liquidità</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  {balanceCollapsed && (
+                    <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                      {formatCurrency(getWalletsWithCalculatedBalance().reduce((sum, w) => sum + (w.balance || 0), 0))}
+                    </span>
+                  )}
+                  {/* Freccia solo visiva, non cliccabile */}
+                  {balanceCollapsed ? (
+                    <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              
+              {!balanceCollapsed && (
+                <>
+                  <div className="text-center mt-4 animate-fade-in-up">
+                    <div className="text-4xl font-bold mb-4 text-blue-700 dark:text-blue-300">
+                      {formatCurrency(getWalletsWithCalculatedBalance().reduce((sum, w) => sum + (w.balance || 0), 0))}
+                    </div>
+                  </div>
+                  {/* Sezione gestione conti */}
+                  <div className="mt-8 animate-fade-in-up">
+                    {(() => {
+                      const walletsWithBalance = getWalletsWithCalculatedBalance();
+                      if (walletsWithBalance.length === 0) {
+                        return (
+                          <div className="text-center py-4">
+                            <div className="flex justify-between items-center mb-3 max-w-xs mx-auto">
+                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">Gestione Conti</div>
+                              <button
+                                onClick={addWallet ? handleAddWallet : undefined}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
+                              >
+                                <Wallet className="w-4 h-4" />
+                                <span className="font-medium">Nuovo</span>
+                              </button>
+                            </div>
+                            <div className="mb-3">
+                              <div className="w-14 h-14 mx-auto bg-muted rounded-full flex items-center justify-center mb-2">
+                                <Wallet className="w-7 h-7 text-gray-500 dark:text-gray-400" />
+                              </div>
+                              <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                                Nessun conto salvato
+                              </h3>
+                              <p className="text-gray-500 dark:text-gray-400 text-sm">
+                                Aggiungi un conto per iniziare a tracciare le tue finanze
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <WalletManager
+                          wallets={walletsWithBalance}
+                          onAdd={addWallet}
+                          onDelete={deleteWallet}
+                          onTransfer={handleTransfer}
+                          onShowForm={handleAddWallet}
+                          onEditWallet={handleEditWallet}
+                          onShowTransferModal={handleShowTransferModal}
+                          onWalletClick={handleWalletClick}
+                        />
+                      );
+                    })()}
+                  </div>
+                </>
               )}
             </div>
           </div>
-          
-          {!balanceCollapsed && (
-            <>
-              <div className="text-center mt-4 animate-fade-in-up">
-                <div className="text-4xl font-bold mb-4 text-blue-700 dark:text-blue-300">
-                  {formatCurrency(getWalletsWithCalculatedBalance().reduce((sum, w) => sum + (w.balance || 0), 0))}
+        </div>
+
+        {/* Zona destra - Contenuto principale (scrollabile su tablet/desktop) */}
+        <div className="flex-1 lg:overflow-y-auto lg:pb-20">
+          <div className="max-w-md mx-auto px-6 py-4 -mt-6 relative z-10 lg:max-w-none lg:px-8 lg:py-0 lg:mt-0 lg:pt-0">
+
+            {/* Content */}
+            {activeTab === 'transactions' && (
+              <div className="animate-fade-in-up">
+                <div className="sticky top-20 lg:top-4 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg lg:max-w-none">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Transazioni</h2>
+                    <div className="flex items-center gap-2">
+                      <FilterButton
+                        onClick={() => setShowFilterDialog(true)}
+                        className="ml-3"
+                      >
+                        Filtri
+                      </FilterButton>
+                    </div>
+                  </div>
+
+                  {/* Bottoni per aggiungere transazioni */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleAddExpense}
+                      className="flex-1 flex items-center justify-center gap-2 px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-red-500 to-red-600 backdrop-blur-sm text-white rounded-xl shadow-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95 font-medium"
+                    >
+                      <TrendingDown className="w-4 h-4" />
+                      <span>Nuova Spesa</span>
+                    </button>
+                    <button
+                      onClick={handleAddIncome}
+                      className="flex-1 flex items-center justify-center gap-2 px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 backdrop-blur-sm text-white rounded-xl shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95 font-medium"
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      <span>Nuova Entrata</span>
+                    </button>
+                  </div>
+                </div>
+                
+                <ExpenseList
+                  items={filteredTransactions}
+                  onDelete={confirmDelete}
+                  onEdit={handleEdit}
+                  type="mixed"
+                  categories={categories}
+                  onShowDetail={handleShowDetail}
+                />
+              </div>
+            )}
+
+            {activeTab === 'stats' && (
+              <div className="animate-fade-in-up">
+                <div className="sticky top-20 lg:top-4 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg lg:max-w-none">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistiche</h2>
+                    <button
+                      onClick={() => setShowFilterDialog(true)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        (activeFilters.timeRange !== 'all' || 
+                         activeFilters.selectedCategories.length > 0 || 
+                         activeFilters.selectedStores.length > 0)
+                          ? 'bg-blue-600 text-white shadow-lg'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      <Filter className="w-4 h-4" />
+                      Filtri
+                      {((activeFilters.timeRange !== 'all' || 
+                         activeFilters.selectedCategories.length > 0 || 
+                         activeFilters.selectedStores.length > 0)) && (
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-8">
+                  <Statistics
+                    expenses={getFilteredTransactions().filter(t => t._type === 'expense')}
+                    incomes={getFilteredTransactions().filter(t => t._type === 'income')}
+                    currentMonthExpenses={currentMonthExpenses}
+                    currentMonthIncomes={currentMonthIncomes}
+                    categories={categories}
+                    stores={stores}
+                    activeFilters={activeFilters}
+                  />
                 </div>
               </div>
-              {/* Sezione gestione conti */}
-              <div className="mt-8 animate-fade-in-up">
+            )}
+
+            {activeTab === 'categories' && (
+              <div className="animate-fade-in-up">
+                <div className="sticky top-20 lg:top-4 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg lg:max-w-none">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Categorie</h2>
+                </div>
+              <div className="space-y-8">
+                <CategoryManager
+                categories={categories.expense}
+                onAddCategory={(cat) => handleAddCategory('expense', cat)}
+                onEditCategory={(id, fields) => handleEditCategory('expense', id, fields)}
+                onDeleteCategory={(id) => handleDeleteCategory('expense', id)}
+                type="expense"
+                onShowForm={handleShowCategoryForm}
+                onCategoryClick={handleCategoryClick}
+              />
+              <CategoryManager
+                categories={categories.income}
+                onAddCategory={(cat) => handleAddCategory('income', cat)}
+                onEditCategory={(id, fields) => handleEditCategory('income', id, fields)}
+                onDeleteCategory={(id) => handleDeleteCategory('income', id)}
+                type="income"
+                onShowForm={handleShowCategoryForm}
+                onCategoryClick={handleCategoryClick}
+              />
+              </div>
+            </div>
+            )}
+
+            {activeTab === 'data' && (
+              <div className="animate-fade-in-up">
+                <div className="sticky top-20 lg:top-4 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg lg:max-w-none">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Gestione Dati</h2>
+                </div>
+                <DataManager 
+                  onImportData={importData} 
+                  onResetData={resetAllData} 
+                  onShowImportModal={() => setShowImportModal(true)}
+                  onShowResetModal={() => setShowResetModal(true)}
+                  onSanitizeStores={sanitizeStores}
+                />
+              </div>
+            )}
+
+            {activeTab === 'stores' && (
+              <div className="animate-fade-in-up">
+                {/* Titolo sticky e bottone filtro, identico alle altre sezioni */}
+                <div className="sticky top-20 lg:top-4 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg flex items-center justify-between lg:max-w-none">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">Negozi</h2>
+                  <button
+                    className="ml-3 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    onClick={() => setShowFilterDialog(true)}
+                    aria-label="Filtra negozi"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A2 2 0 0013 14.586V19a1 1 0 01-1.447.894l-2-1A1 1 0 009 18v-3.414a2 2 0 00-.586-1.414L2 6.707A1 1 0 012 6V4z" />
+                    </svg>
+                  </button>
+                </div>
+                {/* Filtro come nelle altre sezioni */}
+                <div className="max-w-md mx-auto mb-4 lg:max-w-none">
+                  <FilterDialog
+                    filters={activeFilters}
+                    setFilters={setActiveFilters}
+                    categories={categories}
+                    wallets={wallets}
+                    stores={[]}
+                    isOpen={showFilterDialog}
+                    setIsOpen={setShowFilterDialog}
+                    showStoreFilter={false}
+                  />
+                </div>
+                {/* Usa transazioni già filtrate per negozi e saldi, compreso il filtro Tutte/Spese/Entrate */}
                 {(() => {
-                  const walletsWithBalance = getWalletsWithCalculatedBalance();
-                  if (walletsWithBalance.length === 0) {
+                  // Ottieni le transazioni filtrate secondo il tipo selezionato (all/expenses/incomes)
+                  const filteredTransactions = getFilteredTransactions();
+                  // Ricava i negozi unici dalle transazioni filtrate, escludendo 'Trasferimento'
+                  const filteredStores = Array.from(new Set(
+                    filteredTransactions
+                      .filter(t => t.store && t.store.trim() && t.store.trim().toLowerCase() !== 'trasferimento')
+                      .map(t => t.store.trim())
+                  )).sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
+                  if (filteredStores.length === 0) {
                     return (
-                      <div className="text-center py-4">
-                        <div className="flex justify-between items-center mb-3 max-w-xs mx-auto">
-                          <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">Gestione Conti</div>
-                          <button
-                            onClick={addWallet ? handleAddWallet : undefined}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600/90 backdrop-blur-sm text-white rounded-xl shadow-lg hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
-                          >
-                            <Wallet className="w-4 h-4" />
-                            <span className="font-medium">Nuovo</span>
-                          </button>
-                        </div>
-                        <div className="mb-3">
-                          <div className="w-14 h-14 mx-auto bg-muted rounded-full flex items-center justify-center mb-2">
-                            <Wallet className="w-7 h-7 text-gray-500 dark:text-gray-400" />
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                            Nessun conto salvato
-                          </h3>
-                          <p className="text-gray-500 dark:text-gray-400 text-sm">
-                            Aggiungi un conto per iniziare a tracciare le tue finanze
-                          </p>
-                        </div>
+                      <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                        Nessun negozio trovato nelle transazioni
                       </div>
                     );
                   }
                   return (
-                    <WalletManager
-                      wallets={walletsWithBalance}
-                      onAdd={addWallet}
-                      onDelete={deleteWallet}
-                      onTransfer={handleTransfer}
-                      onShowForm={handleAddWallet}
-                      onEditWallet={handleEditWallet}
-                      onShowTransferModal={handleShowTransferModal}
-                      onWalletClick={handleWalletClick}
-                    />
+                    <ul className="space-y-3 mt-8">
+                      {filteredStores.map(store => {
+                        // Calcola saldo solo sulle transazioni filtrate e del tipo selezionato
+                        const storeTransactions = filteredTransactions.filter(t => t.store && t.store.trim() === store);
+                        const totalExpenses = storeTransactions.filter(t => t._type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                        const totalIncomes = storeTransactions.filter(t => t._type === 'income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                        const netTotal = totalIncomes - totalExpenses;
+                        return (
+                          <li key={store} className="card py-2 px-4 w-full max-w-md mx-auto flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl shadow transition-all lg:max-w-none">
+                            <span className="font-medium text-gray-900 dark:text-gray-100 truncate text-base">{store}</span>
+                            <span className={`inline-block min-w-[90px] text-center px-3 py-1 rounded-lg font-semibold text-sm ml-2 ${
+                              netTotal > 0
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                                : netTotal < 0
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                                : 'bg-gray-100 text-gray-600 dark:bg-gray-800/60 dark:text-gray-300'
+                            }`}>
+                              {netTotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 })}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   );
                 })()}
               </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="max-w-md mx-auto px-6 py-4 -mt-6 relative z-10">
-
-        {/* Content */}
-        {activeTab === 'transactions' && (
-          <div className="animate-fade-in-up">
-            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Transazioni</h2>
-                <div className="flex items-center gap-2">
-                  <FilterButton
-                    onClick={() => setShowFilterDialog(true)}
-                    className="ml-3"
-                  >
-                    Filtri
-                  </FilterButton>
-                </div>
-              </div>
-
-              {/* Bottoni per aggiungere transazioni */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleAddExpense}
-                  className="flex-1 flex items-center justify-center gap-2 px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-red-500 to-red-600 backdrop-blur-sm text-white rounded-xl shadow-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95 font-medium"
-                >
-                  <TrendingDown className="w-4 h-4" />
-                  <span>Nuova Spesa</span>
-                </button>
-                <button
-                  onClick={handleAddIncome}
-                  className="flex-1 flex items-center justify-center gap-2 px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 backdrop-blur-sm text-white rounded-xl shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95 font-medium"
-                >
-                  <TrendingUp className="w-4 h-4" />
-                  <span>Nuova Entrata</span>
-                </button>
-              </div>
-            </div>
-            
-            <ExpenseList
-              items={filteredTransactions}
-              onDelete={confirmDelete}
-              onEdit={handleEdit}
-              type="mixed"
-              categories={categories}
-              onShowDetail={handleShowDetail}
-            />
-          </div>
-        )}
-
-        {activeTab === 'stats' && (
-          <div className="animate-fade-in-up">
-            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Statistiche</h2>
-                <button
-                  onClick={() => setShowFilterDialog(true)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    (activeFilters.timeRange !== 'all' || 
-                     activeFilters.selectedCategories.length > 0 || 
-                     activeFilters.selectedStores.length > 0)
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  <Filter className="w-4 h-4" />
-                  Filtri
-                  {((activeFilters.timeRange !== 'all' || 
-                     activeFilters.selectedCategories.length > 0 || 
-                     activeFilters.selectedStores.length > 0)) && (
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  )}
-                </button>
-              </div>
-            </div>
-            <div className="mt-8">
-              <Statistics
-                expenses={getFilteredTransactions().filter(t => t._type === 'expense')}
-                incomes={getFilteredTransactions().filter(t => t._type === 'income')}
-                currentMonthExpenses={currentMonthExpenses}
-                currentMonthIncomes={currentMonthIncomes}
-                categories={categories}
-                stores={stores}
-                activeFilters={activeFilters}
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'categories' && (
-          <div className="animate-fade-in-up">
-            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Categorie</h2>
-            </div>
-          <div className="space-y-8">
-            <CategoryManager
-            categories={categories.expense}
-            onAddCategory={(cat) => handleAddCategory('expense', cat)}
-            onEditCategory={(id, fields) => handleEditCategory('expense', id, fields)}
-            onDeleteCategory={(id) => handleDeleteCategory('expense', id)}
-            type="expense"
-            onShowForm={handleShowCategoryForm}
-            onCategoryClick={handleCategoryClick}
-          />
-          <CategoryManager
-            categories={categories.income}
-            onAddCategory={(cat) => handleAddCategory('income', cat)}
-            onEditCategory={(id, fields) => handleEditCategory('income', id, fields)}
-            onDeleteCategory={(id) => handleDeleteCategory('income', id)}
-            type="income"
-            onShowForm={handleShowCategoryForm}
-            onCategoryClick={handleCategoryClick}
-          />
+            )}
           </div>
         </div>
-        )}
-
-        {activeTab === 'data' && (
-          <div className="animate-fade-in-up">
-            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Gestione Dati</h2>
-            </div>
-            <DataManager 
-              onImportData={importData} 
-              onResetData={resetAllData} 
-              onShowImportModal={() => setShowImportModal(true)}
-              onShowResetModal={() => setShowResetModal(true)}
-              onSanitizeStores={sanitizeStores}
-            />
-          </div>
-        )}
-
-        {activeTab === 'stores' && (
-          <div className="animate-fade-in-up">
-            {/* Titolo sticky e bottone filtro, identico alle altre sezioni */}
-            <div className="sticky top-20 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">Negozi</h2>
-              <button
-                className="ml-3 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-                onClick={() => setShowFilterDialog(true)}
-                aria-label="Filtra negozi"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A2 2 0 0013 14.586V19a1 1 0 01-1.447.894l-2-1A1 1 0 019 18v-3.414a2 2 0 00-.586-1.414L2 6.707A1 1 0 012 6V4z" />
-                </svg>
-              </button>
-            </div>
-            {/* Filtro come nelle altre sezioni */}
-            <div className="max-w-md mx-auto mb-4">
-              <FilterDialog
-                filters={activeFilters}
-                setFilters={setActiveFilters}
-                categories={categories}
-                wallets={wallets}
-                stores={[]}
-                isOpen={showFilterDialog}
-                setIsOpen={setShowFilterDialog}
-                showStoreFilter={false}
-              />
-            </div>
-            {/* Usa transazioni già filtrate per negozi e saldi, compreso il filtro Tutte/Spese/Entrate */}
-            {(() => {
-              // Ottieni le transazioni filtrate secondo il tipo selezionato (all/expenses/incomes)
-              const filteredTransactions = getFilteredTransactions();
-              // Ricava i negozi unici dalle transazioni filtrate, escludendo 'Trasferimento'
-              const filteredStores = Array.from(new Set(
-                filteredTransactions
-                  .filter(t => t.store && t.store.trim() && t.store.trim().toLowerCase() !== 'trasferimento')
-                  .map(t => t.store.trim())
-              )).sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
-              if (filteredStores.length === 0) {
-                return (
-                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-                    Nessun negozio trovato nelle transazioni
-                  </div>
-                );
-              }
-              return (
-                <ul className="space-y-3">
-                  {filteredStores.map(store => {
-                    // Calcola saldo solo sulle transazioni filtrate e del tipo selezionato
-                    const storeTransactions = filteredTransactions.filter(t => t.store && t.store.trim() === store);
-                    const totalExpenses = storeTransactions.filter(t => t._type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
-                    const totalIncomes = storeTransactions.filter(t => t._type === 'income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
-                    const netTotal = totalIncomes - totalExpenses;
-                    return (
-                      <li key={store} className="card py-2 px-4 w-full max-w-md mx-auto flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl shadow transition-all">
-                        <span className="font-medium text-gray-900 dark:text-gray-100 truncate text-base">{store}</span>
-                        <span className={`inline-block min-w-[90px] text-center px-3 py-1 rounded-lg font-semibold text-sm ml-2 ${
-                          netTotal > 0
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                            : netTotal < 0
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-800/60 dark:text-gray-300'
-                        }`}>
-                          {netTotal.toLocaleString('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 })}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              );
-            })()}
-          </div>
-        )}
       </div>
 
       {/* Navigation Tabs fluttuante in basso */}
-      <div className={`fixed bottom-12 left-0 w-full z-30 py-3 transition-all duration-300 ${showFloatingMenu ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-full pointer-events-none'}`}
+      <div className={`fixed bottom-12 left-0 w-full z-30 py-3 transition-all duration-300 ${showFloatingMenu ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-full pointer-events-none'} lg:bottom-8 lg:left-8 lg:right-auto lg:w-80`}
       >
-        <div className="max-w-md mx-auto px-6">
-          <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/30 via-yellow-500/30 via-green-500/30 via-blue-500/30 via-purple-500/30 to-pink-500/30 backdrop-blur-md border border-rainbow-500/40 rounded-2xl' : 'glass-card'} p-2`}>
-            <div className="grid grid-cols-5 gap-2">
+        <div className="max-w-md mx-auto px-6 lg:max-w-none lg:px-0">
+          <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/30 via-yellow-500/30 via-green-500/30 via-blue-500/30 via-purple-500/30 to-pink-500/30 backdrop-blur-md border border-rainbow-500/40 rounded-2xl' : 'glass-card'} p-2 lg:rounded-xl`}>
+            <div className="grid grid-cols-5 gap-2 lg:flex lg:flex-row lg:gap-1 lg:w-full">
               <button
                 onClick={() => setActiveTab('transactions')}
-                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 lg:py-2 lg:px-2 lg:flex-1 ${
                   activeTab === 'transactions'
                     ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
@@ -1827,12 +1903,12 @@ function App() {
               >
                 <div className="flex items-center justify-center gap-1">
                   <DollarSign className="w-4 h-4" />
-                  <span className="hidden sm:inline">Trans.</span>
+                  <span className="hidden sm:inline lg:hidden">Trans.</span>
                 </div>
               </button>
               <button
                 onClick={() => setActiveTab('stores')}
-                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 lg:py-2 lg:px-2 lg:flex-1 ${
                   activeTab === 'stores'
                     ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
@@ -1840,12 +1916,12 @@ function App() {
               >
                 <div className="flex items-center justify-center gap-1">
                   <Store className="w-4 h-4" />
-                  <span className="hidden sm:inline">Negozi</span>
+                  <span className="hidden sm:inline lg:hidden">Negozi</span>
                 </div>
               </button>
               <button
                 onClick={() => setActiveTab('stats')}
-                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 lg:py-2 lg:px-2 lg:flex-1 ${
                   activeTab === 'stats'
                     ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
@@ -1853,12 +1929,12 @@ function App() {
               >
                 <div className="flex items-center justify-center gap-1">
                   <BarChart3 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Stats</span>
+                  <span className="hidden sm:inline lg:hidden">Stats</span>
                 </div>
               </button>
               <button
                 onClick={() => setActiveTab('categories')}
-                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 lg:py-2 lg:px-2 lg:flex-1 ${
                   activeTab === 'categories'
                     ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
@@ -1866,12 +1942,12 @@ function App() {
               >
                 <div className="flex items-center justify-center gap-1">
                   <Tag className="w-4 h-4" />
-                  <span className="hidden sm:inline">Cat.</span>
+                  <span className="hidden sm:inline lg:hidden">Cat.</span>
                 </div>
               </button>
               <button
                 onClick={() => setActiveTab('data')}
-                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 lg:py-2 lg:px-2 lg:flex-1 ${
                   activeTab === 'data'
                     ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
@@ -1879,7 +1955,7 @@ function App() {
               >
                 <div className="flex items-center justify-center gap-1">
                   <Database className="w-4 h-4" />
-                  <span className="hidden sm:inline">Dati</span>
+                  <span className="hidden sm:inline lg:hidden">Dati</span>
                 </div>
               </button>
             </div>
@@ -2394,9 +2470,9 @@ function App() {
         wallets={getWalletsWithCalculatedBalance()}
       />
 
-      {/* Footer con credits */}
+      {/* Footer con credits - Mobile */}
       <footer 
-        className={`fixed bottom-0 left-0 w-full ${rainbowMode ? 'bg-gradient-to-r from-red-500/80 via-yellow-500/80 via-green-500/80 via-blue-500/80 via-purple-500/80 to-pink-500/80 dark:from-red-900/80 dark:via-yellow-900/80 dark:via-blue-900/80 dark:via-purple-900/80 dark:to-pink-900/80' : 'bg-white/80 dark:bg-gray-900/80'} backdrop-blur-md border-t ${rainbowMode ? 'border-rainbow-500/40' : 'border-gray-200 dark:border-gray-700'} py-2 z-40 cursor-pointer hover:bg-opacity-90 transition-all duration-200`}
+        className={`fixed bottom-0 left-0 w-full ${rainbowMode ? 'bg-gradient-to-r from-red-500/80 via-yellow-500/80 via-green-500/80 via-blue-500/80 via-purple-500/80 to-pink-500/80 dark:from-red-900/80 dark:via-yellow-900/80 dark:via-blue-900/80 dark:via-purple-900/80 dark:to-pink-900/80' : 'bg-white/80 dark:bg-gray-900/80'} backdrop-blur-md border-t ${rainbowMode ? 'border-rainbow-500/40' : 'border-gray-200 dark:border-gray-700'} py-2 z-40 cursor-pointer hover:bg-opacity-90 transition-all duration-200 lg:hidden`}
         onClick={handleFooterTap}
         onTouchEnd={handleFooterTap}
         title="Doppio tap per attivare il tema retro! 🎮"
@@ -2404,6 +2480,22 @@ function App() {
         <div className="max-w-md mx-auto px-6">
           <div className="text-center">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              Sviluppato con ❤️ da <span className="font-semibold text-blue-600 dark:text-blue-400">Alex Siroli</span>
+            </p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Footer con credits - Desktop */}
+      <footer 
+        className={`hidden lg:block fixed bottom-0 left-0 w-full z-40 py-2 cursor-pointer hover:bg-opacity-90 transition-all duration-200 ${rainbowMode ? 'bg-gradient-to-r from-red-500/80 via-yellow-500/80 via-green-500/80 via-blue-500/80 via-purple-500/80 to-pink-500/80 dark:from-red-900/80 dark:via-yellow-900/80 dark:via-blue-900/80 dark:via-purple-900/80 dark:to-pink-900/80' : 'bg-white/80 dark:bg-gray-900/80'} backdrop-blur-md border-t ${rainbowMode ? 'border-rainbow-500/40' : 'border-gray-200 dark:border-gray-700'}`}
+        onClick={handleFooterTap}
+        onTouchEnd={handleFooterTap}
+        title="Doppio tap per attivare il tema retro! 🎮"
+      >
+        <div className="max-w-md mx-auto px-6 lg:max-w-none lg:px-8">
+          <div className="text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Sviluppato con ❤️ da <span className="font-semibold text-blue-600 dark:text-blue-400">Alex Siroli</span>
             </p>
           </div>

@@ -76,7 +76,7 @@ function DataManager({ onImportData, onResetData, onShowImportModal, onShowReset
   const [isResetting, setIsResetting] = useState(false);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Export */}
         <div className="card p-4 flex flex-col h-full min-h-[160px] md:min-h-[260px]">
