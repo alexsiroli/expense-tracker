@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1752635068504" clover="3.2.0">
-  <project timestamp="1752635068504" name="All files">
+<coverage generated="1752681791546" clover="3.2.0">
+  <project timestamp="1752681791546" name="All files">
     <metrics statements="173" coveredstatements="169" conditionals="156" coveredconditionals="141" methods="72" coveredmethods="72" elements="401" coveredelements="382" complexity="0" loc="173" ncloc="173" packages="5" files="7" classes="7"/>
     <package name="features.categories">
       <metrics statements="7" coveredstatements="7" conditionals="12" coveredconditionals="12" methods="7" coveredmethods="7"/>
@@ -103,16 +103,16 @@
         <line num="3" count="12" type="cond" truecount="5" falsecount="0"/>
         <line num="4" count="9" type="cond" truecount="2" falsecount="0"/>
         <line num="6" count="4" type="stmt"/>
-        <line num="7" count="4" type="cond" truecount="4" falsecount="0"/>
-        <line num="12" count="4" type="stmt"/>
-        <line num="13" count="8" type="cond" truecount="2" falsecount="0"/>
-        <line num="19" count="8" type="stmt"/>
-        <line num="24" count="12" type="cond" truecount="3" falsecount="0"/>
-        <line num="29" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="31" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="32" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="33" count="4" type="cond" truecount="1" falsecount="1"/>
-        <line num="34" count="4" type="stmt"/>
+        <line num="7" count="4" type="stmt"/>
+        <line num="17" count="4" type="stmt"/>
+        <line num="18" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="24" count="8" type="stmt"/>
+        <line num="29" count="12" type="cond" truecount="3" falsecount="0"/>
+        <line num="34" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="36" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="37" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="38" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="39" count="4" type="stmt"/>
       </file>
     </package>
     <package name="utils">

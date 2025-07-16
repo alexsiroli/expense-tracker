@@ -1012,15 +1012,15 @@ function App() {
           await updateDocument('wallets', firestoreWallet.id, {
             name: walletFormData.name,
             color: walletFormData.color,
-            initialBalance: parseFloat(walletFormData.balance) || 0,
+            initialBalance: parseFloat(String(walletFormData.balance).replace(',', '.')) || 0,
           });
         } else {
           // Se non trova il documento, crea un nuovo wallet
-          await addWallet({ ...walletFormData, initialBalance: walletFormData.balance });
+          await addWallet({ ...walletFormData, initialBalance: parseFloat(String(walletFormData.balance).replace(',', '.')) || 0 });
         }
         setEditingWallet(null);
       } else {
-        await addWallet({ ...walletFormData, initialBalance: walletFormData.balance });
+        await addWallet({ ...walletFormData, initialBalance: parseFloat(String(walletFormData.balance).replace(',', '.')) || 0 });
       }
       
       setWalletFormData({ name: '', color: WALLET_COLORS[0], balance: 0 });
