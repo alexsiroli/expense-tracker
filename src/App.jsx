@@ -769,6 +769,7 @@ function App() {
 
   const handleEdit = (item) => {
     setEditingItem(item);
+    setTransactionType(item._type || inferTypeFromCategory(item.category));
     setShowForm(true);
   };
 
@@ -1514,6 +1515,13 @@ function App() {
     ];
     // Rimuovi duplicati e ordina alfabeticamente
     return Array.from(new Set(allStores)).sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
+  };
+
+  // Utility per inferire il tipo da una categoria
+  const inferTypeFromCategory = (categoryName) => {
+    if (categories.expense.some(c => c.name === categoryName)) return 'expense';
+    if (categories.income.some(c => c.name === categoryName)) return 'income';
+    return 'expense'; // fallback
   };
 
   return (
