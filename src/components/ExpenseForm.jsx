@@ -3,7 +3,7 @@ import { X, Euro, Tag, Calendar, Save, Store, Search, Wallet } from 'lucide-reac
 import CustomSelect from './CustomSelect';
 import { usePopup } from '../contexts/PopupContext';
 
-function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [], categories = [], wallets = [], selectedWalletId, onAddStore }) {
+function ExpenseForm({ isOpen = true, onSubmit, onClose, type, editingItem = null, modelFormData = null, stores = [], categories = [], wallets = [], selectedWalletId, onAddStore, isModelMode = false }) {
   const { showError } = usePopup();
   const [formData, setFormData] = useState({
     amount: '',
@@ -11,7 +11,8 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
     date: new Date().toISOString().split('T')[0],
     time: new Date().toTimeString().slice(0, 5),
     store: '',
-    walletId: selectedWalletId || (wallets[0]?.id ?? '')
+    walletId: selectedWalletId || (wallets[0]?.id ?? ''),
+    note: ''
   });
 
   const [storeSuggestions, setStoreSuggestions] = useState([]);
@@ -19,9 +20,21 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
   const storeInputRef = useRef(null);
   const suggestionsRef = useRef(null);
 
-  // Inizializza il form con i dati dell'item da modificare
+  // Inizializza il form con i dati dell'item da modificare o del modello
   useEffect(() => {
-    if (editingItem) {
+    if (modelFormData) {
+      // Dati da un modello (nuova transazione)
+      setFormData({
+        amount: modelFormData.amount?.toString() || '',
+        category: modelFormData.category || (categories.length > 0 ? categories[0].name : ''),
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toTimeString().slice(0, 5),
+        store: modelFormData.store || '',
+        walletId: modelFormData.walletId || selectedWalletId || (wallets[0]?.id ?? ''),
+        note: modelFormData.note || ''
+      });
+    } else if (editingItem) {
+      // Dati da una transazione esistente (modifica)
       const itemDate = editingItem.date ? new Date(editingItem.date) : new Date();
       setFormData({
         amount: editingItem.amount?.toString() || '',
@@ -29,10 +42,22 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
         date: itemDate.toISOString().split('T')[0],
         time: itemDate.toTimeString().slice(0, 5),
         store: editingItem.store || '',
-        walletId: editingItem.walletId || selectedWalletId || (wallets[0]?.id ?? '')
+        walletId: editingItem.walletId || selectedWalletId || (wallets[0]?.id ?? ''),
+        note: editingItem.note || ''
+      });
+    } else {
+      // Reset del form quando non c'è un item da modificare
+      setFormData({
+        amount: '',
+        category: isModelMode ? '' : (categories.length > 0 ? categories[0].name : ''),
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toTimeString().slice(0, 5),
+        store: '',
+        walletId: isModelMode ? '' : (selectedWalletId || (wallets[0]?.id ?? '')),
+        note: ''
       });
     }
-  }, [editingItem, categories, wallets, selectedWalletId]);
+  }, [editingItem, modelFormData, categories, wallets, selectedWalletId, isModelMode]);
 
   // Gestisce il click fuori dai suggerimenti per chiuderli
   useEffect(() => {
@@ -82,38 +107,57 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.amount || !formData.store.trim()) {
-      if (!formData.amount) {
-        showError('Inserisci un importo valido.', 'Campo obbligatorio');
-      } else if (!formData.store.trim()) {
-        showError('Inserisci il nome del negozio.', 'Campo obbligatorio');
+    
+    if (isModelMode) {
+      // Validazione per modelli - solo il nome del modello è obbligatorio
+      if (!formData.note || formData.note.trim() === '') {
+        showError('Inserisci il nome del modello.', 'Campo obbligatorio');
+        return;
       }
-      return;
+      
+      onSubmit({
+        ...formData,
+        amount: parseFloat(formData.amount),
+        store: formData.store.trim(),
+        category: formData.category,
+        name: formData.note.trim(), // Usa il campo note come nome del modello
+        note: formData.note.trim()
+      });
+    } else {
+      // Validazione per transazioni normali
+      if (!formData.amount || !formData.store.trim()) {
+        if (!formData.amount) {
+          showError('Inserisci un importo valido.', 'Campo obbligatorio');
+        } else if (!formData.store.trim()) {
+          showError('Inserisci il nome del negozio.', 'Campo obbligatorio');
+        }
+        return;
+      }
+      
+      // Valida che la data non sia nel futuro
+      const selectedDate = new Date(formData.date);
+      const today = new Date();
+      const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      
+      if (selectedDateOnly > todayOnly) {
+        showError('Non è possibile creare transazioni con date future. Seleziona una data di oggi o precedente.', 'Data non valida');
+        return;
+      }
+      
+      // Aggiunge il negozio alla lista se non esiste
+      await addStoreToSuggestions(formData.store);
+      
+      // Combina data e ora per creare un timestamp completo
+      const dateTime = `${formData.date}T${formData.time}:00`;
+      
+      onSubmit({
+        ...formData,
+        amount: parseFloat(formData.amount),
+        store: formData.store.trim(),
+        date: dateTime
+      });
     }
-    
-    // Valida che la data non sia nel futuro
-    const selectedDate = new Date(formData.date);
-    const today = new Date();
-    const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    
-    if (selectedDateOnly > todayOnly) {
-      showError('Non è possibile creare transazioni con date future. Seleziona una data di oggi o precedente.', 'Data non valida');
-      return;
-    }
-    
-    // Aggiunge il negozio alla lista se non esiste
-    await addStoreToSuggestions(formData.store);
-    
-    // Combina data e ora per creare un timestamp completo
-    const dateTime = `${formData.date}T${formData.time}:00`;
-    
-    onSubmit({
-      ...formData,
-      amount: parseFloat(formData.amount),
-      store: formData.store.trim(),
-      date: dateTime
-    });
   };
 
   const handleChange = (e) => {
@@ -211,6 +255,8 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
     e.target.setAttribute('inputmode', 'decimal');
   };
 
+  if (!isOpen) return null;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -224,7 +270,12 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
               <X className="w-6 h-6" />
             </button>
             <h2 className="text-xl font-bold">
-              {editingItem ? 'Modifica' : 'Nuovo'} {type === 'expense' ? 'Spesa' : 'Entrata'}
+              {isModelMode 
+                ? `Nuovo Modello ${type === 'expense' ? 'Spesa' : 'Entrata'}`
+                : modelFormData 
+                  ? `Nuova ${type === 'expense' ? 'Spesa' : 'Entrata'}`
+                  : `${editingItem ? 'Modifica' : 'Nuovo'} ${type === 'expense' ? 'Spesa' : 'Entrata'}`
+              }
             </h2>
             <div className="w-6"></div>
           </div>
@@ -242,18 +293,25 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
               <CustomSelect
                 value={formData.walletId}
                 onChange={(value) => setFormData(prev => ({ ...prev, walletId: value }))}
-                options={wallets.map(wallet => ({
-                  value: wallet.id,
-                  label: wallet.name,
-                  icon: (
-                    <div 
-                      className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                      style={{ backgroundColor: wallet.color }}
-                    />
-                  )
-                }))}
+                options={[
+                  ...(isModelMode ? [{
+                    value: '',
+                    label: 'Nessuno',
+                    icon: <div className="w-4 h-4 rounded-full border-2 border-gray-300 bg-gray-100" />
+                  }] : []),
+                  ...wallets.map(wallet => ({
+                    value: wallet.id,
+                    label: wallet.name,
+                    icon: (
+                      <div 
+                        className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                        style={{ backgroundColor: wallet.color }}
+                      />
+                    )
+                  }))
+                ]}
                 placeholder="Seleziona conto"
-                required
+                required={!isModelMode}
               />
             </div>
             <div>
@@ -271,7 +329,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                   placeholder="0,00"
                   step="0.01"
                   className="input form-input-with-icon"
-                  required
+                  required={!isModelMode}
                 />
               </div>
             </div>
@@ -286,21 +344,29 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             <CustomSelect
               value={formData.category}
               onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-              options={categories.map(category => ({
-                value: category.name,
-                label: category.name,
-                icon: category.icon
-              }))}
+              options={[
+                ...(isModelMode ? [{
+                  value: '',
+                  label: 'Nessuna',
+                  icon: <div className="w-4 h-4 rounded-full border-2 border-gray-300 bg-gray-100" />
+                }] : []),
+                ...categories.map(category => ({
+                  value: category.name,
+                  label: category.name,
+                  icon: category.icon
+                }))
+              ]}
               placeholder="Seleziona categoria"
               className="h-12"
+              required={!isModelMode}
             />
           </div>
 
           {/* Terza riga: Negozio */}
           <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              Negozio
-            </label>
+                            <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Negozio
+                </label>
             <div className="form-input-group relative">
               <Store className="form-input-icon" />
               <input
@@ -317,9 +383,9 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
                 }}
                 autoComplete="off"
                 spellCheck="false"
-                className="input form-input-with-icon pr-10"
-                required
-                placeholder="Digita il nome del negozio"
+                                className="input form-input-with-icon pr-10"
+                required={false}
+                placeholder="Digita il nome del negozio (opzionale)"
               />
               {/* Suggerimenti negozi */}
               {showStoreSuggestions && (
@@ -358,42 +424,66 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
             </div>
           </div>
 
-          {/* Riga con Data e Ora */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                Data
-              </label>
+
+
+          {/* Riga con Data e Ora - nascosta per i modelli */}
+          {!isModelMode && (
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                  Data
+                </label>
+                <div>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleChange}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="input"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                  Ora
+                </label>
+                <div>
+                  <input
+                    type="time"
+                    name="time"
+                    value={formData.time}
+                    onChange={handleChange}
+                    className="input"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Campo Nome Modello - solo per i modelli, in fondo */}
+          {isModelMode && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                Nome Modello
+              </label>
+              <div className="form-input-group">
+                <textarea
+                  name="note"
+                  value={formData.note || ''}
                   onChange={handleChange}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="input"
+                  placeholder="Inserisci il nome del modello..."
+                  rows="3"
+                  className="input resize-none"
                   required
                 />
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                Ora
-              </label>
-              <div>
-                <input
-                  type="time"
-                  name="time"
-                  value={formData.time}
-                  onChange={handleChange}
-                  className="input"
-                  required
-                />
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-4 pt-4">
@@ -409,7 +499,7 @@ function ExpenseForm({ onSubmit, onClose, type, editingItem = null, stores = [],
               className={`btn flex-1 ${type === 'expense' ? 'btn-danger' : 'btn-success'}`}
             >
               <Save className="w-5 h-5 mr-2" />
-              {editingItem ? 'Modifica' : 'Salva'}
+              {isModelMode ? 'Salva' : (modelFormData ? 'Salva' : (editingItem ? 'Modifica' : 'Salva'))}
             </button>
           </div>
         </form>

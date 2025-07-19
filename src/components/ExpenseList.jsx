@@ -117,7 +117,11 @@ const ExpenseItem = ({ item, onDelete, onEdit, onShowDetail, getItemType, getCat
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
-      style={{ transform: `translateX(${swipeX}px)`, transition: swiping ? 'none' : 'transform 0.2s' }}
+      style={{ 
+        transform: `translateX(${swipeX}px)`, 
+        transition: swiping ? 'none' : 'transform 0.2s',
+        boxShadow: '2px 0 0 rgba(239, 68, 68, 0.6), -2px 0 0 rgba(59, 130, 246, 0.6)'
+      }}
     >
       {/* Overlay emoji per quadrifoglio fortunato */}
       {isQuadrifoglioFortunatoTransaction(item, getItemType(item)) && (

@@ -26,6 +26,9 @@ import { addWallet as addWalletLogic, editWallet as editWalletLogic, deleteWalle
 import { addExpense as addExpenseLogic, editExpense, deleteExpense, validateExpense } from './features/expenses/expenseLogic';
 import { addIncome as addIncomeLogic, editIncome, deleteIncome, validateIncome } from './features/expenses/incomeLogic';
 import FilterButton from './components/FilterButton';
+import ModelsDialog from './components/ModelsDialog';
+import ModelForm from './components/ModelForm';
+import { addModel, editModel, deleteModel } from './features/models/modelLogic';
 
 // Categorie predefinite
 const defaultCategories = {
@@ -103,6 +106,7 @@ function App() {
   const { data: categoriesData, loading: categoriesLoading } = useCollectionData('categories', null);
   const { data: storesData, loading: storesLoading } = useCollectionData('stores', null);
   const { data: walletsData, loading: walletsLoading } = useCollectionData('wallets', 'createdAt');
+  const { data: modelsData, loading: modelsLoading } = useCollectionData('models', 'createdAt');
   
 
   
@@ -195,12 +199,24 @@ function App() {
   
   // Stato per la visibilità del saldo
   const [showBalance, setShowBalance] = useState(false); // di default nascosto
+  
+  // Stati per il dialog dei modelli
+  const [showModelsDialog, setShowModelsDialog] = useState(false);
+  const [modelsDialogType, setModelsDialogType] = useState('expense');
+  const buttonLongPressTimer = useRef(null);
+  const [models, setModels] = useState([]);
+  const [showModelForm, setShowModelForm] = useState(false);
+  const [editingModel, setEditingModel] = useState(null);
+  const [showModelConfirmDelete, setShowModelConfirmDelete] = useState(false);
+  const [modelToDelete, setModelToDelete] = useState(null);
+  const [modelFormData, setModelFormData] = useState(null);
 
   // Determina se almeno un modal è aperto
   const isAnyModalOpen = showForm || showConfirmDelete || showUserProfile || 
     showWalletForm || showTransferModal || showColorPicker || showCategoryForm || 
     showImportModal || showResetModal || showFilterDialog || showTransactionDialog ||
-    showWalletActions || showWalletConfirmDelete || showCategoryActions || showCategoryConfirmDelete;
+    showWalletActions || showWalletConfirmDelete || showCategoryActions || showCategoryConfirmDelete ||
+    showModelsDialog || showModelForm || showModelConfirmDelete;
 
   // Blocca lo scroll quando un modal è aperto
   useScrollLock(isAnyModalOpen);
@@ -391,6 +407,23 @@ function App() {
       setActiveWalletId(null);
     }
   }, [walletsData, activeWalletId]);
+
+  // Sincronizza i modelli dal database
+  useEffect(() => {
+    if (modelsData && modelsData.length > 0) {
+      const modelsDoc = modelsData[0];
+      console.log('Modelli caricati dal database:', modelsDoc);
+      if (modelsDoc.models) {
+        setModels(modelsDoc.models);
+      } else {
+        setModels([]);
+      }
+      setLastSyncTime(new Date().toISOString());
+    } else if (modelsData && modelsData.length === 0) {
+      console.log('Nessun modello nel database');
+      setModels([]);
+    }
+  }, [modelsData]);
 
   // Inizializza i dati di default se l'utente è nuovo
   useEffect(() => {
@@ -787,6 +820,150 @@ function App() {
     setEditingItem(null);
     setTransactionType('income');
     setShowForm(true);
+  };
+
+  // Funzioni per gestire il long press sui pulsanti
+  const handleButtonLongPressStart = (type) => {
+    const timer = setTimeout(() => {
+      setModelsDialogType(type);
+      setShowModelsDialog(true);
+    }, 500); // 500ms per il long press
+    buttonLongPressTimer.current = timer;
+  };
+
+  const handleButtonLongPressEnd = () => {
+    if (buttonLongPressTimer.current) {
+      clearTimeout(buttonLongPressTimer.current);
+      buttonLongPressTimer.current = null;
+    }
+  };
+
+  const handleButtonClick = (type) => {
+    // Se c'è un timer attivo, significa che è un long press
+    if (buttonLongPressTimer.current) {
+      clearTimeout(buttonLongPressTimer.current);
+      buttonLongPressTimer.current = null;
+      return; // Non eseguire il click normale
+    }
+    
+    // Click normale
+    if (type === 'expense') {
+      handleAddExpense();
+    } else {
+      handleAddIncome();
+    }
+  };
+
+  const handleCloseModelsDialog = () => {
+    setShowModelsDialog(false);
+  };
+
+  // Funzioni per gestire i modelli
+  const handleAddModel = () => {
+    setEditingModel(null);
+    setShowModelForm(true);
+  };
+
+  const handleEditModel = (model) => {
+    setEditingModel(model);
+    setShowModelForm(true);
+  };
+
+  const handleDeleteModel = (model) => {
+    setModelToDelete(model);
+    setShowModelConfirmDelete(true);
+  };
+
+  const confirmDeleteModel = async () => {
+    try {
+      const updatedModels = deleteModel(models, modelToDelete.id);
+      setModels(updatedModels);
+      
+      // Sincronizza con Firestore
+      if (modelsData && modelsData.length > 0) {
+        const modelsDoc = modelsData[0];
+        await updateDocument('models', modelsDoc.id, { models: updatedModels });
+      }
+      
+      setShowModelConfirmDelete(false);
+      setModelToDelete(null);
+      showSuccess('Modello eliminato con successo!');
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione del modello:', error);
+      showError(error.message || 'Errore durante l\'eliminazione del modello.');
+    }
+  };
+
+  const closeModelConfirmDelete = () => {
+    setShowModelConfirmDelete(false);
+    setModelToDelete(null);
+  };
+
+  const handleSubmitModel = async (modelData) => {
+    try {
+      let updatedModels;
+      
+      // Aggiungi il tipo al modello
+      const modelWithType = {
+        ...modelData,
+        type: modelsDialogType
+      };
+      
+      if (editingModel) {
+        // Modifica modello esistente
+        updatedModels = editModel(models, editingModel.id, modelWithType);
+      } else {
+        // Aggiungi nuovo modello
+        updatedModels = addModel(models, modelWithType);
+      }
+      
+      console.log('Modello salvato:', modelWithType);
+      setModels(updatedModels);
+      
+      // Sincronizza con Firestore
+      if (modelsData && modelsData.length > 0) {
+        const modelsDoc = modelsData[0];
+        await updateDocument('models', modelsDoc.id, { models: updatedModels });
+      } else {
+        await addDocument('models', { models: updatedModels });
+      }
+      
+      setShowModelForm(false);
+      setEditingModel(null);
+      
+      // Non mostrare popup di successo per i modelli
+    } catch (error) {
+      console.error('Errore durante il salvataggio del modello:', error);
+      showError(error.message || 'Errore durante il salvataggio del modello.');
+    }
+  };
+
+  const handleUseModel = (model) => {
+    // Prepara i dati del modello per il form
+    const modelData = {
+      amount: model.amount || 0,
+      category: model.category || '',
+      store: model.store || '',
+      walletId: model.walletId || activeWalletId || (wallets[0]?.id ?? ''),
+      note: model.note || ''
+    };
+    
+    // Imposta il tipo di transazione
+    setTransactionType(model.type);
+    
+    // Salva i dati del modello per il form (non come editingItem)
+    setModelFormData(modelData);
+    
+    // Chiudi il dialog dei modelli
+    setShowModelsDialog(false);
+    
+    // Apri il form di nuova transazione
+    setShowForm(true);
+  };
+
+  const handleCloseModelForm = () => {
+    setShowModelForm(false);
+    setEditingModel(null);
   };
 
   // Gestione categorie (usando funzioni pure)
@@ -1727,14 +1904,24 @@ function App() {
                   {/* Bottoni per aggiungere transazioni */}
                   <div className="flex gap-3">
                     <button
-                      onClick={handleAddExpense}
+                      onClick={() => handleButtonClick('expense')}
+                      onMouseDown={() => handleButtonLongPressStart('expense')}
+                      onMouseUp={handleButtonLongPressEnd}
+                      onMouseLeave={handleButtonLongPressEnd}
+                      onTouchStart={() => handleButtonLongPressStart('expense')}
+                      onTouchEnd={handleButtonLongPressEnd}
                       className="flex-1 flex items-center justify-center gap-2 px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-red-500 to-red-600 backdrop-blur-sm text-white rounded-xl shadow-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-red-500/25 active:scale-95 font-medium"
                     >
                       <TrendingDown className="w-4 h-4" />
                       <span>Nuova Spesa</span>
                     </button>
                     <button
-                      onClick={handleAddIncome}
+                      onClick={() => handleButtonClick('income')}
+                      onMouseDown={() => handleButtonLongPressStart('income')}
+                      onMouseUp={handleButtonLongPressEnd}
+                      onMouseLeave={handleButtonLongPressEnd}
+                      onTouchStart={() => handleButtonLongPressStart('income')}
+                      onTouchEnd={handleButtonLongPressEnd}
                       className="flex-1 flex items-center justify-center gap-2 px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 backdrop-blur-sm text-white rounded-xl shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 active:scale-95 font-medium"
                     >
                       <TrendingUp className="w-4 h-4" />
@@ -1998,9 +2185,16 @@ function App() {
               onClose={() => {
                 setShowForm(false);
                 setEditingItem(null);
+                
+                // Se veniamo da un modello, riapri il dialog dei modelli
+                if (modelFormData) {
+                  setModelFormData(null);
+                  setShowModelsDialog(true);
+                }
               }}
               type={transactionType}
-              editingItem={editingItem}
+              editingItem={modelFormData ? null : editingItem}
+              modelFormData={modelFormData}
               stores={stores}
               categories={transactionType === 'expense' ? categories.expense : categories.income}
               wallets={wallets}
@@ -2653,6 +2847,61 @@ function App() {
                 disabled={deletingCategory}
               >
                 {deletingCategory ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> : 'Elimina'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Models Dialog */}
+      <ModelsDialog
+        isOpen={showModelsDialog}
+        onClose={handleCloseModelsDialog}
+        type={modelsDialogType}
+        models={models}
+        onAddModel={handleAddModel}
+        onEditModel={handleEditModel}
+        onDeleteModel={handleDeleteModel}
+        onUseModel={handleUseModel}
+        categories={categories[modelsDialogType] || []}
+      />
+
+      {/* Model Form */}
+      <ModelForm
+        isOpen={showModelForm}
+        onClose={handleCloseModelForm}
+        onSubmit={handleSubmitModel}
+        type={modelsDialogType}
+        categories={categories[modelsDialogType] || []}
+        stores={stores}
+        editingModel={editingModel}
+        wallets={getWalletsWithCalculatedBalance()}
+        selectedWalletId={activeWalletId}
+      />
+
+      {/* Modal Conferma Eliminazione Modello */}
+      {showModelConfirmDelete && modelToDelete && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999]" onClick={closeModelConfirmDelete}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xs p-6 border border-gray-200 dark:border-gray-700 relative" onClick={e => e.stopPropagation()}>
+            <button onClick={closeModelConfirmDelete} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="mb-6 text-center">
+              <div className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">Conferma eliminazione</div>
+              <div className="text-gray-600 dark:text-gray-300">Sei sicuro di voler eliminare il modello <span className='font-semibold'>{modelToDelete.name}</span>? Questa azione non può essere annullata.</div>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={closeModelConfirmDelete}
+                className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={confirmDeleteModel}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold"
+              >
+                Elimina
               </button>
             </div>
           </div>
