@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, PiggyBank, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload, Euro, Edit, ArrowDown, Store, ArrowLeft } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload, Euro, Edit, ArrowDown, Store, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import CategoryManager from './components/CategoryManager';
@@ -192,6 +192,9 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategoryConfirmDelete, setShowCategoryConfirmDelete] = useState(false);
   const [deletingCategory, setDeletingCategory] = useState(false);
+  
+  // Stato per la visibilità del saldo
+  const [showBalance, setShowBalance] = useState(false); // di default nascosto
 
   // Determina se almeno un modal è aperto
   const isAnyModalOpen = showForm || showConfirmDelete || showUserProfile || 
@@ -1603,15 +1606,29 @@ function App() {
         {/* Zona sinistra - Conti (fissa su tablet/desktop) */}
         <div className="lg:w-96 lg:flex-shrink-0">
           <div className="max-w-md mx-auto px-6 mt-4 pb-6 lg:max-w-none lg:px-8 lg:mt-2 lg:pb-0 lg:h-full lg:overflow-y-auto lg:pb-24">
-            <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/20 via-yellow-500/20 via-green-500/20 via-blue-500/20 via-purple-500/20 to-pink-500/20 border border-rainbow-500/40 rounded-2xl' : 'floating-card'} ${balanceCollapsed ? 'p-3' : 'p-6'} transition-all duration-300 ${rainbowMode ? 'hover:shadow-2xl hover:shadow-rainbow-500/30' : 'hover:shadow-2xl hover:shadow-blue-500/20'} animate-bounce-in lg:mt-2`}>
-              <div className="flex items-center justify-between" onClick={() => setBalanceCollapsed(!balanceCollapsed)} style={{ cursor: 'pointer' }}>
+            <div className={`${rainbowMode ? 'bg-gradient-to-r from-red-500/20 via-yellow-500/20 via-green-500/20 via-blue-500/20 via-purple-500/20 to-pink-500/20 border border-rainbow-500/40 rounded-2xl' : 'floating-card'} ${balanceCollapsed ? 'p-3' : 'p-6'} lg:mt-2`}>
+              <div className="flex items-center justify-between" style={{ cursor: 'pointer' }} onClick={() => setBalanceCollapsed(!balanceCollapsed)}>
                 <div className="flex items-center gap-3">
-                  <PiggyBank className="w-6 h-6 text-blue-600" />
+                  <button
+                    aria-label={showBalance ? "Nascondi saldo" : "Mostra saldo"}
+                    onClick={e => { e.stopPropagation(); setShowBalance(v => !v); }}
+                    className="focus:outline-none"
+                    style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
+                  >
+                    {showBalance ? (
+                      <Eye className="w-6 h-6 text-blue-600" />
+                    ) : (
+                      <EyeOff className="w-6 h-6 text-blue-600" />
+                    )}
+                  </button>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Liquidità</h2>
                 </div>
                 <div className="flex items-center gap-2">
                   {balanceCollapsed && (
-                    <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                    <span
+                      className="text-lg font-bold text-blue-700 dark:text-blue-300 transition-all duration-200"
+                      style={{ filter: showBalance ? 'none' : 'blur(8px)', userSelect: showBalance ? 'auto' : 'none' }}
+                    >
                       {formatCurrency(getWalletsWithCalculatedBalance().reduce((sum, w) => sum + (w.balance || 0), 0))}
                     </span>
                   )}
@@ -1631,7 +1648,8 @@ function App() {
               {!balanceCollapsed && (
                 <>
                   <div className="text-center mt-4 animate-fade-in-up">
-                    <div className="text-4xl font-bold mb-4 text-blue-700 dark:text-blue-300">
+                    <div className="text-4xl font-bold mb-4 text-blue-700 dark:text-blue-300 transition-all duration-200"
+                      style={{ filter: showBalance ? 'none' : 'blur(10px)', userSelect: showBalance ? 'auto' : 'none' }}>
                       {formatCurrency(getWalletsWithCalculatedBalance().reduce((sum, w) => sum + (w.balance || 0), 0))}
                     </div>
                   </div>
