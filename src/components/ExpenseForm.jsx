@@ -2,14 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Euro, Tag, Calendar, Save, Store, Search, Wallet } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 import { usePopup } from '../contexts/PopupContext';
+import { getCurrentLocalDate, getCurrentLocalTime, parseLocalDate, compareDatesOnly } from '../utils/formatters';
 
 function ExpenseForm({ isOpen = true, onSubmit, onClose, type, editingItem = null, modelFormData = null, stores = [], categories = [], wallets = [], selectedWalletId, onAddStore, isModelMode = false }) {
   const { showError } = usePopup();
   const [formData, setFormData] = useState({
     amount: '',
     category: categories.length > 0 ? categories[0].name : '',
-    date: new Date().toISOString().split('T')[0],
-    time: new Date().toTimeString().slice(0, 5),
+    date: getCurrentLocalDate(),
+    time: getCurrentLocalTime(),
     store: '',
     walletId: selectedWalletId || (wallets[0]?.id ?? ''),
     note: ''
@@ -27,8 +28,8 @@ function ExpenseForm({ isOpen = true, onSubmit, onClose, type, editingItem = nul
       setFormData({
         amount: modelFormData.amount?.toString() || '',
         category: modelFormData.category || (categories.length > 0 ? categories[0].name : ''),
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toTimeString().slice(0, 5),
+        date: getCurrentLocalDate(),
+        time: getCurrentLocalTime(),
         store: modelFormData.store || '',
         walletId: modelFormData.walletId || selectedWalletId || (wallets[0]?.id ?? ''),
         note: modelFormData.note || ''
@@ -50,8 +51,8 @@ function ExpenseForm({ isOpen = true, onSubmit, onClose, type, editingItem = nul
       setFormData({
         amount: '',
         category: isModelMode ? '' : (categories.length > 0 ? categories[0].name : ''),
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toTimeString().slice(0, 5),
+        date: getCurrentLocalDate(),
+        time: getCurrentLocalTime(),
         store: '',
         walletId: isModelMode ? '' : (selectedWalletId || (wallets[0]?.id ?? '')),
         note: ''
@@ -135,12 +136,10 @@ function ExpenseForm({ isOpen = true, onSubmit, onClose, type, editingItem = nul
       }
       
       // Valida che la data non sia nel futuro
-      const selectedDate = new Date(formData.date);
+      const selectedDate = parseLocalDate(formData.date);
       const today = new Date();
-      const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       
-      if (selectedDateOnly > todayOnly) {
+      if (compareDatesOnly(selectedDate, today) > 0) {
         showError('Non è possibile creare transazioni con date future. Seleziona una data di oggi o precedente.', 'Data non valida');
         return;
       }
