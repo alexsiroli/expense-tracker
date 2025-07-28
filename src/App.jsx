@@ -389,13 +389,54 @@ function App() {
       if (categoriesDoc.expense && categoriesDoc.income) {
         setCategories(categoriesDoc);
         setLastSyncTime(new Date().toISOString());
+        // Salva anche in localStorage come backup
+        localStorage.setItem('categories_backup', JSON.stringify(categoriesDoc));
+      } else {
+        // Prova a caricare dal backup locale
+        const backup = localStorage.getItem('categories_backup');
+        if (backup) {
+          try {
+            const backupCategories = JSON.parse(backup);
+            setCategories(backupCategories);
+            console.log('Categorie caricate dal backup locale');
+          } catch (e) {
+            console.error('Errore nel parsing del backup:', e);
+            setCategories(defaultCategories);
+          }
+        } else {
+          setCategories(defaultCategories);
+        }
+      }
+    } else if (categoriesData && categoriesData.length === 0) {
+      // Prova a caricare dal backup locale
+      const backup = localStorage.getItem('categories_backup');
+      if (backup) {
+        try {
+          const backupCategories = JSON.parse(backup);
+          setCategories(backupCategories);
+          console.log('Categorie caricate dal backup locale (nessun dato Firebase)');
+        } catch (e) {
+          console.error('Errore nel parsing del backup:', e);
+          setCategories(defaultCategories);
+        }
       } else {
         setCategories(defaultCategories);
       }
-    } else if (categoriesData && categoriesData.length === 0) {
-      setCategories(defaultCategories);
     } else {
-      setCategories(defaultCategories);
+      // Prova a caricare dal backup locale
+      const backup = localStorage.getItem('categories_backup');
+      if (backup) {
+        try {
+          const backupCategories = JSON.parse(backup);
+          setCategories(backupCategories);
+          console.log('Categorie caricate dal backup locale (dati Firebase non disponibili)');
+        } catch (e) {
+          console.error('Errore nel parsing del backup:', e);
+          setCategories(defaultCategories);
+        }
+      } else {
+        setCategories(defaultCategories);
+      }
     }
   }, [categoriesData]);
 
@@ -466,6 +507,25 @@ function App() {
       addDocument('stores', { stores: [] });
     }
   }, [user, categoriesData.length, storesData.length]);
+
+  // Sincronizza le categorie dal backup locale se Firebase non è disponibile
+  useEffect(() => {
+    if (user && categoriesData.length === 0) {
+      const backup = localStorage.getItem('categories_backup');
+      if (backup) {
+        try {
+          const backupCategories = JSON.parse(backup);
+          // Verifica che il backup contenga categorie valide
+          if (backupCategories.expense && backupCategories.income) {
+            console.log('Sincronizzazione categorie dal backup locale...');
+            addDocument('categories', backupCategories);
+          }
+        } catch (e) {
+          console.error('Errore nel parsing del backup per sincronizzazione:', e);
+        }
+      }
+    }
+  }, [user, categoriesData.length]);
 
 
 
@@ -1008,6 +1068,9 @@ function App() {
 
   // Gestione categorie (usando funzioni pure)
   const handleAddCategory = async (type, newCategory) => {
+    // Salva lo stato precedente per il ripristino in caso di errore
+    const previousCategories = categories;
+    
     try {
       // Aggiorna lo stato locale
       const updatedCategories = {
@@ -1016,12 +1079,33 @@ function App() {
       };
       setCategories(updatedCategories);
       
-      // Sincronizza con Firestore
-      if (categoriesData && categoriesData.length > 0) {
-        const categoriesDoc = categoriesData[0];
-        await updateDocument('categories', categoriesDoc.id, updatedCategories);
-      } else {
-        await addDocument('categories', updatedCategories);
+      // Salva sempre il backup locale
+      localStorage.setItem('categories_backup', JSON.stringify(updatedCategories));
+      
+      // Sincronizza con Firestore con retry
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          if (categoriesData && categoriesData.length > 0) {
+            const categoriesDoc = categoriesData[0];
+            await updateDocument('categories', categoriesDoc.id, updatedCategories);
+          } else {
+            await addDocument('categories', updatedCategories);
+          }
+          break; // Successo, esci dal loop
+        } catch (syncError) {
+          retryCount++;
+          console.warn(`Tentativo ${retryCount} di sincronizzazione fallito:`, syncError);
+          
+          if (retryCount >= maxRetries) {
+            throw syncError; // Rilancia l'errore se tutti i tentativi sono falliti
+          }
+          
+          // Aspetta un po' prima di riprovare (backoff esponenziale)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
       }
       
       showSuccess('Categoria aggiunta con successo!');
@@ -1029,11 +1113,16 @@ function App() {
       console.error('Errore durante l\'aggiunta della categoria:', error);
       showError(error.message || 'Errore durante l\'aggiunta della categoria.');
       // Ripristina lo stato precedente in caso di errore
-      setCategories(categories);
+      setCategories(previousCategories);
+      // Ripristina anche il backup locale
+      localStorage.setItem('categories_backup', JSON.stringify(previousCategories));
     }
   };
 
   const handleEditCategory = async (type, id, updatedFields) => {
+    // Salva lo stato precedente per il ripristino in caso di errore
+    const previousCategories = categories;
+    
     try {
       // Aggiorna lo stato locale
       const updatedCategories = {
@@ -1042,10 +1131,31 @@ function App() {
       };
       setCategories(updatedCategories);
       
-      // Sincronizza con Firestore
-      if (categoriesData && categoriesData.length > 0) {
-        const categoriesDoc = categoriesData[0];
-        await updateDocument('categories', categoriesDoc.id, updatedCategories);
+      // Salva sempre il backup locale
+      localStorage.setItem('categories_backup', JSON.stringify(updatedCategories));
+      
+      // Sincronizza con Firestore con retry
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          if (categoriesData && categoriesData.length > 0) {
+            const categoriesDoc = categoriesData[0];
+            await updateDocument('categories', categoriesDoc.id, updatedCategories);
+          }
+          break; // Successo, esci dal loop
+        } catch (syncError) {
+          retryCount++;
+          console.warn(`Tentativo ${retryCount} di sincronizzazione fallito:`, syncError);
+          
+          if (retryCount >= maxRetries) {
+            throw syncError; // Rilancia l'errore se tutti i tentativi sono falliti
+          }
+          
+          // Aspetta un po' prima di riprovare (backoff esponenziale)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
       }
       
       showSuccess('Categoria modificata con successo!');
@@ -1053,11 +1163,16 @@ function App() {
       console.error('Errore durante la modifica della categoria:', error);
       showError(error.message || 'Errore durante la modifica della categoria.');
       // Ripristina lo stato precedente in caso di errore
-      setCategories(categories);
+      setCategories(previousCategories);
+      // Ripristina anche il backup locale
+      localStorage.setItem('categories_backup', JSON.stringify(previousCategories));
     }
   };
 
   const handleDeleteCategory = async (type, id) => {
+    // Salva lo stato precedente per il ripristino in caso di errore
+    const previousCategories = categories;
+    
     try {
       // Aggiorna lo stato locale
       const updatedCategories = {
@@ -1066,10 +1181,31 @@ function App() {
       };
       setCategories(updatedCategories);
       
-      // Sincronizza con Firestore
-      if (categoriesData && categoriesData.length > 0) {
-        const categoriesDoc = categoriesData[0];
-        await updateDocument('categories', categoriesDoc.id, updatedCategories);
+      // Salva sempre il backup locale
+      localStorage.setItem('categories_backup', JSON.stringify(updatedCategories));
+      
+      // Sincronizza con Firestore con retry
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          if (categoriesData && categoriesData.length > 0) {
+            const categoriesDoc = categoriesData[0];
+            await updateDocument('categories', categoriesDoc.id, updatedCategories);
+          }
+          break; // Successo, esci dal loop
+        } catch (syncError) {
+          retryCount++;
+          console.warn(`Tentativo ${retryCount} di sincronizzazione fallito:`, syncError);
+          
+          if (retryCount >= maxRetries) {
+            throw syncError; // Rilancia l'errore se tutti i tentativi sono falliti
+          }
+          
+          // Aspetta un po' prima di riprovare (backoff esponenziale)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
       }
       
       showSuccess('Categoria eliminata con successo!');
@@ -1077,7 +1213,9 @@ function App() {
       console.error('Errore durante l\'eliminazione della categoria:', error);
       showError(error.message || 'Errore durante l\'eliminazione della categoria.');
       // Ripristina lo stato precedente in caso di errore
-      setCategories(categories);
+      setCategories(previousCategories);
+      // Ripristina anche il backup locale
+      localStorage.setItem('categories_backup', JSON.stringify(previousCategories));
     }
   };
 
@@ -1660,6 +1798,8 @@ function App() {
   const resetAllData = async () => {
     try {
       await deleteAllUserData();
+      // Pulisci anche il backup locale delle categorie
+      localStorage.removeItem('categories_backup');
       // Reset filtri attivi
       setActiveFilters({
         timeRange: 'all',

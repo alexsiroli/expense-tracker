@@ -44,9 +44,9 @@ const PersonDetail = ({
 
   const getBalanceText = (balance) => {
     if (balance > 0) {
-      return `Credito: ${formatCurrency(balance)}`;
+      return formatCurrency(balance);
     } else if (balance < 0) {
-      return `Debito: ${formatCurrency(Math.abs(balance))}`;
+      return formatCurrency(Math.abs(balance));
     }
     return 'Saldo azzerato';
   };
