@@ -1,26 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Calendar, Tag, Store, Search, Filter, Clock, Wallet, ChevronDown, ChevronUp } from 'lucide-react';
 
-function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], activeTab = 'expenses', stores = [], wallets = [] }) {
+function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], activeTab = 'expenses', stores = [], wallets = [], currentFilters = {} }) {
   // Ottieni le categorie appropriate basandosi sull'activeTab
   const getCategoriesForTab = () => {
-    // Nei filtri mostriamo sempre tutte le categorie per permettere il filtraggio completo
+    // Nei filtri mostriamo tutte le categorie tranne "Trasferimento" che è gestita separatamente
     return {
-      expense: categories.expense || [],
-      income: categories.income || []
+      expense: (categories.expense || []).filter(cat => cat.name !== 'Trasferimento'),
+      income: (categories.income || []).filter(cat => cat.name !== 'Trasferimento')
     };
   };
 
   const { expense: expenseCategories, income: incomeCategories } = getCategoriesForTab();
   const [filters, setFilters] = useState({
-    transactionType: 'all', // 'all', 'expenses', 'incomes'
-    timeRange: 'all', // all, today, week, month, year, custom
-    startDate: '',
-    endDate: '',
-    selectedCategories: [],
-    selectedStores: [],
-    selectedWallets: wallets.map(w => w.id), // Di default tutti selezionati
-    searchStore: ''
+    transactionType: currentFilters.transactionType || 'all', // 'all', 'expenses', 'incomes'
+    timeRange: currentFilters.timeRange || 'all', // all, today, week, month, year, custom
+    startDate: currentFilters.startDate || '',
+    endDate: currentFilters.endDate || '',
+    selectedCategories: currentFilters.selectedCategories || [],
+    selectedStores: currentFilters.selectedStores || [],
+    selectedWallets: currentFilters.selectedWallets || wallets.map(w => w.id), // Di default tutti selezionati
+    searchStore: '',
+    showTransfers: currentFilters.showTransfers || false // di default nasconde i trasferimenti
   });
 
   const [storeSuggestions, setStoreSuggestions] = useState([]);
@@ -45,6 +46,21 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
       });
     }
   }, [isOpen]);
+
+  // Aggiorna i filtri quando cambiano i currentFilters
+  useEffect(() => {
+    setFilters({
+      transactionType: currentFilters.transactionType || 'all',
+      timeRange: currentFilters.timeRange || 'all',
+      startDate: currentFilters.startDate || '',
+      endDate: currentFilters.endDate || '',
+      selectedCategories: currentFilters.selectedCategories || [],
+      selectedStores: currentFilters.selectedStores || [],
+      selectedWallets: currentFilters.selectedWallets || wallets.map(w => w.id),
+      searchStore: '',
+      showTransfers: currentFilters.showTransfers || false
+    });
+  }, [currentFilters, wallets]);
 
   // Gestisce il click fuori dai suggerimenti per chiuderli
   useEffect(() => {
@@ -88,6 +104,13 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
       selectedWallets: prev.selectedWallets.includes(walletId)
         ? prev.selectedWallets.filter(w => w !== walletId)
         : [...prev.selectedWallets, walletId]
+    }));
+  };
+
+  const handleShowTransfersToggle = () => {
+    setFilters(prev => ({
+      ...prev,
+      showTransfers: !prev.showTransfers
     }));
   };
 
@@ -156,7 +179,8 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
       selectedCategories: [],
       selectedStores: [],
       selectedWallets: wallets.map(w => w.id), // Reset a tutti selezionati
-      searchStore: ''
+      searchStore: '',
+      showTransfers: false // Reset a non mostrare trasferimenti
     });
   };
 
@@ -234,6 +258,32 @@ function FilterDialog({ isOpen, onClose, onApplyFilters, categories = [], active
 
         {/* Content */}
         <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(90vh-120px)]">
+          {/* Checkbox Mostra Trasferimenti - Sempre visibile */}
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="p-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleShowTransfersToggle}
+                  className={`w-4 h-4 rounded border-2 transition-all ${
+                    filters.showTransfers 
+                      ? 'bg-blue-600 border-blue-600' 
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600'
+                  } flex items-center justify-center`}
+                >
+                  {filters.showTransfers && (
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer" onClick={handleShowTransfersToggle}>
+                  Mostra trasferimenti
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Filtro per tempo */}
           <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
             <button

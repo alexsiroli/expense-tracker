@@ -148,7 +148,8 @@ function App() {
     selectedCategories: [],
     selectedStores: [],
     selectedWallets: [],
-    transactionType: 'all' // di default 'all' (Tutte)
+    transactionType: 'all', // di default 'all' (Tutte)
+    showTransfers: false // di default nasconde i trasferimenti
   });
   const [showFloatingMenu, setShowFloatingMenu] = useState(true);
   const lastScrollY = useRef(window.scrollY);
@@ -1139,6 +1140,16 @@ function App() {
       );
     }
 
+    // Filtro per trasferimenti
+    if (!activeFilters.showTransfers) {
+      filteredExpenses = filteredExpenses.filter(expense => 
+        expense.category !== 'Trasferimento'
+      );
+      filteredIncomes = filteredIncomes.filter(income => 
+        income.category !== 'Trasferimento'
+      );
+    }
+
     // Filtro per date range (se presente)
     if (dateRange) {
       filteredExpenses = filteredExpenses.filter(expense => {
@@ -1156,6 +1167,16 @@ function App() {
   };
 
   const filteredData = getFilteredData();
+
+  // Funzione per ottenere tutti i negozi dalle transazioni filtrate
+  const getAllStoresFromTransactions = () => {
+    const allStores = [
+      ...filteredData.expenses.filter(e => e.store && e.store.trim()).map(e => e.store.trim()),
+      ...filteredData.incomes.filter(i => i.store && i.store.trim()).map(i => i.store.trim())
+    ];
+    // Rimuovi duplicati e ordina alfabeticamente
+    return Array.from(new Set(allStores)).sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
+  };
 
   // Funzione per ottenere i dati delle transazioni filtrati
   const getFilteredTransactions = () => {
@@ -1185,6 +1206,8 @@ function App() {
     
     return allTransactions;
   };
+
+
 
   // Funzioni gestione conti
   const addWallet = async (wallet) => {
@@ -1411,7 +1434,8 @@ function App() {
         endDate: '',
         selectedCategories: [],
         selectedStores: [],
-        selectedWallets: []
+        selectedWallets: [],
+        showTransfers: false
       });
 
               showSuccess('Tutti i dati sono stati eliminati con successo. L\'applicazione si ricaricherà automaticamente.');
@@ -1687,15 +1711,7 @@ function App() {
     setSelectedCategory(null);
   };
 
-  // Calcola i negozi unici dalle transazioni (expenses + incomes)
-  const getAllStoresFromTransactions = () => {
-    const allStores = [
-      ...expenses.filter(e => e.store && e.store.trim()).map(e => e.store.trim()),
-      ...incomes.filter(i => i.store && i.store.trim()).map(i => i.store.trim())
-    ];
-    // Rimuovi duplicati e ordina alfabeticamente
-    return Array.from(new Set(allStores)).sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
-  };
+
 
   // Utility per inferire il tipo da una categoria
   const inferTypeFromCategory = (categoryName) => {
@@ -2055,10 +2071,10 @@ function App() {
                 {(() => {
                   // Ottieni le transazioni filtrate secondo il tipo selezionato (all/expenses/incomes)
                   const filteredTransactions = getFilteredTransactions();
-                  // Ricava i negozi unici dalle transazioni filtrate, escludendo 'Trasferimento'
+                  // Ricava i negozi unici dalle transazioni filtrate
                   const filteredStores = Array.from(new Set(
                     filteredTransactions
-                      .filter(t => t.store && t.store.trim() && t.store.trim().toLowerCase() !== 'trasferimento')
+                      .filter(t => t.store && t.store.trim())
                       .map(t => t.store.trim())
                   )).sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
                   if (filteredStores.length === 0) {
@@ -2688,6 +2704,7 @@ function App() {
         activeTab={activeTab}
         stores={stores}
         wallets={getWalletsWithCalculatedBalance()}
+        currentFilters={activeFilters}
       />
 
       {/* Footer con credits - Mobile */}
