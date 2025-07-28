@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { X, LogOut, Trash2, FileText, Calendar, AlertCircle } from 'lucide-react';
+import { X, LogOut, Trash2, FileText, Calendar, AlertCircle, Database } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useFirestore } from '../hooks/useFirestore';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { getAllEasterEggs, getEasterEggsWithCompletionStatus, saveEasterEggCompletion } from '../utils/easterEggs';
 import { usePopup } from '../contexts/PopupContext';
+import DataManager from './DataManager';
 
-const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
+const UserProfile = ({ isOpen, onClose, easterEggsWithStatus, onImportData, onResetData, onShowImportModal, onShowResetModal, onSanitizeStores }) => {
   const { user, logout, deleteAccount } = useAuth();
   const { deleteAllUserData, getCompletedEasterEggs, setEasterEggCompleted, isEasterEggCompleted } = useFirestore();
   const { showError, showAlert } = usePopup();
@@ -19,6 +20,7 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
   const [showEasterEggs, setShowEasterEggs] = useState(false);
   const [creditsTapCount, setCreditsTapCount] = useState(0);
   const [lastCreditsTapTime, setLastCreditsTapTime] = useState(0);
+  const [activeSection, setActiveSection] = useState('profile'); // 'profile' or 'data'
 
   // Rimuovi:
   // const loadEasterEggsWithStatus = async () => {
@@ -134,96 +136,147 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus }) => {
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Avatar e nome */}
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-lg">
-                {(() => {
-                  const name = user?.displayName || user?.email;
-                  const words = name?.split(' ').filter(word => word.length > 0) || [];
-                  if (words.length >= 2) {
-                    return (words[0][0] + words[1][0]).toUpperCase();
-                  } else if (words.length === 1) {
-                    return words[0].substring(0, 2).toUpperCase();
-                  } else {
-                    return name?.substring(0, 2).toUpperCase() || 'U';
-                  }
-                })()}
-              </span>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {user?.displayName || 'Utente'}
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {user?.email}
-              </p>
-            </div>
-          </div>
-
-          {/* Statistiche */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                  Transazioni
-                </span>
+          {activeSection === 'profile' ? (
+            <>
+              {/* Avatar e nome */}
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-semibold text-lg">
+                    {(() => {
+                      const name = user?.displayName || user?.email;
+                      const words = name?.split(' ').filter(word => word.length > 0) || [];
+                      if (words.length >= 2) {
+                        return (words[0][0] + words[1][0]).toUpperCase();
+                      } else if (words.length === 1) {
+                        return words[0].substring(0, 2).toUpperCase();
+                      } else {
+                        return name?.substring(0, 2).toUpperCase() || 'U';
+                      }
+                    })()}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {user?.displayName || 'Utente'}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {user?.email}
+                  </p>
+                </div>
               </div>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {totalTransactions}
-              </p>
-            </div>
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                  Registrato
-                </span>
+            </>
+          ) : (
+            <>
+              {/* Header Gestione Dati */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <Database className="w-5 h-5" />
+                  Gestione Dati
+                </h3>
+                <button
+                  onClick={() => setActiveSection('profile')}
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-                {registrationDate}
-              </p>
-            </div>
-          </div>
+            </>
+          )}
 
-          {/* Credits */}
-          <div 
-            className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800 cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95"
-            onClick={handleCreditsTap}
-            title="Tap 8 volte rapidamente per un easter egg! 🎉"
-          >
-            <div className="text-center">
-              <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
-                Sviluppato con ❤️
-              </h4>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Questa web app è stata realizzata da
-              </p>
-              <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">
-                Alex Siroli
-              </p>
-            </div>
-          </div>
+          {activeSection === 'profile' ? (
+            <>
+              {/* Statistiche */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                      Transazioni
+                    </span>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {totalTransactions}
+                  </p>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                      Registrato
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                    {registrationDate}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* DataManager */}
+              <DataManager 
+                onImportData={onImportData} 
+                onResetData={onResetData} 
+                onShowImportModal={onShowImportModal}
+                onShowResetModal={onShowResetModal}
+                onSanitizeStores={onSanitizeStores}
+              />
+            </>
+          )}
 
-          {/* Azioni */}
-          <div className="space-y-3">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
-            
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-xl transition-colors duration-200"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Elimina Account</span>
-            </button>
-          </div>
+          {activeSection === 'profile' && (
+            <>
+              {/* Credits */}
+              <div 
+                className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800 cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95"
+                onClick={handleCreditsTap}
+                title="Tap 8 volte rapidamente per un easter egg! 🎉"
+              >
+                <div className="text-center">
+                  <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
+                    Sviluppato con ❤️
+                  </h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Questa web app è stata realizzata da
+                  </p>
+                  <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">
+                    Alex Siroli
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeSection === 'profile' && (
+            <>
+              {/* Azioni */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => setActiveSection('data')}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200"
+                >
+                  <Database className="w-4 h-4" />
+                  <span>Gestione Dati</span>
+                </button>
+                
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
+                
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-xl transition-colors duration-200"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Elimina Account</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

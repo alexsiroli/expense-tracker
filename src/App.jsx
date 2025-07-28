@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload, Euro, Edit, ArrowDown, Store, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Settings, Wallet, Sun, Moon, Tag, Database, LogOut, User, X, ArrowRight, Loader2, Palette, Filter, Trash2, AlertCircle, CheckCircle, Upload, Euro, Edit, ArrowDown, Store, ArrowLeft, Eye, EyeOff, Users } from 'lucide-react';
 import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import CategoryManager from './components/CategoryManager';
@@ -11,6 +11,10 @@ import UserProfile from './components/UserProfile';
 import ConfirmDialog from './components/ConfirmDialog';
 import FilterDialog from './components/FilterDialog';
 import TransactionDetailDialog from './components/TransactionDetailDialog';
+import DebtList from './components/DebtList';
+import DebtForm from './components/DebtForm';
+import PersonDetail from './components/PersonDetail';
+import DebtTransactionDetailDialog from './components/DebtTransactionDetailDialog';
 import { useAuth } from './hooks/useAuth';
 import { useFirestore } from './hooks/useFirestore';
 import { useTheme } from './hooks/useTheme';
@@ -23,8 +27,9 @@ import { getEasterEgg, getAllEasterEggs, activateEasterEgg, saveEasterEggComplet
 import CustomSelect from './components/CustomSelect';
 import { addCategory, editCategory, deleteCategory, validateCategory } from './features/categories/categoryLogic';
 import { addWallet as addWalletLogic, editWallet as editWalletLogic, deleteWallet as deleteWalletLogic, validateWallet, calculateWalletBalance } from './features/wallets/walletLogic';
-import { addExpense as addExpenseLogic, editExpense, deleteExpense, validateExpense } from './features/expenses/expenseLogic';
-import { addIncome as addIncomeLogic, editIncome, deleteIncome, validateIncome } from './features/expenses/incomeLogic';
+import { editExpense, deleteExpense, validateExpense } from './features/expenses/expenseLogic';
+import { editIncome, deleteIncome, validateIncome } from './features/expenses/incomeLogic';
+import { addDebtTransaction, editDebtTransaction, deleteDebtTransaction, getUniquePersons, deletePersonTransactions, createResolutionTransaction, deletePersonWithAutomaticTransfers } from './features/debts/debtLogic';
 import FilterButton from './components/FilterButton';
 import ModelsDialog from './components/ModelsDialog';
 import ModelForm from './components/ModelForm';
@@ -107,6 +112,7 @@ function App() {
   const { data: storesData, loading: storesLoading } = useCollectionData('stores', null);
   const { data: walletsData, loading: walletsLoading } = useCollectionData('wallets', 'createdAt');
   const { data: modelsData, loading: modelsLoading } = useCollectionData('models', 'createdAt');
+  const { data: debtsData, loading: debtsLoading } = useCollectionData('debts', 'createdAt');
   
 
   
@@ -194,6 +200,20 @@ function App() {
   
   // Stati per i dialog delle categorie
   const [showCategoryActions, setShowCategoryActions] = useState(false);
+  
+  // Stati per debiti e crediti
+  const [debts, setDebts] = useState([]);
+  const [showDebtForm, setShowDebtForm] = useState(false);
+  const [editingDebt, setEditingDebt] = useState(null);
+  const [debtTransactionType, setDebtTransactionType] = useState('debt'); // 'debt' or 'credit'
+  const [selectedPerson, setSelectedPerson] = useState(null);
+  const [showPersonDetail, setShowPersonDetail] = useState(false);
+  // Stato per il dialog di dettaglio movimento debito
+  const [selectedDebtTransaction, setSelectedDebtTransaction] = useState(null);
+  const [showDebtTransactionDialog, setShowDebtTransactionDialog] = useState(false);
+  // Stato per la conferma eliminazione movimento debito
+  const [showDebtConfirmDelete, setShowDebtConfirmDelete] = useState(false);
+  const [debtToDelete, setDebtToDelete] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategoryConfirmDelete, setShowCategoryConfirmDelete] = useState(false);
   const [deletingCategory, setDeletingCategory] = useState(false);
@@ -217,7 +237,8 @@ function App() {
     showWalletForm || showTransferModal || showColorPicker || showCategoryForm || 
     showImportModal || showResetModal || showFilterDialog || showTransactionDialog ||
     showWalletActions || showWalletConfirmDelete || showCategoryActions || showCategoryConfirmDelete ||
-    showModelsDialog || showModelForm || showModelConfirmDelete;
+    showModelsDialog || showModelForm || showModelConfirmDelete || showDebtForm || showPersonDetail ||
+    showDebtTransactionDialog || showDebtConfirmDelete;
 
   // Blocca lo scroll quando un modal è aperto
   useScrollLock(isAnyModalOpen);
@@ -426,6 +447,16 @@ function App() {
     }
   }, [modelsData]);
 
+  // Sincronizza i debiti dal database
+  useEffect(() => {
+    if (debtsData && debtsData.length > 0) {
+      setDebts(debtsData);
+      setLastSyncTime(new Date().toISOString());
+    } else if (debtsData && debtsData.length === 0) {
+      setDebts([]);
+    }
+  }, [debtsData]);
+
   // Inizializza i dati di default se l'utente è nuovo
   useEffect(() => {
     if (user && categoriesData.length === 0) {
@@ -596,9 +627,17 @@ function App() {
     const totalIn = incomes.filter(i => i.walletId === walletId).reduce((sum, i) => sum + parseFloat(i.amount), 0);
     const totalOut = expenses.filter(e => e.walletId === walletId).reduce((sum, e) => sum + parseFloat(e.amount), 0);
     
+    // Calcola l'impatto dei movimenti di debito/credito
+    const walletDebts = debts.filter(d => d.walletId === walletId);
+    const totalDebtImpact = walletDebts.reduce((sum, debt) => {
+      // Se è un credito (ho dato soldi), il conto diminuisce
+      // Se è un debito (ho ricevuto soldi), il conto aumenta
+      return sum + (debt.type === 'credit' ? -debt.amount : debt.amount);
+    }, 0);
+    
     // Usa il saldo iniziale se disponibile, altrimenti il saldo corrente
     const baseBalance = wallet.initialBalance !== undefined ? wallet.initialBalance : wallet.balance;
-    return baseBalance + totalIn - totalOut;
+    return baseBalance + totalIn - totalOut + totalDebtImpact;
   };
 
   // Calcola i saldi di tutti i conti dinamicamente
@@ -1040,6 +1079,200 @@ function App() {
       // Ripristina lo stato precedente in caso di errore
       setCategories(categories);
     }
+  };
+
+  // Gestione debiti e crediti
+  const addDebt = async (debtData) => {
+    try {
+      // Aggiorna lo stato locale
+      const newDebts = addDebtTransaction(debts, debtData);
+      setDebts(newDebts);
+      
+      // Sincronizza con Firestore
+      await addDocument('debts', debtData);
+      
+      setShowDebtForm(false);
+      setEditingDebt(null);
+    } catch (error) {
+      console.error('Errore durante l\'aggiunta del movimento:', error);
+      showError(error.message || 'Errore durante l\'aggiunta del movimento.');
+    }
+  };
+
+  const editDebt = async (debtData) => {
+    try {
+      // Se editingDebt non ha un id, significa che è un nuovo movimento (es. risoluzione situazione)
+      if (!editingDebt.id) {
+        // Tratta come nuovo movimento
+        const newDebts = addDebtTransaction(debts, debtData);
+        setDebts(newDebts);
+        
+        // Sincronizza con Firestore
+        await addDocument('debts', debtData);
+      } else {
+        // Tratta come modifica di movimento esistente
+        const updatedDebts = editDebtTransaction(debts, editingDebt.id, debtData);
+        setDebts(updatedDebts);
+        
+        // Sincronizza con Firestore
+        await updateDocument('debts', editingDebt.id, debtData);
+      }
+      
+      setShowDebtForm(false);
+      setEditingDebt(null);
+    } catch (error) {
+      console.error('Errore durante la modifica del movimento:', error);
+      showError(error.message || 'Errore durante la modifica del movimento.');
+    }
+  };
+
+  const deleteDebt = async (debtId) => {
+    try {
+      // Aggiorna lo stato locale
+      const updatedDebts = deleteDebtTransaction(debts, debtId);
+      setDebts(updatedDebts);
+      
+      // Sincronizza con Firestore
+      await deleteDocument('debts', debtId);
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione del movimento:', error);
+      showError(error.message || 'Errore durante l\'eliminazione del movimento.');
+    }
+  };
+
+  const deletePerson = async (personName) => {
+    try {
+      // Calcola i trasferimenti automatici necessari
+      const { remainingDebts, automaticTransfers } = deletePersonWithAutomaticTransfers(debts, personName);
+      
+      // Aggiorna lo stato locale
+      setDebts(remainingDebts);
+      
+      // Sincronizza con Firestore - elimina tutti i documenti della persona
+      const personDebts = debts.filter(d => d.personName === personName);
+      for (const debt of personDebts) {
+        await deleteDocument('debts', debt.id);
+      }
+      
+      // Aggiungi i trasferimenti automatici se necessari
+      if (automaticTransfers.length > 0) {
+        for (const transfer of automaticTransfers) {
+          // Crea una transazione di trasferimento
+          const transferExpense = {
+            amount: transfer.amount,
+            category: 'Trasferimento',
+            walletId: transfer.fromWalletId,
+            date: transfer.date,
+            description: transfer.description,
+            store: 'Trasferimento automatico'
+          };
+          
+          const transferIncome = {
+            amount: transfer.amount,
+            category: 'Trasferimento',
+            walletId: transfer.toWalletId,
+            date: transfer.date,
+            description: transfer.description,
+            store: 'Trasferimento automatico'
+          };
+          
+          // Aggiungi le transazioni usando le funzioni di logica
+          const newExpense = { 
+            ...transferExpense, 
+            date: transferExpense.date ? new Date(transferExpense.date).toISOString() : new Date().toISOString() 
+          };
+          const newIncome = { 
+            ...transferIncome, 
+            date: transferIncome.date ? new Date(transferIncome.date).toISOString() : new Date().toISOString() 
+          };
+          
+                  // Sincronizza con Firestore
+        await addDocument('expenses', newExpense);
+        await addDocument('incomes', newIncome);
+        }
+        
+        showSuccess(`Persona eliminata con successo! Creati ${automaticTransfers.length} trasferimento/i automatico/i.`);
+      } else {
+        showSuccess('Persona eliminata con successo!');
+      }
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione della persona:', error);
+      showError(error.message || 'Errore durante l\'eliminazione della persona.');
+    }
+  };
+
+  const handleAddDebt = () => {
+    setDebtTransactionType('debt');
+    setEditingDebt(null);
+    setShowDebtForm(true);
+  };
+
+  const handleAddCredit = () => {
+    setDebtTransactionType('credit');
+    setEditingDebt(null);
+    setShowDebtForm(true);
+  };
+
+  const handleEditDebt = (debt) => {
+    setEditingDebt(debt);
+    setDebtTransactionType(debt.type);
+    setShowDebtForm(true);
+    setShowPersonDetail(false); // Chiude il dialog della persona
+  };
+
+  const handleCloseDebtForm = () => {
+    setShowDebtForm(false);
+    setEditingDebt(null);
+  };
+
+  const handlePersonClick = (person) => {
+    setSelectedPerson(person);
+    setShowPersonDetail(true);
+  };
+
+  const handleClosePersonDetail = () => {
+    setShowPersonDetail(false);
+    setSelectedPerson(null);
+  };
+
+  // Funzione per mostrare il dettaglio di un movimento di debito
+  const handleShowDebtTransactionDetail = (transaction) => {
+    setSelectedDebtTransaction(transaction);
+    setShowDebtTransactionDialog(true);
+  };
+
+  // Funzione per confermare l'eliminazione di un movimento di debito
+  const handleConfirmDeleteDebt = (debtId) => {
+    setDebtToDelete(debtId);
+    setShowDebtConfirmDelete(true);
+  };
+
+  const confirmDeleteDebt = async () => {
+    try {
+      await deleteDebt(debtToDelete);
+      setShowDebtConfirmDelete(false);
+      setDebtToDelete(null);
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione del movimento:', error);
+    }
+  };
+
+  const closeDebtConfirmDelete = () => {
+    setShowDebtConfirmDelete(false);
+    setDebtToDelete(null);
+  };
+
+  const handleResolveSituation = (personName, balance) => {
+    // Crea un movimento di risoluzione
+    const resolutionTransaction = createResolutionTransaction(personName, balance, '');
+    setEditingDebt(resolutionTransaction); // Usa editingDebt per pre-compilare tutto tranne il conto
+    setDebtTransactionType(resolutionTransaction.type);
+    setShowDebtForm(true);
+    setShowPersonDetail(false);
+  };
+
+  const getExistingPersons = () => {
+    return getUniquePersons(debts);
   };
 
   const totalExpenses = expenses.filter(expense => expense.category !== 'Trasferimento').reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
@@ -2024,6 +2257,20 @@ function App() {
             </div>
             )}
 
+            {activeTab === 'debts' && (
+              <div className="animate-fade-in-up">
+                <DebtList
+                  debts={debts}
+                  onPersonClick={handlePersonClick}
+                  onAddDebt={handleAddDebt}
+                  onAddCredit={handleAddCredit}
+                  onEditDebt={handleEditDebt}
+                  onDeleteDebt={deleteDebt}
+                  onShowDetail={handleShowDetail}
+                />
+              </div>
+            )}
+
             {activeTab === 'data' && (
               <div className="animate-fade-in-up">
                 <div className="sticky top-20 lg:top-4 z-20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl max-w-md mx-auto px-6 py-3 mb-3 shadow-lg lg:max-w-none">
@@ -2175,16 +2422,16 @@ function App() {
                 </div>
               </button>
               <button
-                onClick={() => setActiveTab('data')}
+                onClick={() => setActiveTab('debts')}
                 className={`py-4 px-2 text-sm font-semibold rounded-xl transition-all duration-300 lg:py-2 lg:px-2 lg:flex-1 ${
-                  activeTab === 'data'
+                  activeTab === 'debts'
                     ? `${rainbowMode ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' : 'tab-active'}`
                     : 'tab-inactive'
                 }`}
               >
                 <div className="flex items-center justify-center gap-1">
-                  <Database className="w-4 h-4" />
-                  <span className="hidden sm:inline lg:hidden">Dati</span>
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline lg:hidden">Debiti</span>
                 </div>
               </button>
             </div>
@@ -2239,6 +2486,11 @@ function App() {
         isOpen={showUserProfile}
         onClose={() => setShowUserProfile(false)}
         easterEggsWithStatus={easterEggsWithStatus}
+        onImportData={importData}
+        onResetData={resetAllData}
+        onShowImportModal={() => setShowImportModal(true)}
+        onShowResetModal={() => setShowResetModal(true)}
+        onSanitizeStores={sanitizeStores}
       />
 
       {/* Wallet Manager Modal */}
@@ -2750,6 +3002,16 @@ function App() {
         />
       )}
 
+      {showDebtTransactionDialog && selectedDebtTransaction && (
+        <DebtTransactionDetailDialog
+          transaction={selectedDebtTransaction}
+          onClose={() => setShowDebtTransactionDialog(false)}
+          onEdit={handleEditDebt}
+          onDelete={deleteDebt}
+          wallets={getWalletsWithCalculatedBalance()}
+        />
+      )}
+
       {/* Modal Azioni Wallet */}
       {showWalletActions && selectedWallet && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999]" onClick={closeWalletActions}>
@@ -2923,6 +3185,62 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Conferma Eliminazione Movimento Debito */}
+      {showDebtConfirmDelete && debtToDelete && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999]" onClick={closeDebtConfirmDelete}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xs p-6 border border-gray-200 dark:border-gray-700 relative" onClick={e => e.stopPropagation()}>
+            <button onClick={closeDebtConfirmDelete} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="mb-6 text-center">
+              <div className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">Conferma eliminazione</div>
+              <div className="text-gray-600 dark:text-gray-300">Sei sicuro di voler eliminare questo movimento? Questa azione non può essere annullata.</div>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={closeDebtConfirmDelete}
+                className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={confirmDeleteDebt}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold"
+              >
+                Elimina
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Debt Form Modal */}
+      {showDebtForm && (
+        <DebtForm
+          onSubmit={editingDebt ? editDebt : addDebt}
+          onClose={handleCloseDebtForm}
+          editingItem={editingDebt}
+          wallets={wallets}
+          existingPersons={getExistingPersons()}
+          transactionType={debtTransactionType}
+        />
+      )}
+
+      {/* Person Detail Modal */}
+      {showPersonDetail && selectedPerson && (
+        <PersonDetail
+          person={selectedPerson}
+          debts={debts}
+          wallets={wallets}
+          onClose={handleClosePersonDetail}
+                          onEditDebt={handleEditDebt}
+                onDeleteDebt={handleConfirmDeleteDebt}
+                onShowDebtTransactionDetail={handleShowDebtTransactionDetail}
+                onResolveSituation={handleResolveSituation}
+                onDeletePerson={deletePerson}
+        />
       )}
     </div>
   );
