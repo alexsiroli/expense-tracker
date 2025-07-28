@@ -1158,23 +1158,23 @@ function App() {
       if (automaticTransfers.length > 0) {
         for (const transfer of automaticTransfers) {
           // Crea una transazione di trasferimento
-          const transferExpense = {
-            amount: transfer.amount,
-            category: 'Trasferimento',
-            walletId: transfer.fromWalletId,
-            date: transfer.date,
-            description: transfer.description,
-            store: 'Trasferimento automatico'
-          };
-          
-          const transferIncome = {
-            amount: transfer.amount,
-            category: 'Trasferimento',
-            walletId: transfer.toWalletId,
-            date: transfer.date,
-            description: transfer.description,
-            store: 'Trasferimento automatico'
-          };
+                  const transferExpense = {
+          amount: transfer.amount,
+          category: 'Trasferimento',
+          walletId: transfer.fromWalletId,
+          date: transfer.date,
+          description: transfer.description,
+          store: 'Trasferimento'
+        };
+
+        const transferIncome = {
+          amount: transfer.amount,
+          category: 'Trasferimento',
+          walletId: transfer.toWalletId,
+          date: transfer.date,
+          description: transfer.description,
+          store: 'Trasferimento'
+        };
           
           // Aggiungi le transazioni usando le funzioni di logica
           const newExpense = { 
