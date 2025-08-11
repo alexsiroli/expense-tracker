@@ -19,7 +19,7 @@ import { useAuth } from './hooks/useAuth';
 import { useFirestore } from './hooks/useFirestore';
 import { useTheme } from './hooks/useTheme';
 import { useScrollLock } from './hooks/useScrollLock';
-import { formatCurrency } from './utils/formatters';
+import { formatCurrency, getCurrentRomeTime } from './utils/formatters';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { PopupProvider, usePopup } from './contexts/PopupContext';
@@ -27,7 +27,7 @@ import { getEasterEgg, getAllEasterEggs, activateEasterEgg, saveEasterEggComplet
 import CustomSelect from './components/CustomSelect';
 import { addCategory, editCategory, deleteCategory, validateCategory } from './features/categories/categoryLogic';
 import { addWallet as addWalletLogic, editWallet as editWalletLogic, deleteWallet as deleteWalletLogic, validateWallet, calculateWalletBalance } from './features/wallets/walletLogic';
-import { editExpense, deleteExpense, validateExpense } from './features/expenses/expenseLogic';
+import { editExpense, deleteExpense, validateExpense, isFutureDate } from './features/expenses/expenseLogic';
 import { editIncome, deleteIncome, validateIncome } from './features/expenses/incomeLogic';
 import { addDebtTransaction, editDebtTransaction, deleteDebtTransaction, getUniquePersons, deletePersonTransactions, createResolutionTransaction, deletePersonWithAutomaticTransfers } from './features/debts/debtLogic';
 import FilterButton from './components/FilterButton';
@@ -242,6 +242,23 @@ function App() {
 
   // Blocca lo scroll quando un modal è aperto
   useScrollLock(isAnyModalOpen);
+
+  // Event listener per la modifica delle transazioni future
+  useEffect(() => {
+    const handleEditFutureTransaction = (event) => {
+      const { transaction } = event.detail;
+      // Apri il form di modifica con la transazione selezionata
+      setEditingItem(transaction);
+      setTransactionType(transaction._type || 'expense');
+      setShowForm(true);
+    };
+
+    window.addEventListener('editFutureTransaction', handleEditFutureTransaction);
+    
+    return () => {
+      window.removeEventListener('editFutureTransaction', handleEditFutureTransaction);
+    };
+  }, []);
 
   // Utility: controlla se la pagina è scrollabile verticalmente
   const checkIfScrollable = () => {
@@ -684,8 +701,12 @@ function App() {
     const wallet = wallets.find(w => w.id === walletId);
     if (!wallet) return 0;
     
-    const totalIn = incomes.filter(i => i.walletId === walletId).reduce((sum, i) => sum + parseFloat(i.amount), 0);
-    const totalOut = expenses.filter(e => e.walletId === walletId).reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    // Filtra le transazioni future per non includerle nel calcolo del saldo
+    const currentIncomes = incomes.filter(i => i.walletId === walletId && !isFutureDate(i.date));
+    const currentExpenses = expenses.filter(e => e.walletId === walletId && !isFutureDate(e.date));
+    
+    const totalIn = currentIncomes.reduce((sum, i) => sum + parseFloat(i.amount), 0);
+    const totalOut = currentExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
     
     // Calcola l'impatto dei movimenti di debito/credito
     const walletDebts = debts.filter(d => d.walletId === walletId);
@@ -1412,17 +1433,17 @@ function App() {
     return getUniquePersons(debts);
   };
 
-  const totalExpenses = expenses.filter(expense => expense.category !== 'Trasferimento').reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
-  const totalIncomes = incomes.filter(income => income.category !== 'Trasferimento').reduce((sum, income) => sum + parseFloat(income.amount), 0);
+  const totalExpenses = expenses.filter(expense => expense.category !== 'Trasferimento' && !isFutureDate(expense.date)).reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+  const totalIncomes = incomes.filter(income => income.category !== 'Trasferimento' && !isFutureDate(income.date)).reduce((sum, income) => sum + parseFloat(income.amount), 0);
   const balance = totalIncomes - totalExpenses;
 
-  const currentMonth = format(new Date(), 'yyyy-MM', { locale: it });
+  const currentMonth = format(getCurrentRomeTime(), 'yyyy-MM', { locale: it });
   const currentMonthExpenses = useMemo(() => 
-    expenses.filter(expense => expense.date.startsWith(currentMonth)), 
+    expenses.filter(expense => expense.date.startsWith(currentMonth) && !isFutureDate(expense.date)), 
     [expenses, currentMonth]
   );
   const currentMonthIncomes = useMemo(() => 
-    incomes.filter(income => income.date.startsWith(currentMonth)), 
+    incomes.filter(income => income.date.startsWith(currentMonth) && !isFutureDate(income.date)), 
     [incomes, currentMonth]
   );
 
@@ -1433,7 +1454,7 @@ function App() {
 
     // Filtro per tempo
     if (activeFilters.timeRange !== 'all') {
-      const now = new Date();
+      const now = getCurrentRomeTime();
       let startDate, endDate;
 
       switch (activeFilters.timeRange) {
@@ -1532,6 +1553,10 @@ function App() {
         return incomeDate >= dateRange.startDate && incomeDate <= dateRange.endDate;
       });
     }
+
+    // Filtro per escludere le transazioni future (solo per la lista generale)
+    filteredExpenses = filteredExpenses.filter(expense => !isFutureDate(expense.date));
+    filteredIncomes = filteredIncomes.filter(income => !isFutureDate(income.date));
 
     return { expenses: filteredExpenses, incomes: filteredIncomes };
   };

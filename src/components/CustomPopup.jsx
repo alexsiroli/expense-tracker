@@ -31,10 +31,21 @@ const CustomPopup = ({ open, onClose, title, message, icon, type = 'success', me
         }`}
         onClick={e => e.stopPropagation()}
       >
-        {/* Titolo */}
-        {title && <h3 className="text-lg font-bold text-center mb-2 text-gray-900 dark:text-gray-100">{title}</h3>}
+        {/* Icona e titolo */}
+        <div className="text-center mb-4">
+          {icon && (
+            <div className="text-4xl mb-3">
+              {icon}
+            </div>
+          )}
+          {title && <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{title}</h3>}
+        </div>
         {/* Messaggio */}
-        {message && <div className="text-center text-gray-700 dark:text-gray-300 mb-2">{message}</div>}
+        {message && (
+          <div className="text-center text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+            {typeof message === 'string' ? message : message}
+          </div>
+        )}
         {/* Medaglia sbloccata */}
         {medal && (
           <div className="flex flex-col items-center my-4">
@@ -44,13 +55,15 @@ const CustomPopup = ({ open, onClose, title, message, icon, type = 'success', me
         )}
         {/* Children opzionali */}
         {children}
-        {/* Pulsante chiudi */}
-        <button
-          onClick={onClose}
-          className="mt-4 w-full py-2 bg-blue-600/90 text-white rounded-xl font-semibold hover:bg-blue-700/90 transition-all"
-        >
-          OK
-        </button>
+        {/* Pulsante chiudi - solo se non ci sono children personalizzati */}
+        {!children && (
+          <button
+            onClick={onClose}
+            className="mt-4 w-full py-2 bg-blue-600/90 text-white rounded-xl font-semibold hover:bg-blue-700/90 transition-all"
+          >
+            OK
+          </button>
+        )}
       </div>
     </div>
   );

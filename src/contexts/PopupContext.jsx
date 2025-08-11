@@ -74,30 +74,40 @@ export const PopupProvider = ({ children }) => {
     });
   };
 
-  const showConfirm = (message, title = 'Conferma', onConfirm) => {
+  const showConfirm = (message, title = 'Conferma', onConfirm, onCancel) => {
     showPopup({
       title,
-      message,
+      message: typeof message === 'string' ? message : '',
       type: 'confirm',
-      icon: '❓',
+      icon: '⚠️',
       children: (
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={() => {
-              hidePopup();
-              onConfirm?.();
+        <>
+          {typeof message !== 'string' && (
+            <div className="mb-4">
+              {message}
+            </div>
+          )}
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={() => {
+                hidePopup();
+                onConfirm?.();
             }}
-            className="flex-1 py-2 bg-red-600/90 text-white rounded-xl font-semibold hover:bg-red-700/90 transition-all"
-          >
-            Conferma
-          </button>
-          <button
-            onClick={hidePopup}
-            className="flex-1 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
-          >
-            Annulla
-          </button>
-        </div>
+              className="flex-1 py-3 bg-blue-600/90 text-white rounded-xl font-semibold hover:bg-blue-700/90 transition-all duration-200 transform hover:scale-105"
+            >
+              Conferma
+            </button>
+            <button
+              onClick={() => {
+                hidePopup();
+                onCancel?.();
+              }}
+              className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
+            >
+              Annulla
+            </button>
+          </div>
+        </>
       )
     });
   };

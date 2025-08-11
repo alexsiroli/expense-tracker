@@ -3,9 +3,10 @@ import { X, Euro, Tag, Calendar, Save, Store, Search, Wallet } from 'lucide-reac
 import CustomSelect from './CustomSelect';
 import { usePopup } from '../contexts/PopupContext';
 import { getCurrentLocalDate, getCurrentLocalTime, parseLocalDate, compareDatesOnly } from '../utils/formatters';
+import { isFutureDate } from '../features/expenses/expenseLogic';
 
 function ExpenseForm({ isOpen = true, onSubmit, onClose, type, editingItem = null, modelFormData = null, stores = [], categories = [], wallets = [], selectedWalletId, onAddStore, isModelMode = false }) {
-  const { showError } = usePopup();
+  const { showError, showConfirm } = usePopup();
   const [formData, setFormData] = useState({
     amount: '',
     category: categories.length > 0 ? categories[0].name : '',
@@ -135,26 +136,40 @@ function ExpenseForm({ isOpen = true, onSubmit, onClose, type, editingItem = nul
         return;
       }
       
-      // Valida che la data non sia nel futuro
-      const selectedDate = parseLocalDate(formData.date);
-      const today = new Date();
+      // Controlla se la data è nel futuro (incluse transazioni di oggi con orario futuro)
+      const dateTime = `${formData.date}T${formData.time}:00`;
+      const isFutureTransaction = isFutureDate(dateTime);
       
-      if (compareDatesOnly(selectedDate, today) > 0) {
-        showError('Non è possibile creare transazioni con date future. Seleziona una data di oggi o precedente.', 'Data non valida');
-        return;
+      // Se è una transazione futura, chiedi conferma
+      if (isFutureTransaction) {
+        // Usa un Promise per gestire la conferma in modo asincrono
+        const confirmed = await new Promise((resolve) => {
+          showConfirm(
+            <div>
+              <p className="mb-3">Stai creando una transazione per un momento futuro.</p>
+              <p className="mb-3">Questa transazione sarà visibile solo nella sezione "Transazioni Future" e verrà automaticamente spostata nelle transazioni normali quando arriverà il momento.</p>
+              <p className="font-medium">Vuoi procedere?</p>
+            </div>,
+            'Transazione Futura',
+            () => resolve(true),  // Conferma
+            () => resolve(false)  // Annulla
+          );
+        });
+        
+        if (!confirmed) {
+          return;
+        }
       }
       
       // Aggiunge il negozio alla lista se non esiste
       await addStoreToSuggestions(formData.store);
       
-      // Combina data e ora per creare un timestamp completo
-      const dateTime = `${formData.date}T${formData.time}:00`;
-      
       onSubmit({
         ...formData,
         amount: parseFloat(formData.amount),
         store: formData.store.trim(),
-        date: dateTime
+        date: dateTime,
+        isFutureTransaction: isFutureTransaction
       });
     }
   };
@@ -439,7 +454,6 @@ function ExpenseForm({ isOpen = true, onSubmit, onClose, type, editingItem = nul
                     name="date"
                     value={formData.date}
                     onChange={handleChange}
-                    max={new Date().toISOString().split('T')[0]}
                     className="input"
                     required
                   />

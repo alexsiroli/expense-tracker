@@ -1,43 +1,51 @@
 import { useState, useEffect } from 'react';
-import { X, LogOut, Trash2, FileText, Calendar, AlertCircle, Database } from 'lucide-react';
+import { X, LogOut, Trash2, FileText, Calendar, AlertCircle, Database, Clock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useFirestore } from '../hooks/useFirestore';
+import { useFutureTransactions } from '../hooks/useFutureTransactions';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { getAllEasterEggs, getEasterEggsWithCompletionStatus, saveEasterEggCompletion } from '../utils/easterEggs';
 import { usePopup } from '../contexts/PopupContext';
 import DataManager from './DataManager';
+import FutureTransactions from './FutureTransactions';
 
 const UserProfile = ({ isOpen, onClose, easterEggsWithStatus, onImportData, onResetData, onShowImportModal, onShowResetModal, onSanitizeStores }) => {
   const { user, logout, deleteAccount } = useAuth();
-  const { deleteAllUserData, getCompletedEasterEggs, setEasterEggCompleted, isEasterEggCompleted } = useFirestore();
-  const { showError, showAlert } = usePopup();
+  const { deleteAllUserData, getCompletedEasterEggs, setEasterEggCompleted, isEasterEggCompleted, deleteDocument } = useFirestore();
+  const { showError, showAlert, showConfirm } = usePopup();
+  const { moveToCurrent, checkAndMoveExpiredTransactions } = useFutureTransactions();
   const { data: expenses } = useFirestore().useCollectionData('expenses');
   const { data: incomes } = useFirestore().useCollectionData('incomes');
+  const { data: categoriesData } = useFirestore().useCollectionData('categories', null);
+  const { data: walletsData } = useFirestore().useCollectionData('wallets', 'createdAt');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [showEasterEggs, setShowEasterEggs] = useState(false);
   const [creditsTapCount, setCreditsTapCount] = useState(0);
   const [lastCreditsTapTime, setLastCreditsTapTime] = useState(0);
-  const [activeSection, setActiveSection] = useState('profile'); // 'profile' or 'data'
+  const [activeSection, setActiveSection] = useState('profile'); // 'profile' only
+  const [showDataManager, setShowDataManager] = useState(false);
+  const [showFutureTransactions, setShowFutureTransactions] = useState(false);
 
-  // Rimuovi:
-  // const loadEasterEggsWithStatus = async () => {
-  //   try {
-  //     const eggsWithStatus = await getEasterEggsWithCompletionStatus(getCompletedEasterEggs);
-  //     setEasterEggsWithStatus(eggsWithStatus);
-  //   } catch (error) {
-  //     setEasterEggsWithStatus(getAllEasterEggs().map(egg => ({ ...egg, isCompleted: false })));
-  //   }
-  // };
-
-  // Rimuovi:
-  // useEffect(() => {
-  //   if (user) loadEasterEggsWithStatus();
-  //   window.loadEasterEggsWithStatus = loadEasterEggsWithStatus;
-  //   return () => { delete window.loadEasterEggsWithStatus; };
-  // }, [user, getCompletedEasterEggs]);
+  // Controlla automaticamente le transazioni future scadute quando si apre il profilo
+  useEffect(() => {
+    if (isOpen && expenses && incomes) {
+      checkAndMoveExpiredTransactions(expenses, incomes)
+        .then(({ movedExpenses, movedIncomes }) => {
+          if (movedExpenses > 0 || movedIncomes > 0) {
+            showAlert(
+              'Transazioni future aggiornate', 
+              `${movedExpenses + movedIncomes} transazioni future sono state automaticamente spostate a oggi.`
+            );
+          }
+        })
+        .catch(error => {
+          console.error('Errore durante il controllo delle transazioni future:', error);
+        });
+    }
+  }, [isOpen, expenses, incomes, checkAndMoveExpiredTransactions, showAlert]);
 
   if (!isOpen) return null;
 
@@ -45,6 +53,12 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus, onImportData, onRe
   const registrationDate = user?.metadata?.creationTime 
     ? format(new Date(user.metadata.creationTime), 'dd MMMM yyyy', { locale: it })
     : 'Data non disponibile';
+
+  // Prepara le categorie per il componente FutureTransactions
+  const categories = {
+    expense: categoriesData?.expense || [],
+    income: categoriesData?.income || []
+  };
 
   // Gestione easter egg - Tap segreto sui crediti
   const handleCreditsTap = () => {
@@ -116,6 +130,71 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus, onImportData, onRe
     }
   };
 
+  const handleFutureTransactions = () => {
+    setShowFutureTransactions(true);
+  };
+
+  const handleDataManager = () => {
+    setShowDataManager(true);
+  };
+
+  const handleEditFutureTransaction = (transaction) => {
+    // Chiudi il modal delle transazioni future
+    setShowFutureTransactions(false);
+    // Chiudi il modal del profilo utente
+    onClose();
+    // Emetti un evento custom per aprire il form di modifica
+    const editEvent = new CustomEvent('editFutureTransaction', { 
+      detail: { transaction } 
+    });
+    window.dispatchEvent(editEvent);
+  };
+
+  const handleDeleteFutureTransaction = async (transaction) => {
+    try {
+      // Chiedi conferma prima di eliminare
+      const confirmed = await new Promise((resolve) => {
+        showConfirm(
+          <div>
+            <p className="mb-3">Sei sicuro di voler eliminare questa transazione futura?</p>
+            <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+              <strong>{transaction.store}</strong> - {transaction.amount}€
+            </p>
+            <p className="font-medium">Questa azione non può essere annullata.</p>
+          </div>,
+          'Elimina Transazione Futura',
+          () => resolve(true),  // Conferma
+          () => resolve(false)  // Annulla
+        );
+      });
+
+      if (!confirmed) {
+        return;
+      }
+
+      // Elimina la transazione
+      const collectionName = transaction._type === 'expense' ? 'expenses' : 'incomes';
+      await deleteDocument(collectionName, transaction.id);
+      
+      // Mostra messaggio di successo
+      showAlert('Transazione eliminata', 'La transazione futura è stata eliminata con successo.');
+      
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione:', error);
+      showError('Errore durante l\'eliminazione della transazione', 'Errore');
+    }
+  };
+
+  const handleMoveToCurrent = async (transaction) => {
+    try {
+      await moveToCurrent(transaction);
+      showAlert('Transazione spostata', 'La transazione è stata spostata a oggi e ora è visibile nelle transazioni normali.');
+    } catch (error) {
+      console.error('Errore durante lo spostamento:', error);
+      showError('Errore durante lo spostamento della transazione', 'Errore');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
               <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-sm w-full animate-fade-in-up" onClick={e => e.stopPropagation()}>
@@ -135,148 +214,113 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus, onImportData, onRe
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
-          {activeSection === 'profile' ? (
-            <>
-              {/* Avatar e nome */}
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-semibold text-lg">
-                    {(() => {
-                      const name = user?.displayName || user?.email;
-                      const words = name?.split(' ').filter(word => word.length > 0) || [];
-                      if (words.length >= 2) {
-                        return (words[0][0] + words[1][0]).toUpperCase();
-                      } else if (words.length === 1) {
-                        return words[0].substring(0, 2).toUpperCase();
-                      } else {
-                        return name?.substring(0, 2).toUpperCase() || 'U';
-                      }
-                    })()}
-                  </span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    {user?.displayName || 'Utente'}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {user?.email}
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Header Gestione Dati */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                  <Database className="w-5 h-5" />
-                  Gestione Dati
-                </h3>
-                <button
-                  onClick={() => setActiveSection('profile')}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </>
-          )}
+        <div className="p-4 space-y-4">
+          {/* Avatar e nome */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-semibold text-base">
+                {(() => {
+                  const name = user?.displayName || user?.email;
+                  const words = name?.split(' ').filter(word => word.length > 0) || [];
+                  if (words.length >= 2) {
+                    return (words[0][0] + words[1][0]).toUpperCase();
+                  } else if (words.length === 1) {
+                    return words[0].substring(0, 2).toUpperCase();
+                  } else {
+                    return name?.substring(0, 2).toUpperCase() || 'U';
+                  }
+                })()}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {user?.displayName || 'Utente'}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {user?.email}
+              </p>
+            </div>
+          </div>
 
-          {activeSection === 'profile' ? (
-            <>
-              {/* Statistiche */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                      Transazioni
-                    </span>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {totalTransactions}
-                  </p>
-                </div>
-                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                      Registrato
-                    </span>
-                  </div>
-                  <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-                    {registrationDate}
-                  </p>
-                </div>
+          {/* Statistiche */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <FileText className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                  Transazioni
+                </span>
               </div>
-            </>
-          ) : (
-            <>
-              {/* DataManager */}
-              <DataManager 
-                onImportData={onImportData} 
-                onResetData={onResetData} 
-                onShowImportModal={onShowImportModal}
-                onShowResetModal={onShowResetModal}
-                onSanitizeStores={onSanitizeStores}
-              />
-            </>
-          )}
+              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                {totalTransactions}
+              </p>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Calendar className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                  Registrato
+                </span>
+              </div>
+              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                {registrationDate}
+              </p>
+            </div>
+          </div>
 
-          {activeSection === 'profile' && (
-            <>
-              {/* Credits */}
-              <div 
-                className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800 cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95"
-                onClick={handleCreditsTap}
-                title="Tap 8 volte rapidamente per un easter egg! 🎉"
-              >
-                <div className="text-center">
-                  <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
-                    Sviluppato con ❤️
-                  </h4>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Questa web app è stata realizzata da
-                  </p>
-                  <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">
-                    Alex Siroli
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
+          {/* Credits */}
+          <div 
+            className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-3 border border-blue-200 dark:border-blue-800 cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95"
+            onClick={handleCreditsTap}
+            title="Tap 8 volte rapidamente per un easter egg! 🎉"
+          >
+            <div className="text-center">
+              <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-1">
+                Sviluppato con ❤️
+              </h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Questa web app è stata realizzata da
+              </p>
+              <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">
+                Alex Siroli
+              </p>
+            </div>
+          </div>
 
-          {activeSection === 'profile' && (
-            <>
-              {/* Azioni */}
-              <div className="space-y-3">
-                <button
-                  onClick={() => setActiveSection('data')}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200"
-                >
-                  <Database className="w-4 h-4" />
-                  <span>Gestione Dati</span>
-                </button>
-                
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
-                </button>
-                
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-xl transition-colors duration-200"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Elimina Account</span>
-                </button>
-              </div>
-            </>
-          )}
+                    {/* Azioni */}
+          <div className="space-y-2">
+            <button
+              onClick={handleDataManager}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200"
+            >
+              <Database className="w-4 h-4" />
+              <span>Gestione Dati</span>
+            </button>
+            
+            <button
+              onClick={handleFutureTransactions}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200"
+            >
+              <Clock className="w-4 h-4" />
+              <span>Transazioni Future</span>
+            </button>
+            
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+            
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-xl transition-colors duration-200"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Elimina Account</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -459,9 +503,72 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus, onImportData, onRe
         </div>
       )}
 
+      {/* Modal Gestione Dati */}
+      {showDataManager && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowDataManager(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full animate-fade-in-up" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl flex items-center justify-between">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Database className="w-5 h-5" />
+                Gestione Dati
+              </h2>
+              <button
+                onClick={() => setShowDataManager(false)}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
 
-      </div>
-    );
-  };
+            <div className="p-4">
+              <DataManager 
+                onImportData={onImportData} 
+                onResetData={onResetData} 
+                onShowImportModal={onShowImportModal}
+                onShowResetModal={onShowResetModal}
+                onSanitizeStores={onSanitizeStores}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Transazioni Future */}
+      {showFutureTransactions && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowFutureTransactions(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full animate-fade-in-up" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bg-blue-600/90 backdrop-blur-sm text-white p-4 rounded-t-3xl flex items-center justify-between">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Transazioni Future
+              </h2>
+              <button
+                onClick={() => setShowFutureTransactions(false)}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-4">
+              <FutureTransactions
+                expenses={expenses || []}
+                incomes={incomes || []}
+                wallets={walletsData || []}
+                categories={categories}
+                onEdit={handleEditFutureTransaction}
+                onDelete={handleDeleteFutureTransaction}
+                onMoveToCurrent={handleMoveToCurrent}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
 
   export default UserProfile; 
