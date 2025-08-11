@@ -12,23 +12,15 @@ const ModelItem = ({ model, onUseModel, onEditModel, onDeleteModel, categories, 
 
   // Touch events
   const handleTouchStart = (e) => {
-    console.log('TOUCH START'); // Debug
     setSwiping(true);
     startXRef.current = e.touches[0].clientX;
   };
   const handleTouchMove = (e) => {
     if (!swiping) return;
     const deltaX = e.touches[0].clientX - startXRef.current;
-    console.log('TOUCH MOVE - DeltaX:', deltaX); // Debug
-    console.log('Element style before:', tileRef.current?.style.transform); // Debug
-    
-    // SOLUZIONE LOGICA: Aggiorna solo lo state, React si occupa del resto
     setSwipeX(deltaX);
-    
-    console.log('Element style after:', tileRef.current?.style.transform); // Debug
   };
   const handleTouchEnd = () => {
-    console.log('TOUCH END - Final swipeX:', swipeX); // Debug
     setSwiping(false);
     if (swipeX < -threshold) {
       onDeleteModel(model);
@@ -40,7 +32,6 @@ const ModelItem = ({ model, onUseModel, onEditModel, onDeleteModel, categories, 
 
   // Mouse events (desktop)
   const handleMouseDown = (e) => {
-    console.log('MOUSE DOWN'); // Debug
     setSwiping(true);
     startXRef.current = e.clientX;
     window.addEventListener('mousemove', handleMouseMove);
@@ -49,13 +40,9 @@ const ModelItem = ({ model, onUseModel, onEditModel, onDeleteModel, categories, 
   const handleMouseMove = (e) => {
     if (!swiping) return;
     const deltaX = e.clientX - startXRef.current;
-    console.log('MOUSE MOVE - DeltaX:', deltaX); // Debug
-    
-    // SOLUZIONE LOGICA: Aggiorna solo lo state, React si occupa del resto
     setSwipeX(deltaX);
   };
   const handleMouseUp = () => {
-    console.log('MOUSE UP - Final swipeX:', swipeX); // Debug
     setSwiping(false);
     if (swipeX < -threshold) {
       onDeleteModel(model);
@@ -93,7 +80,7 @@ const ModelItem = ({ model, onUseModel, onEditModel, onDeleteModel, categories, 
         msUserSelect: 'none',
         boxShadow: '2px 0 0 rgba(239, 68, 68, 0.6), -2px 0 0 rgba(59, 130, 246, 0.6)'
       }}
-      data-swipe-x={swipeX} // Debug
+
     >
       {/* Contenuto del modello */}
       <div className="flex items-center gap-3">

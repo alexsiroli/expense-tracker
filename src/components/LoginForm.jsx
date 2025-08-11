@@ -42,9 +42,9 @@ const LoginForm = () => {
     setLoading(true);
     clearError();
     try {
-      console.log('Iniziando login Google...');
+      
       const user = await loginWithGoogle();
-      console.log('Login Google completato:', user);
+      
     } catch (error) {
       console.error('Errore login Google:', error);
     } finally {

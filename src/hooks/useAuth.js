@@ -29,7 +29,7 @@ export const useAuth = () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          console.log('Redirect result received:', result.user);
+  
         }
       } catch (error) {
         console.error('Error handling redirect result:', error);
@@ -44,10 +44,10 @@ export const useAuth = () => {
 
   const login = async (email, password) => {
     try {
-      console.log('Tentativo di login con email:', email);
+      
       setError(null);
       const result = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Login riuscito per utente:', result.user.email);
+      
       return result.user;
     } catch (error) {
       console.error('Errore durante il login:', error);
@@ -60,16 +60,14 @@ export const useAuth = () => {
 
   const register = async (email, password, displayName) => {
     try {
-      console.log('Tentativo di registrazione con email:', email);
+      
       setError(null);
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('Registrazione riuscita per utente:', result.user.email);
+      
       
       // Aggiorna il profilo con il nome
       if (displayName) {
-        console.log('Aggiornamento profilo con displayName:', displayName);
         await updateProfile(result.user, { displayName });
-        console.log('Profilo aggiornato con successo');
       }
       
       return result.user;
@@ -97,7 +95,7 @@ export const useAuth = () => {
         try {
           result = await signInWithPopup(auth, provider);
         } catch (popupError) {
-          console.log('Popup failed on mobile, trying redirect...', popupError);
+
           // Se il popup fallisce, usa redirect
           await signInWithRedirect(auth, provider);
           // Il redirect gestirà il risultato automaticamente
@@ -108,7 +106,7 @@ export const useAuth = () => {
         result = await signInWithPopup(auth, provider);
       }
       
-      console.log('Google login successful:', result?.user);
+
       return result?.user;
     } catch (error) {
       console.error('Google login error:', error);
@@ -134,7 +132,7 @@ export const useAuth = () => {
       
       // Elimina l'account utente
       await deleteUser(user);
-      console.log('Account eliminato con successo');
+
     } catch (error) {
       console.error('Errore durante l\'eliminazione account:', error);
       setError(getErrorMessage(error.code));
@@ -143,7 +141,7 @@ export const useAuth = () => {
   };
 
   const getErrorMessage = (errorCode) => {
-    console.log('Errore autenticazione Firebase:', errorCode);
+
     
     switch (errorCode) {
       case 'auth/user-not-found':

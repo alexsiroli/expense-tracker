@@ -43,8 +43,7 @@ export const useFirestore = () => {
         return;
       }
 
-      console.log(`Setting up listener for collection: ${collectionName}`);
-      console.log(`User: ${user.uid}`);
+      
 
       let q;
       if (orderByField) {
@@ -57,16 +56,13 @@ export const useFirestore = () => {
       }
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        console.log(`Snapshot received for ${collectionName}:`, snapshot.docs.length, 'documents');
-        console.log(`Snapshot metadata:`, snapshot.metadata);
-        console.log(`Snapshot empty:`, snapshot.empty);
+
         
         const items = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
-        console.log(`Processed ${collectionName} data:`, items);
-        console.log(`Setting data for ${collectionName}:`, items);
+
         setData(items);
         setLoading(false);
       }, (error) => {
@@ -92,15 +88,10 @@ export const useFirestore = () => {
       const collectionRef = getUserCollection(collectionName);
       const docRef = doc(collectionRef);
       // Log per debug
-      console.log('addDocument chiamato con:', { collectionName, document });
-      console.log('User:', user);
-      console.log('User UID:', user.uid);
-      console.log('User collection reference:', collectionRef);
+      
       // Salva il documento
       await setDoc(docRef, { ...document, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-      console.log('Document data to save:', { ...document, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-      console.log('Document created successfully:', docRef);
-      console.log('Document ID:', docRef.id);
+      
       // Se è una spesa o entrata e contiene un nuovo negozio, aggiorna la lista negozi
       if ((collectionName === 'expenses' || collectionName === 'incomes') && document.store && document.store.trim()) {
         await sanitizeStores(forceUpdateStoresState);
@@ -278,8 +269,7 @@ export const useFirestore = () => {
       
       await batch.commit();
       
-      console.log('Importazione completata. Negozi estratti:', Array.from(extractedStores));
-      console.log('Lista finale negozi:', finalStores);
+      
       // Sanifica i negozi dopo l'import
       await sanitizeStores(forceUpdateStoresState);
     } catch (error) {
@@ -373,33 +363,33 @@ export const useFirestore = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('[sanitizeStores] Avvio sanificazione negozi...');
+      
       // Carica tutte le spese e entrate
       const expensesSnap = await getDocs(getUserCollection('expenses'));
       const incomesSnap = await getDocs(getUserCollection('incomes'));
       const storesSet = new Set();
-      console.log('[sanitizeStores] Numero spese trovate:', expensesSnap.docs.length);
+      
       expensesSnap.docs.forEach(doc => {
         const data = doc.data();
         if (data.store && data.store.trim()) {
           storesSet.add(data.store.trim());
-          console.log('[sanitizeStores] Trovato negozio in expense:', data.store.trim());
+  
         }
       });
-      console.log('[sanitizeStores] Numero entrate trovate:', incomesSnap.docs.length);
+      
       incomesSnap.docs.forEach(doc => {
         const data = doc.data();
         if (data.store && data.store.trim()) {
           storesSet.add(data.store.trim());
-          console.log('[sanitizeStores] Trovato negozio in income:', data.store.trim());
+  
         }
       });
       const finalStores = Array.from(storesSet);
-      console.log('[sanitizeStores] Lista finale negozi da salvare:', finalStores);
+      
       // Salva la lista finale su Firestore (anche se vuota)
       const storesRef = doc(getUserCollection('stores'), 'default');
       await setDoc(storesRef, { stores: finalStores });
-      console.log('[sanitizeStores] Negozi aggiornati su Firestore!', finalStores);
+      
       if (typeof forceUpdateStoresState === 'function') forceUpdateStoresState(finalStores);
     } catch (error) {
       setError('Errore durante la sanificazione negozi: ' + error.message);
@@ -407,7 +397,7 @@ export const useFirestore = () => {
       throw error;
     } finally {
       setLoading(false);
-      console.log('[sanitizeStores] Fine sanificazione negozi.');
+      
     }
   };
 

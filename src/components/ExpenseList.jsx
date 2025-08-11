@@ -192,14 +192,14 @@ const ExpenseItem = ({ item, onDelete, onEdit, onShowDetail, getItemType, getCat
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-0.5">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0 max-w-[60%]">
                 <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-base">
                   {item.store || 'Senza negozio'}
                 </h3>
               </div>
-              <div className={`flex items-end justify-end mt-3`}>
+              <div className={`flex items-end justify-end mt-3 flex-shrink-0`}>
                 <span className={`px-3 py-1 rounded-xl border font-bold text-base shadow-sm ${getItemType(item) === 'expense' ? 'text-red-700 border-red-200 bg-red-50 dark:text-red-300 dark:border-red-700 dark:bg-red-900/30' : 'text-green-700 border-green-200 bg-green-50 dark:text-green-300 dark:border-green-700 dark:bg-green-900/30'}`}
-                      style={{ textAlign: 'right', minWidth: 'fit-content' }}>
+                      style={{ textAlign: 'right' }}>
                   {getItemType(item) === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
                 </span>
               </div>

@@ -80,7 +80,7 @@ const UserProfile = ({ isOpen, onClose, easterEggsWithStatus, onImportData, onRe
       // Chiudi il modal
       onClose();
       
-      console.log('Account eliminato con successo');
+      
     } catch (error) {
       console.error('Errore durante l\'eliminazione account:', error);
       

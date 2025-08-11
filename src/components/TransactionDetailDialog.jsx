@@ -80,8 +80,8 @@ function TransactionDetailDialog({ transaction, onClose, onEdit, onDelete, categ
           {transaction.store && (
             <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <Store className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-              <div className="flex-1">
-                <div className="font-semibold text-gray-900 dark:text-gray-100">{transaction.store}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">{transaction.store}</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Negozio</div>
               </div>
             </div>

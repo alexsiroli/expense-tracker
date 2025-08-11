@@ -398,7 +398,7 @@ function App() {
           try {
             const backupCategories = JSON.parse(backup);
             setCategories(backupCategories);
-            console.log('Categorie caricate dal backup locale');
+    
           } catch (e) {
             console.error('Errore nel parsing del backup:', e);
             setCategories(defaultCategories);
@@ -414,7 +414,7 @@ function App() {
         try {
           const backupCategories = JSON.parse(backup);
           setCategories(backupCategories);
-          console.log('Categorie caricate dal backup locale (nessun dato Firebase)');
+  
         } catch (e) {
           console.error('Errore nel parsing del backup:', e);
           setCategories(defaultCategories);
@@ -429,7 +429,7 @@ function App() {
         try {
           const backupCategories = JSON.parse(backup);
           setCategories(backupCategories);
-          console.log('Categorie caricate dal backup locale (dati Firebase non disponibili)');
+  
         } catch (e) {
           console.error('Errore nel parsing del backup:', e);
           setCategories(defaultCategories);
@@ -475,7 +475,7 @@ function App() {
   useEffect(() => {
     if (modelsData && modelsData.length > 0) {
       const modelsDoc = modelsData[0];
-      console.log('Modelli caricati dal database:', modelsDoc);
+      
       if (modelsDoc.models) {
         setModels(modelsDoc.models);
       } else {
@@ -483,7 +483,7 @@ function App() {
       }
       setLastSyncTime(new Date().toISOString());
     } else if (modelsData && modelsData.length === 0) {
-      console.log('Nessun modello nel database');
+      
       setModels([]);
     }
   }, [modelsData]);
@@ -517,7 +517,7 @@ function App() {
           const backupCategories = JSON.parse(backup);
           // Verifica che il backup contenga categorie valide
           if (backupCategories.expense && backupCategories.income) {
-            console.log('Sincronizzazione categorie dal backup locale...');
+    
             addDocument('categories', backupCategories);
           }
         } catch (e) {
@@ -538,7 +538,7 @@ function App() {
       
       if (walletsWithCustomIds.length > 0) {
         walletsWithCustomIds.forEach(wallet => {
-          console.log('Conto con ID personalizzato:', wallet.name, wallet.id);
+  
         });
       }
     }
@@ -844,8 +844,7 @@ function App() {
     
     // Verifica se l'ID è un ID personalizzato (vecchio formato)
     if (typeof walletId === 'string' && walletId.startsWith('wallet-')) {
-      console.log('ATTENZIONE: Eliminando conto con ID personalizzato:', walletId);
-      console.log('Questo potrebbe causare problemi di sincronizzazione');
+      
     }
     
     // Ora l'ID del wallet è direttamente l'ID del documento Firestore
@@ -1017,7 +1016,7 @@ function App() {
         updatedModels = addModel(models, modelWithType);
       }
       
-      console.log('Modello salvato:', modelWithType);
+      
       setModels(updatedModels);
       
       // Sincronizza con Firestore
@@ -1785,7 +1784,7 @@ function App() {
         await addDocument('stores', { stores: newStores });
       }
     } else {
-      console.log('Store già esistente o nome vuoto, non aggiunto');
+      
     }
   };
 

@@ -28,8 +28,7 @@ if (missingVars.length > 0) {
   console.error('Variabili d\'ambiente Firebase mancanti:', missingVars);
   console.error('Configurazione Firebase incompleta. Verifica il file .env');
 } else {
-  console.log('Configurazione Firebase caricata correttamente');
-  console.log('Project ID:', import.meta.env.VITE_FIREBASE_PROJECT_ID);
+  
 }
 
 // Inizializza Firebase

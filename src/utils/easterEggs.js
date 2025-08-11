@@ -226,7 +226,7 @@ export const handleTransactionEasterEggs = (amount, date, setters) => {
 export const saveEasterEggCompletion = async (easterEggId, setEasterEggCompleted) => {
   try {
     await setEasterEggCompleted(easterEggId);
-    console.log(`Easter egg ${easterEggId} salvato come completato`);
+    
     return true;
   } catch (error) {
     console.error('Errore nel salvataggio easter egg:', error);
